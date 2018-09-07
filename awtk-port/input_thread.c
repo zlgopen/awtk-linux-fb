@@ -129,10 +129,10 @@ static int32_t map_key(uint8_t code) {
 }
 
 static ret_t input_dispatch(run_info_t* info) {
-  info->dispatch(info->dispatch_ctx, &(info->req));
+  ret_t ret = info->dispatch(info->dispatch_ctx, &(info->req));
   info->req.event.type = EVT_NONE;
 
-  return RET_OK;
+  return ret;
 }
 
 static ret_t input_dispatch_one_event(run_info_t* info) {
@@ -146,8 +146,8 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
   return_value_if_fail(ret == sizeof(e), RET_FAIL);
 
   switch (e.type) {
-    printf("EV_KEY:%d\n", e.code);
     case EV_KEY: {
+      printf("EV_KEY:%d\n", e.code);
       if (e.code == BTN_LEFT || e.code == BTN_RIGHT || e.code == BTN_MIDDLE ||
           e.code == BTN_TOUCH) {
         req->event.type = e.value ? EVT_POINTER_DOWN : EVT_POINTER_UP;
@@ -155,7 +155,7 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
         req->event.type = e.value ? EVT_KEY_DOWN : EVT_KEY_UP;
         req->key_event.key = map_key(e.code);
 
-        input_dispatch(info);
+        return input_dispatch(info);
       }
 
       break;
@@ -221,8 +221,7 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
         case EVT_POINTER_DOWN:
         case EVT_POINTER_MOVE:
         case EVT_POINTER_UP: {
-          input_dispatch(info);
-          break;
+          return input_dispatch(info);
         }
         default:
           break;
@@ -242,6 +241,7 @@ void* input_run(void* ctx) {
   while (input_dispatch_one_event(info) == RET_OK)
     ;
 
+  close(info->fd);
   TKMEM_FREE(info);
 
   return NULL;

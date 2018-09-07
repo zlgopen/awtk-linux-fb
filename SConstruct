@@ -32,13 +32,17 @@ else:
 COMMON_CCFLAGS=' -DHAS_STD_MALLOC -DWITH_FS_RES -DHAS_STDIO -DWITH_VGCANVAS -DWITH_UNICODE_BREAK '
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_STB_FONT '
 
+TSLIB_INC_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src')
+TSLIB_LIB_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src/.libs')
+
+
 os.environ['LCD'] = LCD
 os.environ['VGCANVAS'] = VGCANVAS 
 os.environ['BIN_DIR'] = BIN_DIR;
 os.environ['LIB_DIR'] = LIB_DIR;
 os.environ['TK_ROOT'] = TK_ROOT;
-os.environ['GTEST_ROOT'] = GTEST_ROOT;
 os.environ['INPUT_ENGINE'] = INPUT_ENGINE;
+os.environ['TSLIB_LIB_DIR'] = TSLIB_LIB_DIR;
 os.environ['FRAME_BUFFER_FORMAT'] = FRAME_BUFFER_FORMAT;
 
 OS_LIBS=[]
@@ -53,8 +57,8 @@ OS_LIBS = ['GL'] + OS_LIBS + ['stdc++', 'pthread', 'm', 'dl']
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD'
   
 LINKFLAGS=OS_LINKFLAGS;
-LIBPATH=[LIB_DIR] + OS_LIBPATH
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
+LIBPATH=[LIB_DIR] + OS_LIBPATH
 LIBS=['awtk', 'gpinyin', 'awtk', 'cairo', 'pixman', 'linebreak'] + OS_LIBS
 
 CPPPATH=[TK_ROOT, 
@@ -65,7 +69,12 @@ CPPPATH=[TK_ROOT,
   joinPath(TK_3RD_ROOT, 'pixman/pixman'), 
   joinPath(TK_3RD_ROOT, 'gpinyin/include'), 
   joinPath(TK_3RD_ROOT, 'libunibreak/src'), 
-  TK_TOOLS_ROOT] + OS_CPPPATH
+  ] + OS_CPPPATH
+
+if TSLIB_LIB_DIR:
+  LIBS = ['ts'] + LIBS
+  LIBPATH = [TSLIB_LIB_DIR] + LIBPATH;
+  CPPPATH = [TSLIB_INC_DIR] + CPPPATH;
 
 DefaultEnvironment(CCFLAGS = CCFLAGS, 
   LIBS = LIBS,

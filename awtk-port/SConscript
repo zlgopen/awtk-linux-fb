@@ -1,13 +1,19 @@
 import os
 import copy
 
-BIN_DIR=os.environ['BIN_DIR'];
-LIB_DIR=os.environ['LIB_DIR'];
+BIN_DIR = os.environ['BIN_DIR'];
+LIB_DIR = os.environ['LIB_DIR'];
+env = DefaultEnvironment().Clone()
 
-sources = ['input_thread.c', 'input_dispatcher.c']
+SOURCES = ['input_thread.c', 'input_dispatcher.c']
 
-env=DefaultEnvironment().Clone()
-env.Library(os.path.join(LIB_DIR, 'awtk_linux_fb'), sources)
+if os.environ['TSLIB_LIB_DIR']:
+  SOURCES = ['tslib_thread.c'] + SOURCES;
+
+env.Library(os.path.join(LIB_DIR, 'awtk_linux_fb'), SOURCES)
 
 env['LIBS'] = ['awtk_linux_fb'] + env['LIBS']
+
 env.Program(os.path.join(BIN_DIR, 'input_test'), ["input_thread_test.c"])
+if os.environ['TSLIB_LIB_DIR']:
+  env.Program(os.path.join(BIN_DIR, 'tslib_test'), ["tslib_thread_test.c"])
