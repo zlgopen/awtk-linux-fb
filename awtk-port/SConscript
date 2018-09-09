@@ -5,7 +5,7 @@ BIN_DIR = os.environ['BIN_DIR'];
 LIB_DIR = os.environ['LIB_DIR'];
 env = DefaultEnvironment().Clone()
 
-SOURCES = ['input_thread.c', 'input_dispatcher.c']
+SOURCES = ['input_thread.c', 'input_dispatcher.c', 'lcd_linux_fb.c', 'main_loop_linux.c']
 
 if os.environ['TSLIB_LIB_DIR']:
   SOURCES = ['tslib_thread.c'] + SOURCES;

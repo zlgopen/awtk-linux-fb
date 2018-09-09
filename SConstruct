@@ -13,8 +13,16 @@ TK_TOOLS_ROOT = joinPath(TK_ROOT, 'tools')
 GTEST_ROOT = joinPath(TK_ROOT, '3rd/gtest/googletest')
 
 TK_LINUX_FB_ROOT=os.path.normpath(os.getcwd())
-BIN_DIR=joinPath(TK_LINUX_FB_ROOT, 'bin')
-LIB_DIR=joinPath(TK_LINUX_FB_ROOT, 'lib')
+BIN_DIR=joinPath(TK_ROOT, 'bin')
+LIB_DIR=joinPath(TK_ROOT, 'lib')
+
+TSLIB_INC_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src')
+TSLIB_LIB_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src/.libs')
+TOOLS_PREFIX=''
+
+#TSLIB_LIB_DIR='/opt/28x/tslib/lib'
+#TSLIB_INC_DIR='/opt/28x/tslib/include'
+#TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
 
 LCD='SDL'
 LCD='NANOVG'
@@ -31,10 +39,6 @@ else:
 
 COMMON_CCFLAGS=' -DHAS_STD_MALLOC -DWITH_FS_RES -DHAS_STDIO -DWITH_VGCANVAS -DWITH_UNICODE_BREAK '
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_STB_FONT '
-
-TSLIB_INC_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src')
-TSLIB_LIB_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src/.libs')
-
 
 os.environ['LCD'] = LCD
 os.environ['VGCANVAS'] = VGCANVAS 
@@ -53,13 +57,13 @@ OS_FLAGS='-g -Wall'
 OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
 
-OS_LIBS = ['GL'] + OS_LIBS + ['stdc++', 'pthread', 'm', 'dl']
+OS_LIBS = OS_LIBS + ['stdc++', 'pthread', 'm', 'dl']
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD'
   
 LINKFLAGS=OS_LINKFLAGS;
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
 LIBPATH=[LIB_DIR] + OS_LIBPATH
-LIBS=['awtk', 'gpinyin', 'awtk', 'cairo', 'pixman', 'linebreak'] + OS_LIBS
+LIBS=['awtk', 'gpinyin', 'awtk_linux_fb', 'awtk', 'cairo', 'pixman', 'linebreak'] + OS_LIBS
 
 CPPPATH=[TK_ROOT, 
   TK_SRC, 
@@ -77,6 +81,11 @@ if TSLIB_LIB_DIR:
   CPPPATH = [TSLIB_INC_DIR] + CPPPATH;
 
 DefaultEnvironment(CCFLAGS = CCFLAGS, 
+  CC=TOOLS_PREFIX+'gcc',
+  CXX=TOOLS_PREFIX+'g++',
+  LD=TOOLS_PREFIX+'g++',
+  AR=TOOLS_PREFIX+'ar',
+  STRIP=TOOLS_PREFIX+'strip',
   LIBS = LIBS,
   LIBPATH = LIBPATH,
   CPPPATH = CPPPATH,
@@ -90,6 +99,8 @@ SConscriptFiles=[
   'awtk/3rd/cairo/SConscript',
   'awtk/3rd/gpinyin/SConscript', 
   'awtk/3rd/libunibreak/SConscript',
+  'awtk/src/SConscript',
+  'awtk/demos/SConscript',
   'awtk-port/SConscript',
   ]
   
