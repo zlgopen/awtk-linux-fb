@@ -3,3 +3,5 @@ bin
 lib
 *.o
 3rd
+release.zip
+release

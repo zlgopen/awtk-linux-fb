@@ -42,7 +42,6 @@ typedef struct _run_info_t {
   event_queue_req_t req;
 } run_info_t;
 
-/*FIXME: complete the keymap table.*/
 static const int32_t s_key_map[0x100] = {[KEY_1] = FKEY_1,
                                          [KEY_2] = FKEY_2,
                                          [KEY_3] = FKEY_3,
@@ -101,6 +100,8 @@ static const int32_t s_key_map[0x100] = {[KEY_1] = FKEY_1,
                                          [KEY_F8] = FKEY_F8,
                                          [KEY_F9] = FKEY_F9,
                                          [KEY_F10] = FKEY_F10,
+                                         [KEY_F11] = FKEY_F11,
+                                         [KEY_F12] = FKEY_F12,
                                          [KEY_COMMA] = FKEY_COMMA,
                                          [KEY_DOT] = FKEY_DOT,
                                          [KEY_SLASH] = FKEY_SLASH,
@@ -119,12 +120,9 @@ static const int32_t s_key_map[0x100] = {[KEY_1] = FKEY_1,
                                          [KEY_EQUAL] = FKEY_EQUAL,
                                          [KEY_BACKSPACE] = FKEY_BACKSPACE,
                                          [KEY_TAB] = FKEY_TAB,
-                                         [KEY_ESC] = FKEY_ESCAPE,
-                                         [139] = FKEY_F2};
+                                         [KEY_ESC] = FKEY_ESCAPE };
 
 static int32_t map_key(uint8_t code) {
-  /*FIXME*/
-
   return s_key_map[code];
 }
 
@@ -143,11 +141,11 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
   if (ret != sizeof(e)) {
     printf("%s:%d read failed(ret=%d, errno=%d)\n", __func__, __LINE__, ret, errno);
   }
+
   return_value_if_fail(ret == sizeof(e), RET_FAIL);
 
   switch (e.type) {
     case EV_KEY: {
-      printf("EV_KEY:%d\n", e.code);
       if (e.code == BTN_LEFT || e.code == BTN_RIGHT || e.code == BTN_MIDDLE ||
           e.code == BTN_TOUCH) {
         req->event.type = e.value ? EVT_POINTER_DOWN : EVT_POINTER_UP;
@@ -161,7 +159,6 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
       break;
     }
     case EV_ABS: {
-      printf("EV_ABS:%d\n", e.value);
       switch (e.code) {
         case ABS_X: {
           req->pointer_event.x = e.value;
@@ -182,7 +179,6 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
       break;
     }
     case EV_REL: {
-      printf("EV_REL:%d\n", e.value);
       switch (e.code) {
         case REL_X: {
           req->pointer_event.x += e.value;
@@ -216,7 +212,6 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
       break;
     }
     case EV_SYN: {
-      printf("EV_SYNC:%d\n", e.value);
       switch (req->event.type) {
         case EVT_POINTER_DOWN:
         case EVT_POINTER_MOVE:
@@ -257,9 +252,7 @@ static run_info_t* info_dup(run_info_t* info) {
 
 thread_t* input_thread_run(const char* filename, input_dispatch_t dispatch, void* ctx,
                            int32_t max_x, int32_t max_y) {
-  int grab = 0;
   run_info_t info;
-  char name[100] = {0};
   thread_t* thread = NULL;
   return_value_if_fail(filename != NULL && dispatch != NULL, NULL);
 
@@ -272,23 +265,6 @@ thread_t* input_thread_run(const char* filename, input_dispatch_t dispatch, void
   info.fd = open(filename, O_RDONLY);
 
   return_value_if_fail(info.fd >= 0, NULL);
-
-#ifdef PC_EMU
-  /*use uinput only.*/
-  if (ioctl(info.fd, EVIOCGNAME(sizeof(name) - 1), &name) < 0 || name[0] != 'v') {
-    close(info.fd);
-    return NULL;
-  }
-
-  /*grab uinput to prevent event broadcasting*/
-  if (ioctl(info.fd, EVIOCGRAB, &grab) < 0) {
-    close(info.fd);
-    return NULL;
-  }
-#else
-  (void)name;
-  (void)grab;
-#endif
 
   thread = thread_create(input_run, info_dup(&info));
   if (thread != NULL) {

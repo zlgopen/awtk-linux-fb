@@ -31,8 +31,9 @@
 #include <sys/ioctl.h>
 #include "base/lcd.h"
 #include "base/mem.h"
-#include "lcd/lcd_mem_bgra8888.h"
 #include "lcd/lcd_mem_rgb565.h"
+#include "lcd/lcd_mem_bgra8888.h"
+#include "lcd/lcd_mem_rgba8888.h"
 
 typedef struct _fb_info_t {
   int fd;
@@ -157,7 +158,7 @@ static void fb_sync(fb_info_t* info) {
 static fb_info_t fb;
 
 static ret_t lcd_linux_fb_flush(lcd_t* lcd) {
-  fb_sync(&fb);
+  //fb_sync(&fb);
 
   return RET_OK;
 }

@@ -47,14 +47,12 @@ static ret_t tslib_dispatch(run_info_t* info) {
 
 static ret_t tslib_dispatch_one_event(run_info_t* info) {
   struct ts_sample e = {0};
+  int ret = ts_read(info->ts, &e, 1);
   event_queue_req_t* req = &(info->req);
-  int ret = ret = ts_read(info->ts, &e, 1);
 
   if (ret <= 0) {
     return RET_OK;
   }
-
-  return_value_if_fail(ret == sizeof(e), RET_FAIL);
 
   req->event.type = EVT_NONE;
   req->pointer_event.x = e.x;
@@ -111,7 +109,7 @@ thread_t* tslib_thread_run(const char* filename, input_dispatch_t dispatch, void
   info.max_y = max_y;
   info.dispatch_ctx = ctx;
   info.dispatch = dispatch;
-  info.ts = ts_open(filename, 1);
+  info.ts = ts_open(filename, 0);
 
   return_value_if_fail(info.ts != NULL, NULL);
   ts_config(info.ts);

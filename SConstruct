@@ -16,13 +16,13 @@ TK_LINUX_FB_ROOT=os.path.normpath(os.getcwd())
 BIN_DIR=joinPath(TK_ROOT, 'bin')
 LIB_DIR=joinPath(TK_ROOT, 'lib')
 
-TSLIB_INC_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src')
-TSLIB_LIB_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src/.libs')
-TOOLS_PREFIX=''
+#TSLIB_INC_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src')
+#TSLIB_LIB_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src/.libs')
+#TOOLS_PREFIX=''
 
-#TSLIB_LIB_DIR='/opt/28x/tslib/lib'
-#TSLIB_INC_DIR='/opt/28x/tslib/include'
-#TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
+TSLIB_LIB_DIR='/opt/28x/tslib/lib'
+TSLIB_INC_DIR='/opt/28x/tslib/include'
+TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
 
 LCD='SDL'
 LCD='NANOVG'
@@ -37,7 +37,7 @@ if FRAME_BUFFER_FORMAT=='rgba8888':
 else:
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_FB_565=1';
 
-COMMON_CCFLAGS=' -DHAS_STD_MALLOC -DWITH_FS_RES -DHAS_STDIO -DWITH_VGCANVAS -DWITH_UNICODE_BREAK '
+COMMON_CCFLAGS=' -DHAS_STD_MALLOC -DWITH_FS_RES -DHAS_STDIO -DWITH_VGCANVAS -DWITH_UNICODE_BREAK -DLINUX'
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_STB_FONT '
 
 os.environ['LCD'] = LCD
