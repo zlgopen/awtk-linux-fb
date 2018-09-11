@@ -103,81 +103,51 @@ static void fb_close(fb_info_t* fb) {
   return;
 }
 
-static ret_t fb_pan(fb_info_t* info, int xoffset, int yoffset, int onsync) {
-  struct fb_var_screeninfo* var = &info->var;
-
-  return_value_if_fail(var->xres_virtual >= (xoffset + var->xres), RET_FAIL);
-  return_value_if_fail(var->yres_virtual >= (yoffset + var->yres), RET_FAIL);
-
-  if (!info->fix.xpanstep && !info->fix.ypanstep && !info->fix.ywrapstep) {
-    return RET_OK;
-  }
-
-  if (info->fix.xpanstep) {
-    var->xoffset = xoffset - (xoffset % info->fix.xpanstep);
-  } else {
-    var->xoffset = 0;
-  }
-
-  if (info->fix.ywrapstep) {
-    var->yoffset = yoffset - (yoffset % info->fix.ywrapstep);
-    var->vmode |= FB_VMODE_YWRAP;
-  } else if (info->fix.ypanstep) {
-    var->yoffset = yoffset - (yoffset % info->fix.ypanstep);
-    var->vmode &= ~FB_VMODE_YWRAP;
-  } else {
-    var->yoffset = 0;
-  }
-
-  var->activate = onsync ? FB_ACTIVATE_VBL : FB_ACTIVATE_NOW;
-
-  log_debug("%s: xoffset=%d yoffset=%d ywrapstep=%d\n", __func__, var->xoffset, var->yoffset,
-            info->fix.ywrapstep);
-  if (ioctl(info->fd, FBIOPAN_DISPLAY, var) < 0) {
-    return RET_FAIL;
-  }
-
-  return RET_OK;
-}
-
 static void fb_sync(fb_info_t* info) {
   int ret = 0;
   int zero = 0;
   ret = ioctl(info->fd, FBIO_WAITFORVSYNC, &zero);
-  ret = fb_pan(info, 0, 0, 1);
-  ret = ioctl(info->fd, FBIO_WAITFORVSYNC, &zero);
-#ifdef USE_FB_ACTIVATE_ALL
-  ret = ioctl(info->fd, FB_ACTIVATE_ALL, NULL);
-  log_debug("%s: FB_ACTIVATE_ALL ret = %d\n", __func__, ret);
-#endif
-  (void)ret;
+
+  log_debug("FBIO_WAITFORVSYNC: %d %d\n", ret, zero);
+
   return;
 }
 
-
-static fb_info_t fb;
+static fb_info_t s_fb;
+static lcd_flush_t s_lcd_flush_default = NULL;
 
 static ret_t lcd_linux_fb_flush(lcd_t* lcd) {
-  //fb_sync(&fb);
+  if(s_lcd_flush_default != NULL) {
+    s_lcd_flush_default(lcd);
+  }
+
+  fb_sync(&s_fb);
 
   return RET_OK;
 }
 
 lcd_t* lcd_linux_fb_create(const char* filename) {
   lcd_t* lcd = NULL;
+  fb_info_t* fb = &s_fb;
   return_value_if_fail(filename != NULL, NULL);
 
-  if (fb_open(&fb, filename) == 0) {
-    int w = fb_width(&fb);
-    int h = fb_height(&fb);
-    uint8_t* bits = (uint8_t*)(fb.bits);
-    int bits_per_pixel = fb.var.bits_per_pixel;
+  if (fb_open(fb, filename) == 0) {
+    int w = fb_width(fb);
+    int h = fb_height(fb);
+    int bpp = fb->var.bits_per_pixel;
+    uint8_t* online_fb = (uint8_t*)(fb->bits);
+    uint8_t* offline_fb = (uint8_t*)malloc(w*h*bpp);
+    if(offline_fb == NULL) {
+      fb_close(fb);
 
-    if (bits_per_pixel == 16) {
-      lcd = lcd_mem_rgb565_create_single_fb(w, h, bits);
-    } else if (bits_per_pixel == 32) {
-      lcd = lcd_mem_bgra8888_create_single_fb(w, h, bits);
-    } else if (bits_per_pixel == 24) {
+      return NULL;
+    }
+
+    if (bpp == 16) {
+      lcd = lcd_mem_rgb565_create_double_fb(w, h, online_fb, offline_fb);
+    } else if (bpp == 32) {
+      lcd = lcd_mem_bgra8888_create_double_fb(w, h, online_fb, offline_fb);
+    } else if (bpp == 24) {
       assert(!"not supported framebuffer format.");
     } else {
       assert(!"not supported framebuffer format.");
@@ -185,7 +155,8 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
   }
 
   if(lcd != NULL) {
-    lcd->flush = lcd_linux_fb_flush;
+    s_lcd_flush_default = lcd->flush;
+    lcd->flush = lcd_linux_fb_flush; 
   }
 
   return lcd;
