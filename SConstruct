@@ -39,6 +39,7 @@ else:
 
 COMMON_CCFLAGS=' -DHAS_STD_MALLOC -DWITH_FS_RES -DHAS_STDIO -DWITH_VGCANVAS -DWITH_UNICODE_BREAK -DLINUX'
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_STB_FONT '
+COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE '
 
 os.environ['LCD'] = LCD
 os.environ['VGCANVAS'] = VGCANVAS 
@@ -53,7 +54,7 @@ OS_LIBS=[]
 OS_LIBPATH=[]
 OS_CPPPATH=[]
 OS_LINKFLAGS=''
-OS_FLAGS='-g -Wall'
+OS_FLAGS='-g -Wall -Os '
 OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
 
@@ -63,14 +64,15 @@ COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD'
 LINKFLAGS=OS_LINKFLAGS;
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
 LIBPATH=[LIB_DIR] + OS_LIBPATH
-LIBS=['awtk', 'gpinyin', 'awtk_linux_fb', 'awtk', 'cairo', 'pixman', 'linebreak'] + OS_LIBS
+LIBS=['awtk', 'gpinyin', 'awtk_linux_fb', 'awtk', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
 
 CPPPATH=[TK_ROOT, 
   TK_SRC, 
   TK_3RD_ROOT, 
   joinPath(TK_SRC, 'ext_widgets'), 
-  joinPath(TK_3RD_ROOT, 'cairo/cairo'), 
-  joinPath(TK_3RD_ROOT, 'pixman/pixman'), 
+  joinPath(TK_3RD_ROOT, 'nanovg/src'), 
+  joinPath(TK_3RD_ROOT, 'agge/include'), 
+  joinPath(TK_3RD_ROOT, 'agge/src'), 
   joinPath(TK_3RD_ROOT, 'gpinyin/include'), 
   joinPath(TK_3RD_ROOT, 'libunibreak/src'), 
   ] + OS_CPPPATH
@@ -95,8 +97,8 @@ DefaultEnvironment(CCFLAGS = CCFLAGS,
 )
 
 SConscriptFiles=[
-  'awtk/3rd/pixman/SConscript',
-  'awtk/3rd/cairo/SConscript',
+  'awtk/3rd/nanovg/SConscript',
+  'awtk/3rd/agge/SConscript',
   'awtk/3rd/gpinyin/SConscript', 
   'awtk/3rd/libunibreak/SConscript',
   'awtk/src/SConscript',
