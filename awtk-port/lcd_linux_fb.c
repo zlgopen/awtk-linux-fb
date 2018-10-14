@@ -134,9 +134,11 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
   if (fb_open(fb, filename) == 0) {
     int w = fb_width(fb);
     int h = fb_height(fb);
+    int size = fb_size(fb);
     int bpp = fb->var.bits_per_pixel;
     uint8_t* online_fb = (uint8_t*)(fb->bits);
-    uint8_t* offline_fb = (uint8_t*)malloc(w*h*bpp);
+    uint8_t* offline_fb = (uint8_t*)malloc(size);
+
     if(offline_fb == NULL) {
       fb_close(fb);
 
