@@ -64,17 +64,17 @@ COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD'
 LINKFLAGS=OS_LINKFLAGS;
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
 LIBPATH=[LIB_DIR] + OS_LIBPATH
-LIBS=['awtk', 'gpinyin', 'awtk_linux_fb', 'awtk', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
+LIBS=['awtk', 'gpinyin', 'awtk_linux_fb', 'awtk', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
 
 CPPPATH=[TK_ROOT, 
   TK_SRC, 
   TK_3RD_ROOT, 
   joinPath(TK_SRC, 'ext_widgets'), 
-  joinPath(TK_3RD_ROOT, 'nanovg/src'), 
-  joinPath(TK_3RD_ROOT, 'agge/include'), 
-  joinPath(TK_3RD_ROOT, 'agge/src'), 
+  joinPath(TK_3RD_ROOT, 'nanovg/base'), 
+  joinPath(TK_3RD_ROOT, 'nanovg'), 
+  joinPath(TK_3RD_ROOT, 'agge'), 
   joinPath(TK_3RD_ROOT, 'gpinyin/include'), 
-  joinPath(TK_3RD_ROOT, 'libunibreak/src'), 
+  joinPath(TK_3RD_ROOT, 'libunibreak'), 
   ] + OS_CPPPATH
 
 if TSLIB_LIB_DIR:
