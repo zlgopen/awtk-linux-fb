@@ -9,8 +9,6 @@ OS_NAME=platform.system()
 TK_ROOT = joinPath(os.getcwd(), 'awtk')
 TK_SRC = joinPath(TK_ROOT, 'src')
 TK_3RD_ROOT = joinPath(TK_ROOT, '3rd')
-TK_TOOLS_ROOT = joinPath(TK_ROOT, 'tools')
-GTEST_ROOT = joinPath(TK_ROOT, '3rd/gtest/googletest')
 
 TK_LINUX_FB_ROOT=os.path.normpath(os.getcwd())
 BIN_DIR=joinPath(TK_ROOT, 'bin')
@@ -27,28 +25,21 @@ TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi
 LCD='SDL'
 LCD='NANOVG'
 LCD='LINUX_FB'
-VGCANVAS="CAIRO"
 INPUT_ENGINE='pinyin'
-FRAME_BUFFER_FORMAT='rgb565'
+NANOVG_BACKEND='AGGE'
 
 COMMON_CCFLAGS='-g '
-if FRAME_BUFFER_FORMAT=='rgba8888':
-  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_FB_8888=1';
-else:
-  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_FB_565=1';
-
 COMMON_CCFLAGS=' -DHAS_STD_MALLOC -DWITH_FS_RES -DHAS_STDIO -DWITH_VGCANVAS -DWITH_UNICODE_BREAK -DLINUX'
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_STB_FONT '
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE '
 
 os.environ['LCD'] = LCD
-os.environ['VGCANVAS'] = VGCANVAS 
 os.environ['BIN_DIR'] = BIN_DIR;
 os.environ['LIB_DIR'] = LIB_DIR;
 os.environ['TK_ROOT'] = TK_ROOT;
 os.environ['INPUT_ENGINE'] = INPUT_ENGINE;
 os.environ['TSLIB_LIB_DIR'] = TSLIB_LIB_DIR;
-os.environ['FRAME_BUFFER_FORMAT'] = FRAME_BUFFER_FORMAT;
+os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
 
 OS_LIBS=[]
 OS_LIBPATH=[]
@@ -59,7 +50,7 @@ OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
 
 OS_LIBS = OS_LIBS + ['stdc++', 'pthread', 'm', 'dl']
-COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD'
+COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR '
   
 LINKFLAGS=OS_LINKFLAGS;
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
@@ -69,12 +60,12 @@ LIBS=['awtk', 'gpinyin', 'awtk_linux_fb', 'awtk', 'nanovg-agge', 'agge', 'nanovg
 CPPPATH=[TK_ROOT, 
   TK_SRC, 
   TK_3RD_ROOT, 
+  joinPath(TK_3RD_ROOT, 'agge'), 
+  joinPath(TK_3RD_ROOT, 'nanovg'), 
   joinPath(TK_SRC, 'ext_widgets'), 
   joinPath(TK_3RD_ROOT, 'nanovg/base'), 
-  joinPath(TK_3RD_ROOT, 'nanovg'), 
-  joinPath(TK_3RD_ROOT, 'agge'), 
-  joinPath(TK_3RD_ROOT, 'gpinyin/include'), 
   joinPath(TK_3RD_ROOT, 'libunibreak'), 
+  joinPath(TK_3RD_ROOT, 'gpinyin/include'), 
   ] + OS_CPPPATH
 
 if TSLIB_LIB_DIR:
