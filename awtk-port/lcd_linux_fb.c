@@ -31,7 +31,7 @@
 #include <sys/ioctl.h>
 #include "base/lcd.h"
 #include "base/mem.h"
-#include "lcd/lcd_mem_rgb565.h"
+#include "lcd/lcd_mem_bgr565.h"
 #include "lcd/lcd_mem_bgra8888.h"
 #include "lcd/lcd_mem_rgba8888.h"
 
@@ -146,7 +146,7 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
     }
 
     if (bpp == 16) {
-      lcd = lcd_mem_rgb565_create_double_fb(w, h, online_fb, offline_fb);
+      lcd = lcd_mem_bgr565_create_double_fb(w, h, online_fb, offline_fb);
     } else if (bpp == 32) {
       lcd = lcd_mem_bgra8888_create_double_fb(w, h, online_fb, offline_fb);
     } else if (bpp == 24) {
