@@ -230,7 +230,7 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
   return RET_OK;
 }
 
-void* input_run(void* ctx) {
+static void* input_run(void* ctx) {
   run_info_t* info = (run_info_t*)ctx;
 
   while (input_dispatch_one_event(info) == RET_OK)

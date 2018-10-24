@@ -17,12 +17,12 @@ LIB_DIR=joinPath(TK_ROOT, 'lib')
 #TSLIB_INC_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src')
 #TSLIB_LIB_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src/.libs')
 
-TOOLS_PREFIX=''
-TSLIB_LIB_DIR=''
+#TOOLS_PREFIX=''
+#TSLIB_LIB_DIR=''
 
-#TSLIB_LIB_DIR='/opt/28x/tslib/lib'
-#TSLIB_INC_DIR='/opt/28x/tslib/include'
-#TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
+TSLIB_LIB_DIR='/opt/28x/tslib/lib'
+TSLIB_INC_DIR='/opt/28x/tslib/include'
+TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
 
 LCD='SDL'
 LCD='NANOVG'

@@ -65,7 +65,7 @@ static ret_t tslib_dispatch_one_event(run_info_t* info) {
       req->event.type = EVT_POINTER_MOVE;
     } else {
       req->event.type = EVT_POINTER_DOWN;
-      req->pointer_event.pressed = 1;
+      req->pointer_event.pressed = TRUE;
     }
   } else {
     if (req->pointer_event.pressed) {
