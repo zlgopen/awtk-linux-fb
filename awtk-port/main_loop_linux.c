@@ -52,7 +52,10 @@ main_loop_t* main_loop_init(int w, int h) {
   loop->base.destroy = main_loop_linux_destroy;
   canvas_init(&(loop->base.canvas), lcd, font_manager());
 
+#ifdef HAS_TSLIB
   tslib_thread_run(TS_DEVICE_FILENAME, main_loop_queue_event, loop, lcd->w, lcd->h);
+#endif/*HAS_TSLIB*/  
+
   input_thread_run(KB_DEVICE_FILENAME, main_loop_queue_event, loop, lcd->w, lcd->h);
 
   return (main_loop_t*)loop;

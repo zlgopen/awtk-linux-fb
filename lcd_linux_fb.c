@@ -45,10 +45,9 @@ typedef struct _fb_info_t {
 #define fb_width(fb) ((fb)->var.xres)
 #define fb_height(fb) ((fb)->var.yres)
 #define fb_size(fb) ((fb)->var.yres * (fb)->fix.line_length)
-
 #ifndef FBIO_WAITFORVSYNC
 #define FBIO_WAITFORVSYNC _IOW('F', 0x20, u_int32_t)
-#endif/*FBIO_WAITFORVSYNC*/
+#endif
 
 static int fb_open(fb_info_t* fb, const char* filename) {
   uint32_t size = 0;
@@ -153,11 +152,7 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
     if (bpp == 16) {
       lcd = lcd_mem_bgr565_create_double_fb(w, h, online_fb, offline_fb);
     } else if (bpp == 32) {
-      if(fb->var.blue.offset == 0) {
-        lcd = lcd_mem_bgra8888_create_double_fb(w, h, online_fb, offline_fb);
-      } else {
-        lcd = lcd_mem_rgba8888_create_double_fb(w, h, online_fb, offline_fb);
-      }
+      lcd = lcd_mem_rgba8888_create_double_fb(w, h, online_fb, offline_fb);
     } else if (bpp == 24) {
       assert(!"not supported framebuffer format.");
     } else {
