@@ -41,7 +41,6 @@ typedef struct _run_info_t {
   void* dispatch_ctx;
   input_dispatch_t dispatch;
 
-  bool_t pressed;
   event_queue_req_t req;
 } run_info_t;
 
@@ -81,15 +80,15 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
     }
 
     if(left) {
-      if(!info->pressed) {
-        info->pressed = TRUE;
+      if(!req->pointer_event.pressed) {
+        req->pointer_event.pressed = TRUE;
         req->event.type = EVT_POINTER_DOWN;
       } else {
         req->event.type = EVT_POINTER_MOVE;
       }
     } else {
-      if(info->pressed) {
-        info->pressed = FALSE;
+      if(req->pointer_event.pressed) {
+        req->pointer_event.pressed = FALSE;
         req->event.type = EVT_POINTER_UP;
       } else {
         req->event.type = EVT_POINTER_MOVE;
