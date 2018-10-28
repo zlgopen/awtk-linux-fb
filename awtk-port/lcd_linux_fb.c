@@ -86,6 +86,7 @@ static int fb_open(fb_info_t* fb, const char* filename) {
 
   memset(fb->bits, 0xff, size);
 
+  log_debug("line_length=%d mem_size=%d\n", fb->fix.line_length, fb_size(fb));
   log_debug("xres_virtual =%d yres_virtual=%d xpanstep=%d ywrapstep=%d\n", fb->var.xres_virtual,
             fb->var.yres_virtual, fb->fix.xpanstep, fb->fix.ywrapstep);
 
