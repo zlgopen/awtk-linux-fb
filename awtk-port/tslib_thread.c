@@ -78,13 +78,12 @@ static ret_t tslib_dispatch_one_event(run_info_t* info) {
 }
 
 void* tslib_run(void* ctx) {
-  run_info_t* info = (run_info_t*)ctx;
+  run_info_t info = *(run_info_t*)ctx;
 
-  while (tslib_dispatch_one_event(info) == RET_OK)
+  TKMEM_FREE(ctx);
+  while (tslib_dispatch_one_event(&info) == RET_OK)
     ;
-
-  ts_close(info->ts);
-  TKMEM_FREE(info);
+  ts_close(info.ts);
 
   return NULL;
 }

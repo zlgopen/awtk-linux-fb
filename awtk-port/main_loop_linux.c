@@ -51,6 +51,18 @@ ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* e) {
   return RET_OK;
 }
 
+static lcd_t* s_lcd = NULL;
+static thread_t* s_kb_thread = NULL;
+static thread_t* s_mice_thread = NULL;
+static thread_t* s_ts_thread = NULL;
+
+static void on_app_exit(void) {
+  thread_destroy(s_kb_thread);
+  thread_destroy(s_mice_thread);
+  thread_destroy(s_ts_thread);
+  lcd_destroy(s_lcd);
+}
+
 main_loop_t* main_loop_init(int w, int h) {
   main_loop_simple_t* loop = NULL;
   lcd_t* lcd = lcd_linux_fb_create(FB_DEVICE_FILENAME);
@@ -62,11 +74,18 @@ main_loop_t* main_loop_init(int w, int h) {
   canvas_init(&(loop->base.canvas), lcd, font_manager());
 
 #ifdef HAS_TSLIB
-  tslib_thread_run(TS_DEVICE_FILENAME, input_dispatch_to_main_loop, loop, lcd->w, lcd->h);
-#endif/*HAS_TSLIB*/  
+  s_ts_thread =
+      tslib_thread_run(TS_DEVICE_FILENAME, input_dispatch_to_main_loop, loop, lcd->w, lcd->h);
+#endif /*HAS_TSLIB*/
 
-  input_thread_run(KB_DEVICE_FILENAME, input_dispatch_to_main_loop, loop, lcd->w, lcd->h);
-  mouse_thread_run(MICE_DEVICE_FILENAME, input_dispatch_to_main_loop, loop, lcd->w, lcd->h);
+  s_kb_thread =
+      input_thread_run(KB_DEVICE_FILENAME, input_dispatch_to_main_loop, loop, lcd->w, lcd->h);
+  s_mice_thread =
+      mouse_thread_run(MICE_DEVICE_FILENAME, input_dispatch_to_main_loop, loop, lcd->w, lcd->h);
+
+  s_lcd = lcd;
+
+  atexit(on_app_exit);
 
   return (main_loop_t*)loop;
 }

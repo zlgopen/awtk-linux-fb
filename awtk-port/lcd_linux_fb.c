@@ -48,7 +48,7 @@ typedef struct _fb_info_t {
 
 #ifndef FBIO_WAITFORVSYNC
 #define FBIO_WAITFORVSYNC _IOW('F', 0x20, u_int32_t)
-#endif/*FBIO_WAITFORVSYNC*/
+#endif /*FBIO_WAITFORVSYNC*/
 
 static int fb_open(fb_info_t* fb, const char* filename) {
   uint32_t size = 0;
@@ -121,13 +121,21 @@ static fb_info_t s_fb;
 static lcd_flush_t s_lcd_flush_default = NULL;
 
 static ret_t lcd_linux_fb_flush(lcd_t* lcd) {
-  if(s_lcd_flush_default != NULL) {
+  if (s_lcd_flush_default != NULL) {
     s_lcd_flush_default(lcd);
   }
 
   fb_sync(&s_fb);
 
   return RET_OK;
+}
+
+static void* s_offline_fb = NULL;
+
+static void on_app_exit(void) {
+  fb_info_t* fb = &s_fb;
+  free(s_offline_fb);
+  fb_close(fb);
 }
 
 lcd_t* lcd_linux_fb_create(const char* filename) {
@@ -143,35 +151,37 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
     int size = fb_size(fb);
     int bpp = fb->var.bits_per_pixel;
     uint8_t* online_fb = (uint8_t*)(fb->bits);
-    uint8_t* offline_fb = (uint8_t*)malloc(size);
 
-    if(offline_fb == NULL) {
+    s_offline_fb = (uint8_t*)malloc(size);
+    if (s_offline_fb == NULL) {
       fb_close(fb);
 
       return NULL;
     }
 
     if (bpp == 16) {
-      lcd = lcd_mem_bgr565_create_double_fb(w, h, online_fb, offline_fb);
+      lcd = lcd_mem_bgr565_create_double_fb(w, h, online_fb, s_offline_fb);
     } else if (bpp == 32) {
-      if(fb->var.blue.offset == 0) {
-        lcd = lcd_mem_bgra8888_create_double_fb(w, h, online_fb, offline_fb);
+      if (fb->var.blue.offset == 0) {
+        lcd = lcd_mem_bgra8888_create_double_fb(w, h, online_fb, s_offline_fb);
       } else {
-        lcd = lcd_mem_rgba8888_create_double_fb(w, h, online_fb, offline_fb);
+        lcd = lcd_mem_rgba8888_create_double_fb(w, h, online_fb, s_offline_fb);
       }
     } else if (bpp == 24) {
       assert(!"not supported framebuffer format.");
     } else {
       assert(!"not supported framebuffer format.");
     }
-    
+
     lcd_mem_set_line_length(lcd, line_length);
   }
 
-  if(lcd != NULL) {
+  if (lcd != NULL) {
     s_lcd_flush_default = lcd->flush;
-    lcd->flush = lcd_linux_fb_flush; 
+    lcd->flush = lcd_linux_fb_flush;
   }
+
+  atexit(on_app_exit);
 
   return lcd;
 }

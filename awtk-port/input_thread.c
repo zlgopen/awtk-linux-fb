@@ -120,7 +120,7 @@ static const int32_t s_key_map[0x100] = {[KEY_1] = FKEY_1,
                                          [KEY_EQUAL] = FKEY_EQUAL,
                                          [KEY_BACKSPACE] = FKEY_BACKSPACE,
                                          [KEY_TAB] = FKEY_TAB,
-                                         [KEY_ESC] = FKEY_ESCAPE };
+                                         [KEY_ESC] = FKEY_ESCAPE};
 
 static int32_t map_key(uint8_t code) {
   return s_key_map[code];
@@ -231,13 +231,12 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
 }
 
 static void* input_run(void* ctx) {
-  run_info_t* info = (run_info_t*)ctx;
+  run_info_t info = *(run_info_t*)ctx;
 
-  while (input_dispatch_one_event(info) == RET_OK)
+  TKMEM_FREE(ctx);
+  while (input_dispatch_one_event(&info) == RET_OK)
     ;
-
-  close(info->fd);
-  TKMEM_FREE(info);
+  close(info.fd);
 
   return NULL;
 }

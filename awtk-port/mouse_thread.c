@@ -56,38 +56,38 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
   event_queue_req_t* req = &(info->req);
   int ret = read(info->fd, data, sizeof(data));
 
-  if(ret == 3) {
+  if (ret == 3) {
     int left = data[0] & 0x1;
-    //int right = data[0] & 0x2;
-    //int middle = data[0] & 0x4;
+    // int right = data[0] & 0x2;
+    // int middle = data[0] & 0x4;
     int x = data[1];
     int y = data[2];
 
     info->x += x;
     info->y -= y;
 
-    if(info->x < 0) {
+    if (info->x < 0) {
       info->x = 0;
     }
-    if(info->x > info->max_x) {
+    if (info->x > info->max_x) {
       info->x = info->max_x;
     }
-    if(info->y < 0) {
+    if (info->y < 0) {
       info->y = 0;
     }
-    if(info->y > info->max_y) {
+    if (info->y > info->max_y) {
       info->y = info->max_y;
     }
 
-    if(left) {
-      if(!req->pointer_event.pressed) {
+    if (left) {
+      if (!req->pointer_event.pressed) {
         req->pointer_event.pressed = TRUE;
         req->event.type = EVT_POINTER_DOWN;
       } else {
         req->event.type = EVT_POINTER_MOVE;
       }
     } else {
-      if(req->pointer_event.pressed) {
+      if (req->pointer_event.pressed) {
         req->pointer_event.pressed = FALSE;
         req->event.type = EVT_POINTER_UP;
       } else {
@@ -104,13 +104,12 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
 }
 
 void* input_run(void* ctx) {
-  run_info_t* info = (run_info_t*)ctx;
+  run_info_t info = *(run_info_t*)ctx;
 
-  while (input_dispatch_one_event(info) == RET_OK)
+  TKMEM_FREE(ctx);
+  while (input_dispatch_one_event(&info) == RET_OK)
     ;
-
-  close(info->fd);
-  TKMEM_FREE(info);
+  close(info.fd);
 
   return NULL;
 }
