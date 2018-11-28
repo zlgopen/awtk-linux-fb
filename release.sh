@@ -15,6 +15,7 @@ mkdir -p release/demos/assets/raw/ui
 cp -rvf awtk/bin/demoui release/bin
 cp -rvf awtk/demos/assets/raw/fonts/default.ttf release/demos/assets/raw/fonts
 cp -rvf awtk/demos/assets/raw/images/x1 release/demos/assets/raw/images/
+cp -rvf awtk/demos/assets/raw/images/svg release/demos/assets/raw/images/svg
 cp -rvf awtk/demos/assets/raw/strings/*.bin release/demos/assets/raw/strings/
 cp -rvf awtk/demos/assets/raw/styles/*.bin release/demos/assets/raw/styles/
 cp -rvf awtk/demos/assets/raw/ui/*.bin release/demos/assets/raw/ui/

@@ -58,6 +58,7 @@ CPPPATH=[TK_ROOT,
   TK_SRC, 
   TK_3RD_ROOT, 
   joinPath(TK_3RD_ROOT, 'agge'), 
+  joinPath(TK_3RD_ROOT, 'agg/include'), 
   joinPath(TK_3RD_ROOT, 'nanovg'), 
   joinPath(TK_SRC, 'ext_widgets'), 
   joinPath(TK_3RD_ROOT, 'nanovg/base'), 
@@ -69,6 +70,16 @@ if TSLIB_LIB_DIR != '':
   LIBS = ['ts'] + LIBS
   LIBPATH = [TSLIB_LIB_DIR] + LIBPATH;
   CPPPATH = [TSLIB_INC_DIR] + CPPPATH;
+
+os.environ['LCD'] = LCD
+os.environ['BIN_DIR'] = BIN_DIR;
+os.environ['LIB_DIR'] = LIB_DIR;
+os.environ['TK_ROOT'] = TK_ROOT;
+os.environ['INPUT_ENGINE'] = INPUT_ENGINE;
+os.environ['TSLIB_LIB_DIR'] = TSLIB_LIB_DIR;
+os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
+os.environ['CCFLAGS'] = CCFLAGS;
+os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
 
 DefaultEnvironment(CCFLAGS = CCFLAGS, 
   CC=TOOLS_PREFIX+'gcc',
@@ -86,6 +97,7 @@ DefaultEnvironment(CCFLAGS = CCFLAGS,
 
 SConscriptFiles=[
   'awtk/3rd/nanovg/SConscript',
+  'awtk/3rd/agg/SConscript',
   'awtk/3rd/agge/SConscript',
   'awtk/3rd/gpinyin/SConscript', 
   'awtk/3rd/libunibreak/SConscript',
@@ -94,15 +106,6 @@ SConscriptFiles=[
   'awtk-port/SConscript',
   ]
 
-os.environ['LCD'] = LCD
-os.environ['BIN_DIR'] = BIN_DIR;
-os.environ['LIB_DIR'] = LIB_DIR;
-os.environ['TK_ROOT'] = TK_ROOT;
-os.environ['INPUT_ENGINE'] = INPUT_ENGINE;
-os.environ['TSLIB_LIB_DIR'] = TSLIB_LIB_DIR;
-os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
-os.environ['CCFLAGS'] = CCFLAGS;
-os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
   
 SConscript(SConscriptFiles)
 
