@@ -35,14 +35,6 @@ COMMON_CCFLAGS=' -DHAS_STD_MALLOC -DWITH_FS_RES -DHAS_STDIO -DWITH_VGCANVAS -DWI
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_STB_FONT '
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE '
 
-os.environ['LCD'] = LCD
-os.environ['BIN_DIR'] = BIN_DIR;
-os.environ['LIB_DIR'] = LIB_DIR;
-os.environ['TK_ROOT'] = TK_ROOT;
-os.environ['INPUT_ENGINE'] = INPUT_ENGINE;
-os.environ['TSLIB_LIB_DIR'] = TSLIB_LIB_DIR;
-os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
-
 OS_LIBS=[]
 OS_LIBPATH=[]
 OS_CPPPATH=[]
@@ -101,6 +93,16 @@ SConscriptFiles=[
   'awtk/demos/SConscript',
   'awtk-port/SConscript',
   ]
+
+os.environ['LCD'] = LCD
+os.environ['BIN_DIR'] = BIN_DIR;
+os.environ['LIB_DIR'] = LIB_DIR;
+os.environ['TK_ROOT'] = TK_ROOT;
+os.environ['INPUT_ENGINE'] = INPUT_ENGINE;
+os.environ['TSLIB_LIB_DIR'] = TSLIB_LIB_DIR;
+os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
+os.environ['CCFLAGS'] = CCFLAGS;
+os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
   
 SConscript(SConscriptFiles)
 
