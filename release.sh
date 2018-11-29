@@ -1,24 +1,26 @@
 #!/bin/bash
 
+APP_ROOT='awtk/demos'
+#APP_ROOT='awtk-hello'
 rm -rf release release.zip
 
 mkdir -p release/bin
-mkdir -p release/demos/assets/raw/fonts
-mkdir -p release/demos/assets/raw/images
-mkdir -p release/demos/assets/raw/strings
-mkdir -p release/demos/assets/raw/styles
-mkdir -p release/demos/assets/raw/ui
+mkdir -p release/assets/raw/fonts
+mkdir -p release/assets/raw/images
+mkdir -p release/assets/raw/images/svg
+mkdir -p release/assets/raw/strings
+mkdir -p release/assets/raw/styles
+mkdir -p release/assets/raw/ui
 
-#cp -rvf awtk/bin/demo* release/bin
-#cp -rvf awtk/bin/*test release/bin
-
-cp -rvf awtk/bin/demoui release/bin
-cp -rvf awtk/demos/assets/raw/fonts/default.ttf release/demos/assets/raw/fonts
-cp -rvf awtk/demos/assets/raw/images/x1 release/demos/assets/raw/images/
-cp -rvf awtk/demos/assets/raw/images/svg release/demos/assets/raw/images/svg
-cp -rvf awtk/demos/assets/raw/strings/*.bin release/demos/assets/raw/strings/
-cp -rvf awtk/demos/assets/raw/styles/*.bin release/demos/assets/raw/styles/
-cp -rvf awtk/demos/assets/raw/ui/*.bin release/demos/assets/raw/ui/
+cp -rvf build/bin/* release/bin
+rm -fv  release/bin/*test*
+rm -fv  release/bin/agg**
+cp -rvf ${APP_ROOT}/assets/raw/fonts/* release/assets/raw/fonts
+cp -rvf ${APP_ROOT}/assets/raw/images/x1 release/assets/raw/images/
+cp -rvf ${APP_ROOT}/assets/raw/images/svg/*.bsvg release/assets/raw/images/svg
+cp -rvf ${APP_ROOT}/assets/raw/strings/*.bin release/assets/raw/strings/
+cp -rvf ${APP_ROOT}/assets/raw/styles/*.bin release/assets/raw/styles/
+cp -rvf ${APP_ROOT}/assets/raw/ui/*.bin release/assets/raw/ui/
 
 zip -r release.zip release/
 

@@ -1,6 +1,3 @@
-
-
-
 # AWTK针对arm-linux平台的移植。
 
 [AWTK](https://github.com/zlgopen/awtk)是为嵌入式系统开发的GUI引擎库。
@@ -56,5 +53,25 @@ scons
 ./release/bin/demoui
 ```
 
+## 其它
 
+### 编译自己的项目
+
+* 1.项目的目录结构与[awtk-hello](https://github.com/zlgopen/awtk-hello)保持一致。
+
+* 2.项目放在当前目录下。
+
+* 3.修改SConstruct中的APP\_NAME。
+
+```
+APP_NAME = 'awtk-hello'
+```
+
+* 4.修改release.sh中的APP\_ROOT。
+
+```
+APP_ROOT='awtk-hello'
+```
+
+> 后续工作与前面编译demos一致。
 
