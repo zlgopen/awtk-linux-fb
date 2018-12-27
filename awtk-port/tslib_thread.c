@@ -23,9 +23,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "tslib.h"
-#include "base/mem.h"
+#include "tkc/mem.h"
 #include "base/keys.h"
-#include "base/thread.h"
+#include "tkc/thread.h"
 #include "tslib_thread.h"
 
 typedef struct _run_info_t {

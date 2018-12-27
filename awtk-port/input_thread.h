@@ -22,7 +22,7 @@
 #ifndef TK_INPUT_THREAD_H
 #define TK_INPUT_THREAD_H
 
-#include "base/thread.h"
+#include "tkc/thread.h"
 #include "input_dispatcher.h"
 
 BEGIN_C_DECLS

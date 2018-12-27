@@ -23,9 +23,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <linux/input.h>
-#include "base/mem.h"
+#include "tkc/mem.h"
 #include "base/keys.h"
-#include "base/thread.h"
+#include "tkc/thread.h"
 #include "input_thread.h"
 
 #ifndef EV_SYN

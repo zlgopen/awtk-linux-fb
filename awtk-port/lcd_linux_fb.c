@@ -30,7 +30,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include "base/lcd.h"
-#include "base/mem.h"
+#include "tkc/mem.h"
 #include "lcd/lcd_mem_bgr565.h"
 #include "lcd/lcd_mem_bgra8888.h"
 #include "lcd/lcd_mem_rgba8888.h"
