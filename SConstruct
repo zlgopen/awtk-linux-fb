@@ -62,6 +62,7 @@ CPPPATH=[TK_ROOT,
   TK_SRC, 
   TK_3RD_ROOT, 
   joinPath(TK_SRC, 'ext_widgets'), 
+  joinPath(TK_ROOT, 'tools'), 
   joinPath(TK_3RD_ROOT, 'agge'), 
   joinPath(TK_3RD_ROOT, 'agg/include'), 
   joinPath(TK_3RD_ROOT, 'nanovg'), 
@@ -106,6 +107,8 @@ SConscriptFiles=[
   'awtk/3rd/gpinyin/SConscript', 
   'awtk/3rd/libunibreak/SConscript',
   'awtk/src/SConscript',
+  'awtk/tools/common/SConscript', 
+  'awtk/tools/ui_gen/xml_to_ui/SConscript',
   'awtk-port/SConscript',
   ] + APP_PROJ;
   
