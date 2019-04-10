@@ -37,7 +37,7 @@ NANOVG_BACKEND='AGGE'
 
 COMMON_CCFLAGS=' -DHAS_STD_MALLOC -DWITH_FS_RES -DHAS_STDIO -DWITH_VGCANVAS -DWITH_UNICODE_BREAK -DLINUX'
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_STB_FONT '
-COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE '
+COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_WIDGET_TYPE_CHECK'
 
 OS_LIBS=[]
 OS_LIBPATH=[]
@@ -56,7 +56,7 @@ if TSLIB_LIB_DIR != '':
 LINKFLAGS=OS_LINKFLAGS;
 LIBPATH=[LIB_DIR] + OS_LIBPATH
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
-LIBS=['awtk', 'gpinyin', 'awtk_linux_fb', 'awtk', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
+LIBS=['awtk', 'gpinyin', 'awtk_linux_fb', 'awtk', 'pixman', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
 
 CPPPATH=[TK_ROOT, 
   TK_SRC, 
@@ -66,6 +66,8 @@ CPPPATH=[TK_ROOT,
   joinPath(TK_3RD_ROOT, 'agge'), 
   joinPath(TK_3RD_ROOT, 'agg/include'), 
   joinPath(TK_3RD_ROOT, 'nanovg'), 
+  joinPath(TK_3RD_ROOT, 'pixman'), 
+  joinPath(TK_3RD_ROOT, 'pixman/pixman'), 
   joinPath(TK_3RD_ROOT, 'nanovg/base'), 
   joinPath(TK_3RD_ROOT, 'libunibreak'), 
   joinPath(TK_3RD_ROOT, 'gpinyin/include'), 
@@ -77,6 +79,7 @@ if TSLIB_LIB_DIR != '':
   CPPPATH = [TSLIB_INC_DIR] + CPPPATH;
 
 os.environ['LCD'] = LCD
+os.environ['TARGET_ARCH'] = 'arm'
 os.environ['BIN_DIR'] = BIN_DIR;
 os.environ['LIB_DIR'] = LIB_DIR;
 os.environ['TK_ROOT'] = TK_ROOT;
@@ -104,6 +107,7 @@ SConscriptFiles=[
   'awtk/3rd/nanovg/SConscript',
   'awtk/3rd/agg/SConscript',
   'awtk/3rd/agge/SConscript',
+  'awtk/3rd/pixman/SConscript',
   'awtk/3rd/gpinyin/SConscript', 
   'awtk/3rd/libunibreak/SConscript',
   'awtk/src/SConscript',
