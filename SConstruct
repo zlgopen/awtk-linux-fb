@@ -56,7 +56,7 @@ if TSLIB_LIB_DIR != '':
 LINKFLAGS=OS_LINKFLAGS;
 LIBPATH=[LIB_DIR] + OS_LIBPATH
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
-LIBS=['awtk', 'gpinyin', 'awtk_linux_fb', 'awtk', 'pixman', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
+LIBS=['awtk', 'gpinyin', 'awtk_linux_fb', 'awtk', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
 
 CPPPATH=[TK_ROOT, 
   TK_SRC, 
@@ -66,8 +66,6 @@ CPPPATH=[TK_ROOT,
   joinPath(TK_3RD_ROOT, 'agge'), 
   joinPath(TK_3RD_ROOT, 'agg/include'), 
   joinPath(TK_3RD_ROOT, 'nanovg'), 
-  joinPath(TK_3RD_ROOT, 'pixman'), 
-  joinPath(TK_3RD_ROOT, 'pixman/pixman'), 
   joinPath(TK_3RD_ROOT, 'nanovg/base'), 
   joinPath(TK_3RD_ROOT, 'libunibreak'), 
   joinPath(TK_3RD_ROOT, 'gpinyin/include'), 
@@ -107,7 +105,6 @@ SConscriptFiles=[
   'awtk/3rd/nanovg/SConscript',
   'awtk/3rd/agg/SConscript',
   'awtk/3rd/agge/SConscript',
-  'awtk/3rd/pixman/SConscript',
   'awtk/3rd/gpinyin/SConscript', 
   'awtk/3rd/libunibreak/SConscript',
   'awtk/src/SConscript',
