@@ -22,7 +22,7 @@
 #include "input_thread.h"
 
 int main(int argc, char* argv[]) {
-  thread_t* thread = NULL;
+  tk_thread_t* thread = NULL;
   if (argc < 2) {
     printf("%s filename\n", argv[0]);
     return 0;
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 
   thread = input_thread_run(argv[1], input_dispatch_print, NULL, 320, 480);
 
-  thread_join(thread);
+  tk_thread_join(thread);
 
   return 0;
 }

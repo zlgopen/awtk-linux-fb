@@ -52,14 +52,14 @@ ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* e) {
 }
 
 static lcd_t* s_lcd = NULL;
-static thread_t* s_kb_thread = NULL;
-static thread_t* s_mice_thread = NULL;
-static thread_t* s_ts_thread = NULL;
+static tk_thread_t* s_kb_thread = NULL;
+static tk_thread_t* s_mice_thread = NULL;
+static tk_thread_t* s_ts_thread = NULL;
 
 static void on_app_exit(void) {
-  thread_destroy(s_kb_thread);
-  thread_destroy(s_mice_thread);
-  thread_destroy(s_ts_thread);
+  tk_thread_destroy(s_kb_thread);
+  tk_thread_destroy(s_mice_thread);
+  tk_thread_destroy(s_ts_thread);
   lcd_destroy(s_lcd);
 }
 

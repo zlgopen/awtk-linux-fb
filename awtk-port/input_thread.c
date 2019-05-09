@@ -249,10 +249,10 @@ static run_info_t* info_dup(run_info_t* info) {
   return new_info;
 }
 
-thread_t* input_thread_run(const char* filename, input_dispatch_t dispatch, void* ctx,
+tk_thread_t* input_thread_run(const char* filename, input_dispatch_t dispatch, void* ctx,
                            int32_t max_x, int32_t max_y) {
   run_info_t info;
-  thread_t* thread = NULL;
+  tk_thread_t* thread = NULL;
   return_value_if_fail(filename != NULL && dispatch != NULL, NULL);
 
   memset(&info, 0x00, sizeof(info));
@@ -265,9 +265,9 @@ thread_t* input_thread_run(const char* filename, input_dispatch_t dispatch, void
 
   return_value_if_fail(info.fd >= 0, NULL);
 
-  thread = thread_create(input_run, info_dup(&info));
+  thread = tk_thread_create(input_run, info_dup(&info));
   if (thread != NULL) {
-    thread_start(thread);
+    tk_thread_start(thread);
   } else {
     close(info.fd);
   }
