@@ -43,7 +43,7 @@ OS_LIBS=[]
 OS_LIBPATH=[]
 OS_CPPPATH=[]
 OS_LINKFLAGS=''
-OS_FLAGS='-g -Wall -Os -mfloat-abi=hard'
+OS_FLAGS='-g -Wall -Os -mfloat-abi=hard -std=gnu11 '
 OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
 
