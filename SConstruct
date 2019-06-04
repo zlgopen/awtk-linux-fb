@@ -43,7 +43,7 @@ OS_LIBS=[]
 OS_LIBPATH=[]
 OS_CPPPATH=[]
 OS_LINKFLAGS=''
-OS_FLAGS='-g -Wall -Os -mfloat-abi=hard -std=gnu11 '
+OS_FLAGS='-g -Wall -Os -mfloat-abi=hard '
 OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
 
@@ -89,6 +89,7 @@ os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
 os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
 
 DefaultEnvironment(CCFLAGS = CCFLAGS, 
+  CFLAGS='-std=gnu11',
   CC=TOOLS_PREFIX+'gcc',
   CXX=TOOLS_PREFIX+'g++',
   LD=TOOLS_PREFIX+'g++',
