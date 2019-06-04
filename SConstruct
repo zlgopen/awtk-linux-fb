@@ -4,7 +4,7 @@ import platform
 def joinPath(root, subdir):
   return os.path.normpath(os.path.join(root, subdir))
 
-TK_ROOT = joinPath(os.getcwd(), 'awtk')
+TK_ROOT = joinPath(os.getcwd(), '../awtk')
 TK_SRC = joinPath(TK_ROOT, 'src')
 TK_3RD_ROOT = joinPath(TK_ROOT, '3rd')
 TK_LINUX_FB_ROOT=os.path.normpath(os.getcwd())
@@ -12,9 +12,9 @@ BIN_DIR=joinPath(TK_LINUX_FB_ROOT, 'build/bin')
 LIB_DIR=joinPath(TK_LINUX_FB_ROOT, 'build/lib')
 
 APP_NAME=''
-#APP_NAME = 'awtk-hello'
+APP_NAME=joinPath(os.getcwd(), '../awtk-examples/Ventilator-Demo')
 if APP_NAME == '':
-  APP_PROJ = ['awtk/demos/SConscript']
+  APP_PROJ = [joinPath(TK_ROOT, 'demos/SConscript')]
 else:
   APP_PROJ = [joinPath(APP_NAME, 'src/SConscript')]
 
@@ -25,7 +25,7 @@ else:
 #for prebuild tslib
 TSLIB_LIB_DIR='/opt/28x/tslib/lib'
 TSLIB_INC_DIR='/opt/28x/tslib/include'
-TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
+TOOLS_PREFIX='/opt/poky/1.7/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-'
 
 #for pc build
 #TOOLS_PREFIX=''
@@ -43,7 +43,7 @@ OS_LIBS=[]
 OS_LIBPATH=[]
 OS_CPPPATH=[]
 OS_LINKFLAGS=''
-OS_FLAGS='-g -Wall -Os '
+OS_FLAGS='-g -Wall -Os -mfloat-abi=hard'
 OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
 
@@ -82,6 +82,7 @@ os.environ['BIN_DIR'] = BIN_DIR;
 os.environ['LIB_DIR'] = LIB_DIR;
 os.environ['TK_ROOT'] = TK_ROOT;
 os.environ['CCFLAGS'] = CCFLAGS;
+os.environ['VGCANVAS'] = 'NANOVG'
 os.environ['INPUT_ENGINE'] = INPUT_ENGINE;
 os.environ['TSLIB_LIB_DIR'] = TSLIB_LIB_DIR;
 os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
@@ -102,14 +103,14 @@ DefaultEnvironment(CCFLAGS = CCFLAGS,
 )
 
 SConscriptFiles=[
-  'awtk/3rd/nanovg/SConscript',
-  'awtk/3rd/agg/SConscript',
-  'awtk/3rd/agge/SConscript',
-  'awtk/3rd/gpinyin/SConscript', 
-  'awtk/3rd/libunibreak/SConscript',
-  'awtk/src/SConscript',
-  'awtk/tools/common/SConscript', 
-  'awtk/tools/ui_gen/xml_to_ui/SConscript',
+  joinPath(TK_ROOT, '3rd/nanovg/SConscript'),
+  joinPath(TK_ROOT, '3rd/agg/SConscript'),
+  joinPath(TK_ROOT, '3rd/agge/SConscript'),
+  joinPath(TK_ROOT, '3rd/gpinyin/SConscript'), 
+  joinPath(TK_ROOT, '3rd/libunibreak/SConscript'),
+  joinPath(TK_ROOT, 'src/SConscript'),
+  joinPath(TK_ROOT, 'tools/common/SConscript'), 
+  joinPath(TK_ROOT, 'tools/ui_gen/xml_to_ui/SConscript'),
   'awtk-port/SConscript',
   ] + APP_PROJ;
   
