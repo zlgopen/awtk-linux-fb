@@ -11,8 +11,8 @@ TK_LINUX_FB_ROOT=os.path.normpath(os.getcwd())
 BIN_DIR=joinPath(TK_LINUX_FB_ROOT, 'build/bin')
 LIB_DIR=joinPath(TK_LINUX_FB_ROOT, 'build/lib')
 
-APP_NAME=''
-APP_NAME=joinPath(os.getcwd(), '../awtk-examples/Ventilator-Demo')
+APP_NAME=ARGUMENTS.get('APP', '')
+#APP_NAME=joinPath(os.getcwd(), '../awtk-examples/HelloWorld-Demo')
 if APP_NAME == '':
   APP_PROJ = [joinPath(TK_ROOT, 'demos/SConscript')]
 else:
