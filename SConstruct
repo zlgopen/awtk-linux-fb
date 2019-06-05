@@ -10,6 +10,7 @@ TK_3RD_ROOT = joinPath(TK_ROOT, '3rd')
 TK_LINUX_FB_ROOT=os.path.normpath(os.getcwd())
 BIN_DIR=joinPath(TK_LINUX_FB_ROOT, 'build/bin')
 LIB_DIR=joinPath(TK_LINUX_FB_ROOT, 'build/lib')
+VAR_DIR=joinPath(TK_LINUX_FB_ROOT, 'build/var')
 
 APP_NAME=ARGUMENTS.get('APP', '')
 #APP_NAME=joinPath(os.getcwd(), '../awtk-examples/HelloWorld-Demo')
@@ -114,6 +115,29 @@ SConscriptFiles=[
   joinPath(TK_ROOT, 'tools/ui_gen/xml_to_ui/SConscript'),
   'awtk-port/SConscript',
   ] + APP_PROJ;
+
+def getSourceName(src_file):
+  source_path = src_file.replace('/SConscript', '')
+  (source_dir, source_name) = os.path.split(source_path)
+  return (source_path, source_name)
   
-SConscript(SConscriptFiles)
+def mappingSConscriptFilesToVar(source_files):
+  var_names = []
+  var_files = []
+  for index, src_file in enumerate(source_files):
+    (source_path, source_name) = getSourceName(src_file)
+
+    if source_name in var_names:
+      source_name = source_name + str(index)
+    var_names.append(source_name)
+
+    var_path = joinPath(VAR_DIR, source_name)
+    VariantDir(var_path, source_path)
+
+    var_files.append(joinPath(var_path, 'SConscript'))
+  return var_files
+
+SConscriptFilesVar = mappingSConscriptFilesToVar(SConscriptFiles)
+
+SConscript(SConscriptFilesVar)
 
