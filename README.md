@@ -11,10 +11,10 @@
 * 1.获取源码
 
 ```
+git clone https://github.com/zlgopen/awtk.git
+git clone https://github.com/zlgopen/awtk-examples.git
 git clone https://github.com/zlgopen/awtk-linux-fb.git
 cd awtk-linux-fb
-git clone https://github.com/zlgopen/awtk.git
-
 ```
 
 * 2.编辑SConstruct设置工具链的路径
@@ -35,15 +35,27 @@ TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi
 
 * 4.编译(请先安装scons)
 
+生成内置 demoui 例子，生成结果在 build/bin 文件夹下的 demoui 文件
+
 ```
 scons
 ```
 
+也可以指定生成其他 Demo，生成结果在 build/bin 文件夹下的 demo 文件
+
+```
+scons APP=../awtk-examples/HelloWorld-Demo
+```
+
 * 5.生成发布包
+
+对于内置的 demoui 例子
 
 ```
 ./release.sh
 ```
+
+对于其他 Demo，需要手工拷贝 Demo 的资源文件夹到 build/bin 内，再执行 release.sh
 
 * 6.运行
 
@@ -51,27 +63,6 @@ scons
 
 ```
 ./release/bin/demoui
+./release/bin/demo
 ```
-
-## 其它
-
-### 编译自己的项目
-
-* 1.项目的目录结构与[awtk-hello](https://github.com/zlgopen/awtk-hello)保持一致。
-
-* 2.项目放在当前目录下。
-
-* 3.修改SConstruct中的APP\_NAME。
-
-```
-APP_NAME = 'awtk-hello'
-```
-
-* 4.修改release.sh中的APP\_ROOT。
-
-```
-APP_ROOT='awtk-hello'
-```
-
-> 后续工作与前面编译demos一致。
 
