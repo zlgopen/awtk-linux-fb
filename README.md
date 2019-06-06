@@ -66,3 +66,23 @@ scons APP=../awtk-examples/HelloWorld-Demo
 ./release/bin/demo
 ```
 
+## 其他问题
+
+#### 修改项目路径
+
+默认情况下，scons 脚本假设以下文件夹在同一个目录
+
+```
+zlgopen
+  |-- awtk
+  |-- awtk-examples
+  |-- awtk-linux-fb
+```
+
+如果实际存放的路径与默认不同，则需要修改以下 awtk-linux-fb/SConstruct 代码，例如：
+
+```
+TK_ROOT = joinPath(os.getcwd(), '../awtk')
+APP_ROOT=joinPath(os.getcwd(), '../awtk-examples/HelloWorld-Demo')
+```
+
