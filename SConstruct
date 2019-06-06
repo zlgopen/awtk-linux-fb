@@ -12,12 +12,8 @@ BIN_DIR=joinPath(TK_LINUX_FB_ROOT, 'build/bin')
 LIB_DIR=joinPath(TK_LINUX_FB_ROOT, 'build/lib')
 VAR_DIR=joinPath(TK_LINUX_FB_ROOT, 'build/var')
 
-APP_NAME=ARGUMENTS.get('APP', '')
-#APP_NAME=joinPath(os.getcwd(), '../awtk-examples/HelloWorld-Demo')
-if APP_NAME == '':
-  APP_PROJ = [joinPath(TK_ROOT, 'demos/SConscript')]
-else:
-  APP_PROJ = [joinPath(APP_NAME, 'src/SConscript')]
+APP_ROOT=ARGUMENTS.get('APP', '')
+#APP_ROOT=joinPath(os.getcwd(), '../awtk-examples/HelloWorld-Demo')
 
 #for build tslib
 #TSLIB_INC_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src')
@@ -104,6 +100,7 @@ DefaultEnvironment(CCFLAGS = CCFLAGS,
   OS_SUBSYSTEM_WINDOWS=OS_SUBSYSTEM_WINDOWS
 )
 
+'''
 SConscriptFiles=[
   joinPath(TK_ROOT, '3rd/nanovg/SConscript'),
   joinPath(TK_ROOT, '3rd/agg/SConscript'),
@@ -115,29 +112,30 @@ SConscriptFiles=[
   joinPath(TK_ROOT, 'tools/ui_gen/xml_to_ui/SConscript'),
   'awtk-port/SConscript',
   ] + APP_PROJ;
+SConscript(SConscriptFiles)
+'''
+TK_ROOT_VAR = joinPath(VAR_DIR, 'awtk')
+VariantDir(TK_ROOT_VAR, TK_ROOT)
 
-def getSourceName(src_file):
-  source_path = src_file.replace('/SConscript', '')
-  (source_dir, source_name) = os.path.split(source_path)
-  return (source_path, source_name)
-  
-def mappingSConscriptFilesToVar(source_files):
-  var_names = []
-  var_files = []
-  for index, src_file in enumerate(source_files):
-    (source_path, source_name) = getSourceName(src_file)
+if APP_ROOT == '':
+  APP_PROJ_VAR = [joinPath(TK_ROOT_VAR, 'demos/SConscript')]
+else:
+  (APP_PATH, APP_NAME) = os.path.split(APP_ROOT)
+  APP_ROOT_VAR = joinPath(VAR_DIR, APP_NAME)
+  APP_PROJ_VAR = [joinPath(APP_ROOT_VAR, 'src/SConscript')]
+  VariantDir(APP_ROOT_VAR, APP_ROOT)
 
-    if source_name in var_names:
-      source_name = source_name + str(index)
-    var_names.append(source_name)
-
-    var_path = joinPath(VAR_DIR, source_name)
-    VariantDir(var_path, source_path)
-
-    var_files.append(joinPath(var_path, 'SConscript'))
-  return var_files
-
-SConscriptFilesVar = mappingSConscriptFilesToVar(SConscriptFiles)
+SConscriptFilesVar=[
+  joinPath(TK_ROOT_VAR, '3rd/nanovg/SConscript'),
+  joinPath(TK_ROOT_VAR, '3rd/agg/SConscript'),
+  joinPath(TK_ROOT_VAR, '3rd/agge/SConscript'),
+  joinPath(TK_ROOT_VAR, '3rd/gpinyin/SConscript'), 
+  joinPath(TK_ROOT_VAR, '3rd/libunibreak/SConscript'),
+  joinPath(TK_ROOT_VAR, 'src/SConscript'),
+  joinPath(TK_ROOT_VAR, 'tools/common/SConscript'), 
+  joinPath(TK_ROOT_VAR, 'tools/ui_gen/xml_to_ui/SConscript'),
+  'awtk-port/SConscript',
+  ] + APP_PROJ_VAR;
 
 SConscript(SConscriptFilesVar)
 
