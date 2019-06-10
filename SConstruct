@@ -24,10 +24,6 @@ TSLIB_LIB_DIR='/opt/28x/tslib/lib'
 TSLIB_INC_DIR='/opt/28x/tslib/include'
 TOOLS_PREFIX='/opt/poky/1.7/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-'
 
-#for pc build
-#TOOLS_PREFIX=''
-#TSLIB_LIB_DIR=''
-
 LCD='LINUX_FB'
 INPUT_ENGINE='pinyin'
 NANOVG_BACKEND='AGGE'
@@ -43,6 +39,12 @@ OS_LINKFLAGS=''
 OS_FLAGS='-g -Wall -Os -mfloat-abi=hard '
 OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
+
+#for pc build
+# TOOLS_PREFIX=''
+# TSLIB_LIB_DIR=''
+# OS_FLAGS='-g -Wall '
+
 
 OS_LIBS = OS_LIBS + ['stdc++', 'pthread', 'm', 'dl']
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR '
