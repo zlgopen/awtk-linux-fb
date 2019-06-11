@@ -4,6 +4,7 @@ APP_ROOT='../awtk/demos'
 #APP_ROOT='../awtk-hello'
 rm -rf release release.zip
 
+
 mkdir -p release/bin
 mkdir -p release/assets/raw/fonts
 mkdir -p release/assets/raw/images
