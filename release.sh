@@ -1,7 +1,7 @@
 #!/bin/bash
 
-APP_ROOT='awtk/demos'
-#APP_ROOT='awtk-hello'
+APP_ROOT='../awtk/demos'
+#APP_ROOT='../awtk-hello'
 rm -rf release release.zip
 
 mkdir -p release/bin
