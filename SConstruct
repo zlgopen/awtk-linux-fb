@@ -22,7 +22,8 @@ APP_ROOT=ARGUMENTS.get('APP', '')
 #for prebuild tslib
 TSLIB_LIB_DIR='/opt/28x/tslib/lib'
 TSLIB_INC_DIR='/opt/28x/tslib/include'
-TOOLS_PREFIX='/opt/poky/1.7/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-'
+TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
+#TOOLS_PREFIX='/opt/poky/1.7/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-'
 
 LCD='LINUX_FB'
 INPUT_ENGINE='pinyin'
@@ -36,7 +37,8 @@ OS_LIBS=[]
 OS_LIBPATH=[]
 OS_CPPPATH=[]
 OS_LINKFLAGS=''
-OS_FLAGS='-g -Wall -Os -mfloat-abi=hard '
+OS_FLAGS='-g -Wall -Os '
+#OS_FLAGS='-g -Wall -Os -mfloat-abi=hard '
 OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
 
@@ -88,7 +90,7 @@ os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
 os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
 
 DefaultEnvironment(CCFLAGS = CCFLAGS, 
-  CFLAGS='-std=gnu11',
+  #CFLAGS='-std=gnu11',
   CC=TOOLS_PREFIX+'gcc',
   CXX=TOOLS_PREFIX+'g++',
   LD=TOOLS_PREFIX+'g++',
