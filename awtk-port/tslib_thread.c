@@ -97,7 +97,7 @@ static run_info_t* info_dup(run_info_t* info) {
 }
 
 tk_thread_t* tslib_thread_run(const char* filename, input_dispatch_t dispatch, void* ctx,
-                           int32_t max_x, int32_t max_y) {
+                              int32_t max_x, int32_t max_y) {
   run_info_t info;
   tk_thread_t* thread = NULL;
   return_value_if_fail(filename != NULL && dispatch != NULL, NULL);
