@@ -1,7 +1,7 @@
 ﻿/**
- * File:   lcd_mem_special.h
+ * File:   lcd_mem_others.h
  * Author: AWTK Develop Team
- * Brief:  lcd_mem_special
+ * Brief:  support other special format linux framebuffers
  *
  * Copyright (c) 2018 - 2019  Guangzhou ZHIYUAN Electronics Co.,Ltd.
  *

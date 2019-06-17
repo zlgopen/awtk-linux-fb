@@ -1,7 +1,7 @@
 ﻿/**
- * File:   lcd_linux_fb.h
+ * File:   fb_info.h
  * Author: AWTK Develop Team
- * Brief:  linux framebuffer lcd
+ * Brief:  linux framebuffer related functions
  *
  * Copyright (c) 2018 - 2018  Guangzhou ZHIYUAN Electronics Co.,Ltd.
  *
