@@ -2,6 +2,7 @@ awtk
 bin
 lib
 *.o
+*.pyc
 3rd
 release.zip
 release

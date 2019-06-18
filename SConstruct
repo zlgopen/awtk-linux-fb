@@ -4,6 +4,7 @@ import platform
 import awtk_config as awtk
 
 DefaultEnvironment(CCFLAGS = awtk.CCFLAGS, 
+  CFLAGS = awtk.CFLAGS,
   CC=awtk.TOOLS_PREFIX+'gcc',
   CXX=awtk.TOOLS_PREFIX+'g++',
   LD=awtk.TOOLS_PREFIX+'g++',

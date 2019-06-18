@@ -24,7 +24,10 @@ NANOVG_BACKEND='AGGE'
 COMMON_CCFLAGS=' -DHAS_STD_MALLOC -DWITH_FS_RES -DHAS_STDIO -DWITH_VGCANVAS -DWITH_UNICODE_BREAK -DLINUX'
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_STB_FONT '
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_WIDGET_TYPE_CHECK'
-#COMMON_CCFLAGS=COMMON_CCFLAGS+' -std=gnu11 '
+
+#only for c compiler flags
+COMMON_CFLAGS=''
+#COMMON_CFLAGS=COMMON_CFLAGS+' -std=gnu99 '
 
 OS_LIBS=[]
 OS_LIBPATH=[]
@@ -46,9 +49,9 @@ TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi
 #TOOLS_PREFIX='/opt/poky/1.7/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-'
 
 #for pc build
-TOOLS_PREFIX=''
-TSLIB_LIB_DIR=''
-OS_FLAGS='-g -Wall '
+#TOOLS_PREFIX=''
+#TSLIB_LIB_DIR=''
+#OS_FLAGS='-g -Wall '
 
 OS_LIBS = OS_LIBS + ['stdc++', 'pthread', 'm', 'dl']
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR '
@@ -59,6 +62,7 @@ if TSLIB_LIB_DIR != '':
 LINKFLAGS=OS_LINKFLAGS;
 LIBPATH=[LIB_DIR] + OS_LIBPATH
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
+CFLAGS=COMMON_CFLAGS
 LIBS=['awtk', 'gpinyin', 'awtk_linux_fb', 'awtk', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
 
 CPPPATH=[TK_ROOT, 
