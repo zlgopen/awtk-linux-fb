@@ -162,6 +162,7 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   if(lcd != NULL) {
     lcd->impl_data = fb;
     lcd->swap = lcd_mem_linux_swap;
+    lcd->begin_frame = lcd_mem_linux_begin_frame;
     lcd_mem_set_line_length(lcd, line_length);
   }
 
