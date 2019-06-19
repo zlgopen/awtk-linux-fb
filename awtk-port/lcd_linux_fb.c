@@ -121,7 +121,7 @@ static ret_t lcd_mem_linux_swap(lcd_t* lcd) {
   }
 
 	ret = ioctl(fb->fd, FBIOPAN_DISPLAY, &(fb->var));
-  assert(ret == 0);
+	printf("FBIOPAN_DISPLAY ret=%d yoffset=%d\n", ret, var->yoffset);
 
 	return RET_OK;
 }
