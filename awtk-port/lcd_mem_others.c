@@ -44,7 +44,7 @@ static ret_t lcd_bgra5551_flush(lcd_t* lcd) {
         uint8_t g = (0x7e0 & s) >> 5;
         uint8_t r = (0xf800 & s) >> 11;
 
-        dst[x] = (r << 10) | (g << 5) | b;
+        dst[x] = 0x8000 | (r << 10) | (g << 5) | b;
       }
 
       src += src_line_length;
