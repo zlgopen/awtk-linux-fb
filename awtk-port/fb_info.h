@@ -108,8 +108,7 @@ static inline bool_t fb_is_bgra8888(fb_info_t* fb) {
     && var->red.offset == 16
     && var->blue.length == 8
     && var->green.length == 8
-    && var->red.length == 8
-    && var->transp.length == 0) {
+    && var->red.length == 8) {
       return TRUE;
   } else {
     return FALSE;
@@ -124,8 +123,7 @@ static inline bool_t fb_is_rgba8888(fb_info_t* fb) {
     && var->blue.offset == 16
     && var->red.length == 8
     && var->green.length == 8 
-    && var->blue.length == 8
-    && var->transp.length == 0) {
+    && var->blue.length == 8) {
       return TRUE;
   } else {
     return FALSE;

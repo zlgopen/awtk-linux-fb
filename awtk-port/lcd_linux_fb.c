@@ -95,14 +95,10 @@ static ret_t lcd_mem_linux_begin_frame(lcd_t* lcd, rect_t* dirty_rect) {
   fb_info_t* fb = (fb_info_t*)(lcd->impl_data);
   struct fb_var_screeninfo* var = &(fb->var);
 
-  if (lcd->draw_mode == LCD_DRAW_OFFLINE) {
-    lcd_mem->offline_fb = fb->offline_fb;
+  if(var->yoffset == 0) {
+    lcd_mem->offline_fb = fb->fbmem0;
   } else {
-    if(var->yoffset == 0) {
-      lcd_mem->offline_fb = fb->fbmem0;
-    } else {
-      lcd_mem->offline_fb = fb->fbmem1;
-    }
+    lcd_mem->offline_fb = fb->fbmem1;
   }
 
   return RET_OK;
@@ -134,9 +130,6 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   int bpp = fb->var.bits_per_pixel;
   uint8_t* fbmem = (uint8_t*)(fb->fbmem0);
 
-  fb->offline_fb = (uint8_t*)malloc(fb_size(fb));
-  return_value_if_fail(fb->offline_fb != NULL, NULL);
-
   if (bpp == 16) {
     if(fb_is_bgr565(fb)) {
       lcd = lcd_mem_bgr565_create_single_fb(w, h, fbmem);
@@ -166,7 +159,7 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
     lcd_mem_set_line_length(lcd, line_length);
   }
 
-  return NULL;
+  return lcd;
 }
 
 static lcd_t* lcd_linux_create(fb_info_t* fb) {
