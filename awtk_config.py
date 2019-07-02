@@ -1,6 +1,8 @@
 import os
 import platform
 
+OS_NAME = platform.system()
+
 def joinPath(root, subdir):
   return os.path.normpath(os.path.join(root, subdir))
 
@@ -96,4 +98,10 @@ os.environ['TSLIB_LIB_DIR'] = TSLIB_LIB_DIR;
 os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
 os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
 os.environ['GTEST_ROOT'] = GTEST_ROOT;
+
+CC=TOOLS_PREFIX+'gcc',
+CXX=TOOLS_PREFIX+'g++',
+LD=TOOLS_PREFIX+'g++',
+AR=TOOLS_PREFIX+'ar',
+STRIP=TOOLS_PREFIX+'strip',
 
