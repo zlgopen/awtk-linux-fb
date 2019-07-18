@@ -55,7 +55,12 @@ scons APP=../awtk-examples/HelloWorld-Demo
 ./release.sh
 ```
 
-对于其他 Demo，需要手工拷贝 Demo 的资源文件夹到 build/bin 内，再执行 release.sh
+对于其他 Demo，需要加入资源文件夹参数，指向应用程序 assets 的父目录
+
+```
+./release.sh ../awtk-examples/HelloWorld-Demo/res
+./release.sh ../awtk-examples/Chart-Demo/res_800_480
+```
 
 * 6.运行
 
