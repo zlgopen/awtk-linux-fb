@@ -1,13 +1,14 @@
 #!/bin/bash
 
 #example: ./release.sh ../awtk-examples/HelloWorld-Demo/res
-
-APP_ROOT="../awtk/demos"
-if [ -n $1 ] && [ -d $1 ]; then
+if [ $1 ]; then
+  if [ ! -d $1 ]; then
+    echo "input dir : $1 is not exist!"
+	exit
+  fi
   APP_ROOT=$1
 else
-  echo "input dir : $1 is not exist!"
-  exit
+  APP_ROOT="../awtk/demos"
 fi
 echo "APP_ROOT = ${APP_ROOT}" 
 
