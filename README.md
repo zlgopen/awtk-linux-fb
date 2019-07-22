@@ -17,7 +17,7 @@ git clone https://github.com/zlgopen/awtk-linux-fb.git
 cd awtk-linux-fb
 ```
 
-* 2.编辑SConstruct设置工具链的路径
+* 2.编辑 SConstruct 设置工具链的路径
 
 ```
 TSLIB_LIB_DIR='/opt/28x/tslib/lib'
@@ -25,7 +25,7 @@ TSLIB_INC_DIR='/opt/28x/tslib/include'
 TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
 ```
 
-* 3.编辑awtk-port/main\_loop\_linux.c修改输入设备的文件名
+* 3.编辑 awtk-port/main\_loop\_linux.c 修改输入设备的文件名
 
 ```
 #define FB_DEVICE_FILENAME "/dev/fb0"
@@ -64,7 +64,7 @@ scons APP=../awtk-examples/HelloWorld-Demo
 
 * 6.运行
 
-把release.zip上传到开发板，并解压，然后运行：
+把 release.tar.gz 上传到开发板，并解压，然后运行：
 
 ```
 ./release/bin/demoui

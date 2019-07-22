@@ -12,7 +12,7 @@ else
 fi
 echo "APP_ROOT = ${APP_ROOT}" 
 
-rm -rf release release.zip
+rm -rf release release.tar.gz
 
 mkdir -p release/bin
 mkdir -p release/assets/raw/data
@@ -46,5 +46,4 @@ cp -rvf ${APP_ROOT}/assets/raw/styles/*.bin release/assets/raw/styles/
 cp -rvf ${APP_ROOT}/assets/raw/ui/*.bin release/assets/raw/ui/
 cp -rvf ${APP_ROOT}/assets/raw/xml/* release/assets/raw/xml/
 
-zip -r release.zip release/
-
+tar -czvf release.tar.gz release/
