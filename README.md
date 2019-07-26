@@ -17,7 +17,7 @@ git clone https://github.com/zlgopen/awtk-linux-fb.git
 cd awtk-linux-fb
 ```
 
-* 2.编辑 SConstruct 设置工具链的路径
+* 2.编辑 awtk_config.py 设置工具链的路径
 
 ```
 TSLIB_LIB_DIR='/opt/28x/tslib/lib'
