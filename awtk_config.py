@@ -98,8 +98,7 @@ os.environ['TSLIB_LIB_DIR'] = TSLIB_LIB_DIR;
 os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
 os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
 os.environ['GTEST_ROOT'] = GTEST_ROOT;
-os.environ['NATIVE_WINDOW'] = 'default';
-os.environ['MULTI_NATIVE_WINDOW'] = 'false';
+os.environ['NATIVE_WINDOW'] = 'raw';
 
 CC=TOOLS_PREFIX+'gcc',
 CXX=TOOLS_PREFIX+'g++',
