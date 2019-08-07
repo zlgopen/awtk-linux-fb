@@ -24,6 +24,7 @@
 #include "base/font_manager.h"
 #include "base/window_manager.h"
 #include "main_loop/main_loop_simple.h"
+#include "native_window/native_window_raw.h"
 
 #include "tslib_thread.h"
 #include "input_thread.h"
@@ -40,6 +41,7 @@ static ret_t main_loop_linux_destroy(main_loop_t* l) {
   main_loop_simple_t* loop = (main_loop_simple_t*)l;
 
   main_loop_simple_reset(loop);
+  native_window_raw_deinit();
 
   return RET_OK;
 }
@@ -68,10 +70,10 @@ main_loop_t* main_loop_init(int w, int h) {
   lcd_t* lcd = lcd_linux_fb_create(FB_DEVICE_FILENAME);
 
   return_value_if_fail(lcd != NULL, NULL);
+  
+  native_window_raw_init(lcd);
   loop = main_loop_simple_init(lcd->w, lcd->h);
-
   loop->base.destroy = main_loop_linux_destroy;
-  canvas_init(&(loop->base.canvas), lcd, font_manager());
 
 #ifdef HAS_TSLIB
   s_ts_thread =

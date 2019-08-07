@@ -32,7 +32,6 @@ ret_t input_dispatch_print(void* ctx, const event_queue_req_t* e) {
       break;
     }
     case EVT_POINTER_MOVE: {
-      printf("pointer move:%d %d\n", e->pointer_event.x, e->pointer_event.y);
       break;
     }
     case EVT_KEY_DOWN: {
