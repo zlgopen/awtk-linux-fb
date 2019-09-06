@@ -27,6 +27,7 @@
 #include "base/keys.h"
 #include "tkc/thread.h"
 #include "input_thread.h"
+#include "tkc/utils.h"
 
 #ifndef EV_SYN
 #define EV_SYN 0x00
@@ -37,6 +38,7 @@ typedef struct _run_info_t {
   int32_t max_x;
   int32_t max_y;
   void* dispatch_ctx;
+  char* filename;
   input_dispatch_t dispatch;
 
   event_queue_req_t req;
@@ -127,22 +129,43 @@ static int32_t map_key(uint8_t code) {
 }
 
 static ret_t input_dispatch(run_info_t* info) {
-  ret_t ret = info->dispatch(info->dispatch_ctx, &(info->req));
+  ret_t ret = info->dispatch(info->dispatch_ctx, &(info->req), "keyboard");
   info->req.event.type = EVT_NONE;
 
   return ret;
 }
 
 static ret_t input_dispatch_one_event(run_info_t* info) {
+  int ret = 0;
   struct input_event e;
   event_queue_req_t* req = &(info->req);
-  int ret = read(info->fd, &e, sizeof(e));
 
-  if (ret != sizeof(e)) {
-    printf("%s:%d read failed(ret=%d, errno=%d)\n", __func__, __LINE__, ret, errno);
+  if (info->fd < 0) {
+    ret = -1;
+  } else {
+    ret = read(info->fd, &e, sizeof(e));
   }
 
-  return_value_if_fail(ret == sizeof(e), RET_FAIL);
+  if (ret != sizeof(e)) {
+    printf("%s:%d keyboard read failed(ret=%d, errno=%d)\n", __func__, __LINE__, ret, errno);
+  }
+
+  if (ret == -1) {
+    printf("%s:%d keyboard read failed(ret=%d, errno=%d, fd=%d, filename=%s)\n", __func__, __LINE__,
+           ret, errno, info->fd, info->filename);
+    perror("Print keyboard: ");
+
+    sleep(2);
+
+    if (access(info->filename, R_OK) == 0) {
+      if (info->fd >= 0 && errno == ENODEV) {
+        close(info->fd);
+      }
+      info->fd = open(info->filename, O_RDONLY);
+    }
+  }
+
+  return_value_if_fail(ret == sizeof(e), RET_OK);
 
   switch (e.type) {
     case EV_KEY: {
@@ -237,6 +260,7 @@ static void* input_run(void* ctx) {
   while (input_dispatch_one_event(&info) == RET_OK)
     ;
   close(info.fd);
+  TKMEM_FREE(info.filename)
 
   return NULL;
 }
@@ -262,8 +286,7 @@ tk_thread_t* input_thread_run(const char* filename, input_dispatch_t dispatch, v
   info.dispatch_ctx = ctx;
   info.dispatch = dispatch;
   info.fd = open(filename, O_RDONLY);
-
-  return_value_if_fail(info.fd >= 0, NULL);
+  info.filename = tk_strdup(filename);
 
   thread = tk_thread_create(input_run, info_dup(&info));
   if (thread != NULL) {

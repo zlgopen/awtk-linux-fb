@@ -21,25 +21,26 @@
 
 #include "input_dispatcher.h"
 
-ret_t input_dispatch_print(void* ctx, const event_queue_req_t* e) {
+ret_t input_dispatch_print(void* ctx, const event_queue_req_t* e, const char* msg) {
   switch (e->event.type) {
     case EVT_POINTER_DOWN: {
-      printf("pointer down:%d %d\n", e->pointer_event.x, e->pointer_event.y);
+      printf("%s pointer down:%d %d\n", msg, e->pointer_event.x, e->pointer_event.y);
       break;
     }
     case EVT_POINTER_UP: {
-      printf("pointer up:%d %d\n", e->pointer_event.x, e->pointer_event.y);
+      printf("%s pointer up:%d %d\n", msg, e->pointer_event.x, e->pointer_event.y);
       break;
     }
     case EVT_POINTER_MOVE: {
+      printf("%s pointer move:%d %d\n", msg, e->pointer_event.x, e->pointer_event.y);
       break;
     }
     case EVT_KEY_DOWN: {
-      printf("keydown:%d\n", e->key_event.key);
+      printf("%s keydown:%d\n", msg, e->key_event.key);
       break;
     }
     case EVT_KEY_UP: {
-      printf("keyup:%d\n", e->key_event.key);
+      printf("%s keyup:%d\n", msg, e->key_event.key);
       break;
     }
   }

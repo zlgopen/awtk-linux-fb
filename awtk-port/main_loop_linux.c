@@ -46,9 +46,9 @@ static ret_t main_loop_linux_destroy(main_loop_t* l) {
   return RET_OK;
 }
 
-ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* e) {
+ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* e, const char* msg) {
   main_loop_queue_event((main_loop_t*)ctx, e);
-  input_dispatch_print(ctx, e);
+  input_dispatch_print(ctx, e, msg);
 
   return RET_OK;
 }

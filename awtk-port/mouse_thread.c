@@ -1,4 +1,4 @@
-﻿/**
+/**
  * File:   mouse_thread.c
  * Author: AWTK Develop Team
  * Brief:  thread to read /dev/input/
@@ -27,6 +27,7 @@
 #include "base/keys.h"
 #include "tkc/thread.h"
 #include "mouse_thread.h"
+#include "tkc/utils.h"
 
 #ifndef EV_SYN
 #define EV_SYN 0x00
@@ -38,33 +39,61 @@ typedef struct _run_info_t {
   int32_t y;
   int32_t max_x;
   int32_t max_y;
+  int flag;
   void* dispatch_ctx;
+  char* filename;
   input_dispatch_t dispatch;
+  union {
+    int8_t d[3];
+    struct input_event e; /* for EasyARM-iMX280A_283A_287A */
+  } data;
 
   event_queue_req_t req;
 } run_info_t;
 
 static ret_t input_dispatch(run_info_t* info) {
-  ret_t ret = info->dispatch(info->dispatch_ctx, &(info->req));
+  ret_t ret = info->dispatch(info->dispatch_ctx, &(info->req), "mouse");
   info->req.event.type = EVT_NONE;
 
   return ret;
 }
 
 static ret_t input_dispatch_one_event(run_info_t* info) {
-  int8_t data[3];
+  int ret = 0;
   event_queue_req_t* req = &(info->req);
-  int ret = read(info->fd, data, sizeof(data));
+
+  if (info->fd < 0) {
+    ret = -1;
+  } else {
+    ret = info->flag == 0 ? read(info->fd, &info->data.e, sizeof(info->data.e))
+                          : read(info->fd, info->data.d, sizeof(info->data.d));
+  }
+
+  if (ret == -1) {
+    printf("%s:%d mouse read failed(ret=%d, errno=%d, fd=%d, filename=%s)\n", __func__, __LINE__,
+           ret, errno, info->fd, info->filename);
+    perror("Print mouse: ");
+
+    sleep(2);
+
+    if (access(info->filename, R_OK) == 0) {
+      if (info->fd >= 0 && errno == ENODEV) {
+        close(info->fd);
+      }
+      info->fd = open(info->filename, O_RDONLY);
+    }
+  }
 
   if (ret == 3) {
-    int left = data[0] & 0x1;
-    // int right = data[0] & 0x2;
-    // int middle = data[0] & 0x4;
-    int x = data[1];
-    int y = data[2];
+    int left = info->data.d[0] & 0x1;
+    // int right = info->data.d[0] & 0x2;
+    // int middle = info->data.d[0] & 0x4;
+    int x = info->data.d[1];
+    int y = info->data.d[2];
 
     info->x += x;
     info->y -= y;
+    info->flag = 1;
 
     if (info->x < 0) {
       info->x = 0;
@@ -98,6 +127,83 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
     req->pointer_event.y = info->y;
 
     input_dispatch(info);
+  } else if (ret == sizeof(info->data.e)) {
+    switch (info->data.e.type) {
+      case EV_KEY: {
+        if (info->data.e.code == BTN_LEFT || info->data.e.code == BTN_RIGHT ||
+            info->data.e.code == BTN_MIDDLE || info->data.e.code == BTN_TOUCH) {
+          req->event.type = info->data.e.value ? EVT_POINTER_DOWN : EVT_POINTER_UP;
+        }
+        break;
+      }
+      case EV_ABS: {
+        switch (info->data.e.code) {
+          case ABS_X: {
+            req->pointer_event.x = info->data.e.value;
+            break;
+          }
+          case ABS_Y: {
+            req->pointer_event.y = info->data.e.value;
+            break;
+          }
+          default:
+            break;
+        }
+
+        if (req->event.type == EVT_NONE) {
+          req->event.type = EVT_POINTER_MOVE;
+        }
+
+        break;
+      }
+      case EV_REL: {
+        switch (info->data.e.code) {
+          case REL_X: {
+            req->pointer_event.x += info->data.e.value;
+
+            if (req->pointer_event.x < 0) {
+              req->pointer_event.x = 0;
+            }
+            if (req->pointer_event.x > info->max_x) {
+              req->pointer_event.x = info->max_x;
+            }
+            break;
+          }
+          case REL_Y: {
+            req->pointer_event.y += info->data.e.value;
+            if (req->pointer_event.y < 0) {
+              req->pointer_event.y = 0;
+            }
+            if (req->pointer_event.y > info->max_y) {
+              req->pointer_event.y = info->max_y;
+            }
+            break;
+          }
+          default:
+            break;
+        }
+
+        if (req->event.type == EVT_NONE) {
+          req->event.type = EVT_POINTER_MOVE;
+        }
+
+        break;
+      }
+      case EV_SYN: {
+        switch (req->event.type) {
+          case EVT_POINTER_DOWN:
+          case EVT_POINTER_MOVE:
+          case EVT_POINTER_UP: {
+            return input_dispatch(info);
+          }
+          default:
+            break;
+        }
+        break;
+      }
+      default:
+        break;
+    }
   }
 
   return RET_OK;
@@ -110,6 +216,7 @@ void* input_run(void* ctx) {
   while (input_dispatch_one_event(&info) == RET_OK)
     ;
   close(info.fd);
+  TKMEM_FREE(info.filename)
 
   return NULL;
 }
@@ -135,8 +242,7 @@ tk_thread_t* mouse_thread_run(const char* filename, input_dispatch_t dispatch, v
   info.dispatch_ctx = ctx;
   info.dispatch = dispatch;
   info.fd = open(filename, O_RDONLY);
-
-  return_value_if_fail(info.fd >= 0, NULL);
+  info.filename = tk_strdup(filename);
 
   thread = tk_thread_create(input_run, info_dup(&info));
   if (thread != NULL) {
