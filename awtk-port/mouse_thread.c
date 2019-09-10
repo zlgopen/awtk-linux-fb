@@ -39,7 +39,6 @@ typedef struct _run_info_t {
   int32_t y;
   int32_t max_x;
   int32_t max_y;
-  int flag;
   void* dispatch_ctx;
   char* filename;
   input_dispatch_t dispatch;
@@ -65,11 +64,10 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
   if (info->fd < 0) {
     ret = -1;
   } else {
-    ret = info->flag == 0 ? read(info->fd, &info->data.e, sizeof(info->data.e))
-                          : read(info->fd, info->data.d, sizeof(info->data.d));
+    ret = read(info->fd, &info->data.e, sizeof(info->data.e));
   }
 
-  if (ret == -1) {
+  if (ret < 0) {
     printf("%s:%d mouse read failed(ret=%d, errno=%d, fd=%d, filename=%s)\n", __func__, __LINE__,
            ret, errno, info->fd, info->filename);
     perror("Print mouse: ");
@@ -77,7 +75,7 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
     sleep(2);
 
     if (access(info->filename, R_OK) == 0) {
-      if (info->fd >= 0 && errno == ENODEV) {
+      if (info->fd >= 0) {
         close(info->fd);
       }
       info->fd = open(info->filename, O_RDONLY);
@@ -93,7 +91,6 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
 
     info->x += x;
     info->y -= y;
-    info->flag = 1;
 
     if (info->x < 0) {
       info->x = 0;
@@ -216,7 +213,7 @@ void* input_run(void* ctx) {
   while (input_dispatch_one_event(&info) == RET_OK)
     ;
   close(info.fd);
-  TKMEM_FREE(info.filename)
+  TKMEM_FREE(info.filename);
 
   return NULL;
 }
@@ -249,6 +246,7 @@ tk_thread_t* mouse_thread_run(const char* filename, input_dispatch_t dispatch, v
     tk_thread_start(thread);
   } else {
     close(info.fd);
+    TKMEM_FREE(info.filename);
   }
 
   return thread;

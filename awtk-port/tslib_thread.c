@@ -64,7 +64,7 @@ static ret_t tslib_dispatch_one_event(run_info_t* info) {
 
     sleep(2);
     if (access(info->filename, R_OK) == 0) {
-      if (info->ts != NULL && errno == ENODEV) {
+      if (info->ts != NULL) {
         ts_close(info->ts);
       }
       info->ts = ts_open(info->filename, 0);
@@ -143,6 +143,7 @@ tk_thread_t* tslib_thread_run(const char* filename, input_dispatch_t dispatch, v
     tk_thread_start(thread);
   } else {
     ts_close(info.ts);
+    TKMEM_FREE(info.filename);
   }
 
   return thread;

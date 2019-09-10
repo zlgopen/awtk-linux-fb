@@ -150,7 +150,7 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
     printf("%s:%d keyboard read failed(ret=%d, errno=%d)\n", __func__, __LINE__, ret, errno);
   }
 
-  if (ret == -1) {
+  if (ret < 0) {
     printf("%s:%d keyboard read failed(ret=%d, errno=%d, fd=%d, filename=%s)\n", __func__, __LINE__,
            ret, errno, info->fd, info->filename);
     perror("Print keyboard: ");
@@ -158,7 +158,7 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
     sleep(2);
 
     if (access(info->filename, R_OK) == 0) {
-      if (info->fd >= 0 && errno == ENODEV) {
+      if (info->fd >= 0) {
         close(info->fd);
       }
       info->fd = open(info->filename, O_RDONLY);
@@ -260,7 +260,7 @@ static void* input_run(void* ctx) {
   while (input_dispatch_one_event(&info) == RET_OK)
     ;
   close(info.fd);
-  TKMEM_FREE(info.filename)
+  TKMEM_FREE(info.filename);
 
   return NULL;
 }
@@ -293,6 +293,7 @@ tk_thread_t* input_thread_run(const char* filename, input_dispatch_t dispatch, v
     tk_thread_start(thread);
   } else {
     close(info.fd);
+    TKMEM_FREE(info.filename);
   }
 
   return thread;
