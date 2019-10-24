@@ -29,9 +29,14 @@
 #include "lcd/lcd_mem_rgba8888.h"
 
 static fb_info_t s_fb;
+static int s_ttyfd = -1;
 
 static void on_app_exit(void) {
   fb_info_t* fb = &s_fb;
+
+  if (s_ttyfd >= 0) {
+    ioctl(s_ttyfd, KDSETMODE, KD_TEXT);
+  }
 
   fb_close(fb);
 }
@@ -60,9 +65,9 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
   if (bpp == 16) {
     if (fb_is_bgra5551(fb)) {
       lcd = lcd_mem_bgra5551_create(fb);
-    } else if(fb_is_bgr565(fb)) {
+    } else if (fb_is_bgr565(fb)) {
       lcd = lcd_mem_bgr565_create_double_fb(w, h, online_fb, fb->fbmem1);
-    } else if(fb_is_rgb565(fb)) {
+    } else if (fb_is_rgb565(fb)) {
       lcd = lcd_mem_rgb565_create_double_fb(w, h, online_fb, fb->fbmem1);
     } else {
       assert(!"not supported framebuffer format.");
@@ -70,7 +75,7 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
   } else if (bpp == 32) {
     if (fb_is_bgra8888(fb)) {
       lcd = lcd_mem_bgra8888_create_double_fb(w, h, online_fb, fb->fbmem1);
-    } else if(fb_is_rgba8888(fb)) {
+    } else if (fb_is_rgba8888(fb)) {
       lcd = lcd_mem_rgba8888_create_double_fb(w, h, online_fb, fb->fbmem1);
     } else {
       assert(!"not supported framebuffer format.");
@@ -81,7 +86,7 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
     assert(!"not supported framebuffer format.");
   }
 
-  if(lcd != NULL) {
+  if (lcd != NULL) {
     lcd->impl_data = fb;
     lcd->sync = lcd_mem_linux_sync;
     lcd_mem_set_line_length(lcd, line_length);
@@ -95,7 +100,7 @@ static ret_t lcd_mem_linux_begin_frame(lcd_t* lcd, rect_t* dirty_rect) {
   fb_info_t* fb = (fb_info_t*)(lcd->impl_data);
   struct fb_var_screeninfo* var = &(fb->var);
 
-  if(var->yoffset == 0) {
+  if (var->yoffset == 0) {
     lcd_mem->offline_fb = fb->fbmem0;
   } else {
     lcd_mem->offline_fb = fb->fbmem1;
@@ -109,17 +114,17 @@ static ret_t lcd_mem_linux_swap(lcd_t* lcd) {
   fb_info_t* fb = (fb_info_t*)(lcd->impl_data);
   struct fb_var_screeninfo* var = &(fb->var);
 
-	var->xoffset = 0;
-  if(var->yoffset == 0) {
-	  var->yoffset = var->yres;
+  var->xoffset = 0;
+  if (var->yoffset == 0) {
+    var->yoffset = var->yres;
   } else {
-	  var->yoffset = 0;
+    var->yoffset = 0;
   }
 
-	ret = ioctl(fb->fd, FBIOPAN_DISPLAY, &(fb->var));
-	printf("FBIOPAN_DISPLAY ret=%d yoffset=%d\n", ret, var->yoffset);
+  ret = ioctl(fb->fd, FBIOPAN_DISPLAY, &(fb->var));
+  printf("FBIOPAN_DISPLAY ret=%d yoffset=%d\n", ret, var->yoffset);
 
-	return RET_OK;
+  return RET_OK;
 }
 
 static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
@@ -131,9 +136,9 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   uint8_t* fbmem = (uint8_t*)(fb->fbmem0);
 
   if (bpp == 16) {
-    if(fb_is_bgr565(fb)) {
+    if (fb_is_bgr565(fb)) {
       lcd = lcd_mem_bgr565_create_single_fb(w, h, fbmem);
-    } else if(fb_is_rgb565(fb)) {
+    } else if (fb_is_rgb565(fb)) {
       lcd = lcd_mem_rgb565_create_single_fb(w, h, fbmem);
     } else {
       assert(!"not supported framebuffer format.");
@@ -141,7 +146,7 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   } else if (bpp == 32) {
     if (fb_is_bgra8888(fb)) {
       lcd = lcd_mem_bgra8888_create_single_fb(w, h, fbmem);
-    } else if(fb_is_rgba8888(fb)) {
+    } else if (fb_is_rgba8888(fb)) {
       lcd = lcd_mem_rgba8888_create_single_fb(w, h, fbmem);
     } else {
       assert(!"not supported framebuffer format.");
@@ -151,8 +156,8 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   } else {
     assert(!"not supported framebuffer format.");
   }
-  
-  if(lcd != NULL) {
+
+  if (lcd != NULL) {
     lcd->impl_data = fb;
     lcd->swap = lcd_mem_linux_swap;
     lcd->begin_frame = lcd_mem_linux_begin_frame;
@@ -163,11 +168,11 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
 }
 
 static lcd_t* lcd_linux_create(fb_info_t* fb) {
-  if(fb_is_1fb(fb)) {
+  if (fb_is_1fb(fb)) {
     return lcd_linux_create_flushable(fb);
-  } else if(fb_is_2fb(fb)) {
+  } else if (fb_is_2fb(fb)) {
     return lcd_linux_create_swappable(fb);
-  } else if(fb_is_3fb(fb)) {
+  } else if (fb_is_3fb(fb)) {
     return NULL;
   } else {
     return NULL;
@@ -180,6 +185,11 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
   return_value_if_fail(filename != NULL, NULL);
 
   if (fb_open(fb, filename) == 0) {
+    s_ttyfd = open("/dev/tty1", O_RDWR);
+    if (s_ttyfd >= 0) {
+      ioctl(s_ttyfd, KDSETMODE, KD_GRAPHICS);
+    }
+
     lcd = lcd_linux_create(fb);
   }
 
