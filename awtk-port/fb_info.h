@@ -56,15 +56,10 @@ typedef struct _fb_info_t {
 
 static inline bool_t fb_is_bgra5551(fb_info_t* fb) {
   struct fb_var_screeninfo* var = &(fb->var);
-  if (var->bits_per_pixel == 16 
-    && var->blue.offset == 0
-    && var->green.offset == 5
-    && var->red.offset == 10
-    && var->blue.length == 5 
-    && var->green.length == 5 
-    && var->red.length == 5 
-    && var->transp.length == 1) {
-      return TRUE;
+  if (var->bits_per_pixel == 16 && var->blue.offset == 0 && var->green.offset == 5 &&
+      var->red.offset == 10 && var->blue.length == 5 && var->green.length == 5 &&
+      var->red.length == 5 && var->transp.length == 1) {
+    return TRUE;
   } else {
     return FALSE;
   }
@@ -72,14 +67,10 @@ static inline bool_t fb_is_bgra5551(fb_info_t* fb) {
 
 static inline bool_t fb_is_bgr565(fb_info_t* fb) {
   struct fb_var_screeninfo* var = &(fb->var);
-  if (var->bits_per_pixel == 16 
-    && var->blue.offset == 0
-    && var->green.offset == 5
-    && var->red.offset == 11
-    && var->blue.length == 5 
-    && var->green.length == 6 
-    && var->red.length == 5) {
-      return TRUE;
+  if (var->bits_per_pixel == 16 && var->blue.offset == 0 && var->green.offset == 5 &&
+      var->red.offset == 11 && var->blue.length == 5 && var->green.length == 6 &&
+      var->red.length == 5) {
+    return TRUE;
   } else {
     return FALSE;
   }
@@ -87,14 +78,10 @@ static inline bool_t fb_is_bgr565(fb_info_t* fb) {
 
 static inline bool_t fb_is_rgb565(fb_info_t* fb) {
   struct fb_var_screeninfo* var = &(fb->var);
-  if (var->bits_per_pixel == 16 
-    && var->red.offset == 0
-    && var->green.offset == 5
-    && var->blue.offset == 11
-    && var->red.length == 5 
-    && var->green.length == 6 
-    && var->blue.length == 5) { 
-      return TRUE;
+  if (var->bits_per_pixel == 16 && var->red.offset == 0 && var->green.offset == 5 &&
+      var->blue.offset == 11 && var->red.length == 5 && var->green.length == 6 &&
+      var->blue.length == 5) {
+    return TRUE;
   } else {
     return FALSE;
   }
@@ -102,14 +89,10 @@ static inline bool_t fb_is_rgb565(fb_info_t* fb) {
 
 static inline bool_t fb_is_bgra8888(fb_info_t* fb) {
   struct fb_var_screeninfo* var = &(fb->var);
-  if (var->bits_per_pixel == 32 
-    && var->blue.offset == 0
-    && var->green.offset == 8
-    && var->red.offset == 16
-    && var->blue.length == 8
-    && var->green.length == 8
-    && var->red.length == 8) {
-      return TRUE;
+  if (var->bits_per_pixel == 32 && var->blue.offset == 0 && var->green.offset == 8 &&
+      var->red.offset == 16 && var->blue.length == 8 && var->green.length == 8 &&
+      var->red.length == 8) {
+    return TRUE;
   } else {
     return FALSE;
   }
@@ -117,14 +100,10 @@ static inline bool_t fb_is_bgra8888(fb_info_t* fb) {
 
 static inline bool_t fb_is_rgba8888(fb_info_t* fb) {
   struct fb_var_screeninfo* var = &(fb->var);
-  if (var->bits_per_pixel == 32 
-    && var->red.offset == 0
-    && var->green.offset == 8
-    && var->blue.offset == 16
-    && var->red.length == 8
-    && var->green.length == 8 
-    && var->blue.length == 8) {
-      return TRUE;
+  if (var->bits_per_pixel == 32 && var->red.offset == 0 && var->green.offset == 8 &&
+      var->blue.offset == 16 && var->red.length == 8 && var->green.length == 8 &&
+      var->blue.length == 8) {
+    return TRUE;
   } else {
     return FALSE;
   }
@@ -173,12 +152,13 @@ static inline int fb_open(fb_info_t* fb, const char* filename) {
 
   memset(fb->fbmem0, 0xff, size);
 
-  if(fb_is_2fb(fb)) {
+  if (fb_is_2fb(fb)) {
     fb->fbmem1 = fb->fbmem0 + size;
     memset(fb->fbmem1, 0xff, size);
   }
 
-  log_debug("line_length=%d mem_size=%d smem_len=%d\n", fb->fix.line_length, fb_size(fb),fb->fix.smem_len);
+  log_debug("line_length=%d mem_size=%d smem_len=%d\n", fb->fix.line_length, fb_size(fb),
+            fb->fix.smem_len);
   log_debug("xres_virtual =%d yres_virtual=%d xpanstep=%d ywrapstep=%d\n", fb->var.xres_virtual,
             fb->var.yres_virtual, fb->fix.xpanstep, fb->fix.ywrapstep);
 
@@ -192,13 +172,13 @@ fail:
 
 static inline void fb_close(fb_info_t* fb) {
   if (fb != NULL) {
-    if(fb_is_1fb(fb)) {
-      if(fb->fbmem1 != NULL) {
+    if (fb_is_1fb(fb)) {
+      if (fb->fbmem1 != NULL) {
         free(fb->fbmem1);
       }
     }
 
-    if(fb->offline_fb != NULL) {
+    if (fb->offline_fb != NULL) {
       free(fb->offline_fb);
     }
 
@@ -214,7 +194,7 @@ static inline void fb_sync(fb_info_t* info) {
   int zero = 0;
   ret = ioctl(info->fd, FBIO_WAITFORVSYNC, &zero);
 
-  //log_debug("FBIO_WAITFORVSYNC: %d %d\n", ret, zero);
+  // log_debug("FBIO_WAITFORVSYNC: %d %d\n", ret, zero);
 
   return;
 }
