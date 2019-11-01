@@ -19,9 +19,11 @@
  *
  */
 
+#include <signal.h>
 #include "fb_info.h"
 #include "tkc/mem.h"
 #include "base/lcd.h"
+#include "awtk_global.h"
 #include "lcd_mem_others.h"
 #include "lcd/lcd_mem_bgr565.h"
 #include "lcd/lcd_mem_rgb565.h"
@@ -31,6 +33,7 @@
 static fb_info_t s_fb;
 static int s_ttyfd = -1;
 
+
 static void on_app_exit(void) {
   fb_info_t* fb = &s_fb;
 
@@ -39,6 +42,12 @@ static void on_app_exit(void) {
   }
 
   fb_close(fb);
+
+  log_debug("on_app_exit\n");
+}
+
+static void on_signal_int(int sig) {
+  tk_quit();
 }
 
 static ret_t lcd_mem_linux_sync(lcd_t* lcd) {
@@ -194,6 +203,7 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
   }
 
   atexit(on_app_exit);
+  signal(SIGINT, on_signal_int);
 
   return lcd;
 }
