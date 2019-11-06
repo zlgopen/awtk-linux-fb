@@ -10,6 +10,8 @@
 
 * 1.获取源码
 
+> 以下三者并列放在同一个目录。
+
 ```
 git clone https://github.com/zlgopen/awtk.git
 git clone https://github.com/zlgopen/awtk-examples.git
