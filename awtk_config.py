@@ -43,7 +43,7 @@ OS_CPPPATH=[]
 OS_LINKFLAGS=''
 OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
-OS_FLAGS='-g -Wall -Os '
+OS_FLAGS='-Wall -Os '
 #OS_FLAGS='-g -Wall -Os -mfloat-abi=hard '
 
 #for build tslib
@@ -51,15 +51,15 @@ OS_FLAGS='-g -Wall -Os '
 #TSLIB_LIB_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src/.libs')
 
 #for prebuild tslib
-TSLIB_LIB_DIR='/opt/28x/tslib/lib'
-TSLIB_INC_DIR='/opt/28x/tslib/include'
-TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
+#TSLIB_LIB_DIR='/opt/28x/tslib/lib'
+#TSLIB_INC_DIR='/opt/28x/tslib/include'
+#TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
 #TOOLS_PREFIX='/opt/poky/1.7/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-'
 
 #for pc build
 TOOLS_PREFIX=''
 TSLIB_LIB_DIR=''
-OS_FLAGS='-g -Wall '
+OS_FLAGS='-Wall -Os '
 
 OS_LIBS = OS_LIBS + ['stdc++', 'pthread', 'm', 'dl']
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR '
