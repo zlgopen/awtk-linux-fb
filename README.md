@@ -54,14 +54,14 @@ scons APP=../awtk-examples/HelloWorld-Demo
 对于内置的 demoui 例子
 
 ```
-./release.sh
+sh ./release.sh
 ```
 
 对于其他 Demo，需要加入资源文件夹参数，指向应用程序 assets 的父目录
 
 ```
-./release.sh ../awtk-examples/HelloWorld-Demo/res
-./release.sh ../awtk-examples/Chart-Demo/res_800_480
+sh ./release.sh ../awtk-examples/HelloWorld-Demo/res demo
+sh ./release.sh ../awtk-examples/Chart-Demo/res_800_480 demo
 ```
 
 * 6.运行
