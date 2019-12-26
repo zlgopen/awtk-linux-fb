@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <assert.h>
 #include <linux/fb.h>
 #include <linux/kd.h>
 #include <sys/mman.h>
@@ -49,10 +50,11 @@ typedef struct _fb_info_t {
 #define fb_width(fb) ((fb)->var.xres)
 #define fb_height(fb) ((fb)->var.yres)
 #define fb_size(fb) ((fb)->var.yres * (fb)->fix.line_length)
+#define fb_vsize(fb) ((fb)->var.yres_virtual * (fb)->fix.line_length)
 
 #define fb_is_1fb(fb) ((fb)->var.yres_virtual < 2 * (fb)->var.yres)
-#define fb_is_2fb(fb) ((fb)->var.yres_virtual == 2 * (fb)->var.yres)
-#define fb_is_3fb(fb) ((fb)->var.yres_virtual == 3 * (fb)->var.yres)
+#define fb_is_2fb(fb) ((fb)->var.yres_virtual >= 2 * (fb)->var.yres)
+#define fb_is_3fb(fb) 0//((fb)->var.yres_virtual == 3 * (fb)->var.yres)
 
 static inline bool_t fb_is_bgra5551(fb_info_t* fb) {
   struct fb_var_screeninfo* var = &(fb->var);
@@ -142,7 +144,8 @@ static inline int fb_open(fb_info_t* fb, const char* filename) {
   // uclinux doesn't support MAP_SHARED or MAP_PRIVATE with PROT_WRITE, so no mmap at all is simpler
   fb->fbmem0 = (uint8_t*)(fb->fix.smem_start);
 #else
-  fb->fbmem0 = (uint8_t*)mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fb->fd, 0);
+  //assert(fb->fix.smem_len == fb_vsize(fb));
+  fb->fbmem0 = (uint8_t*)mmap(0, fb_vsize(fb), PROT_READ | PROT_WRITE, MAP_SHARED, fb->fd, 0);
 #endif
 
   if (fb->fbmem0 == MAP_FAILED) {
@@ -182,7 +185,7 @@ static inline void fb_close(fb_info_t* fb) {
       free(fb->offline_fb);
     }
 
-    munmap(fb->fbmem0, fb_size(fb));
+    munmap(fb->fbmem0, fb_vsize(fb));
     close(fb->fd);
   }
 

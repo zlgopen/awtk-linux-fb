@@ -110,9 +110,9 @@ static ret_t lcd_mem_linux_begin_frame(lcd_t* lcd, rect_t* dirty_rect) {
   struct fb_var_screeninfo* var = &(fb->var);
 
   if (var->yoffset == 0) {
-    lcd_mem->offline_fb = fb->fbmem0;
-  } else {
     lcd_mem->offline_fb = fb->fbmem1;
+  } else {
+    lcd_mem->offline_fb = fb->fbmem0;
   }
 
   return RET_OK;
