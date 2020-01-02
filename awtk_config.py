@@ -60,7 +60,23 @@ TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi
 #TOOLS_PREFIX=''
 #TSLIB_LIB_DIR=''
 
-OS_LIBS = OS_LIBS + ['stdc++', 'pthread', 'm', 'dl']
+CC=TOOLS_PREFIX+'gcc',
+CXX=TOOLS_PREFIX+'g++',
+LD=TOOLS_PREFIX+'g++',
+AR=TOOLS_PREFIX+'ar',
+STRIP=TOOLS_PREFIX+'strip',
+OS_LIBS = ['stdc++', 'pthread', 'rt', 'm', 'dl']
+
+#for android
+#TOOLS_PREFIX='/opt/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/'
+#CC=TOOLS_PREFIX+'armv7a-linux-androideabi16-clang'
+#CXX=TOOLS_PREFIX+'armv7a-linux-androideabi16-clang++'
+#LD=TOOLS_PREFIX+'arm-linux-androideabi-ld'
+#AR=TOOLS_PREFIX+'arm-linux-androideabi-ar'
+#STRIP=TOOLS_PREFIX+'arm-linux-androideabi-strip'
+#OS_LIBS = ['stdc++', 'm', 'dl']
+#OS_FLAGS='-Wall -g -DFB_DEVICE_FILENAME=\\\"\"/dev/graphics/fb0\\\"\" '
+
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR '
 
 if TSLIB_LIB_DIR != '':
@@ -70,7 +86,7 @@ CFLAGS=COMMON_CFLAGS
 LINKFLAGS=OS_LINKFLAGS;
 LIBPATH=[LIB_DIR] + OS_LIBPATH
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
-LIBS=['awtk', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'tkc', 'nanovg-agge', 'agge', 'nanovg', 'linebreak', 'rt'] + OS_LIBS
+LIBS=['awtk', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'tkc', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
 
 CPPPATH=[TK_ROOT, 
   TK_SRC, 
@@ -104,10 +120,4 @@ os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
 os.environ['GTEST_ROOT'] = GTEST_ROOT;
 os.environ['NATIVE_WINDOW'] = 'raw';
 os.environ['GRAPHIC_BUFFER'] = GRAPHIC_BUFFER;
-
-CC=TOOLS_PREFIX+'gcc',
-CXX=TOOLS_PREFIX+'g++',
-LD=TOOLS_PREFIX+'g++',
-AR=TOOLS_PREFIX+'ar',
-STRIP=TOOLS_PREFIX+'strip',
 
