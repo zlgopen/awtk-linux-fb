@@ -49,11 +49,13 @@ typedef struct _fb_info_t {
 
 #define fb_width(fb) ((fb)->var.xres)
 #define fb_height(fb) ((fb)->var.yres)
+#define fb_memsize(fb) ((fb)->fix.smem_len)
 #define fb_size(fb) ((fb)->var.yres * (fb)->fix.line_length)
 #define fb_vsize(fb) ((fb)->var.yres_virtual * (fb)->fix.line_length)
+#define fb_number(fb) ((fb)->var.yres_virtual * (fb)->var.xres_virtual)/((fb)->var.yres * (fb)->var.xres);
 
 #define fb_is_1fb(fb) ((fb)->var.yres_virtual < 2 * (fb)->var.yres)
-#define fb_is_2fb(fb) ((fb)->var.yres_virtual >= 2 * (fb)->var.yres)
+#define fb_is_2fb(fb) (fb_memsize(fb)/fb_size(fb) >= 2)
 #define fb_is_3fb(fb) 0//((fb)->var.yres_virtual == 3 * (fb)->var.yres)
 
 static inline bool_t fb_is_bgra5551(fb_info_t* fb) {
@@ -91,8 +93,8 @@ static inline bool_t fb_is_rgb565(fb_info_t* fb) {
 
 static inline bool_t fb_is_bgra8888(fb_info_t* fb) {
   struct fb_var_screeninfo* var = &(fb->var);
-  if (var->bits_per_pixel == 32 && var->blue.offset == 0 && var->green.offset == 8 &&
-      var->red.offset == 16 && var->blue.length == 8 && var->green.length == 8 &&
+  if (var->bits_per_pixel == 32 && var->blue.offset == 24 && var->green.offset == 16 &&
+      var->red.offset == 8 && var->blue.length == 8 && var->green.length == 8 &&
       var->red.length == 8) {
     return TRUE;
   } else {
@@ -102,8 +104,8 @@ static inline bool_t fb_is_bgra8888(fb_info_t* fb) {
 
 static inline bool_t fb_is_rgba8888(fb_info_t* fb) {
   struct fb_var_screeninfo* var = &(fb->var);
-  if (var->bits_per_pixel == 32 && var->red.offset == 0 && var->green.offset == 8 &&
-      var->blue.offset == 16 && var->red.length == 8 && var->green.length == 8 &&
+  if (var->bits_per_pixel == 32 && var->red.offset == 24 && var->green.offset == 16 &&
+      var->blue.offset == 8 && var->red.length == 8 && var->green.length == 8 &&
       var->blue.length == 8) {
     return TRUE;
   } else {
@@ -117,11 +119,14 @@ static inline bool_t fb_is_rgba8888(fb_info_t* fb) {
 
 static inline int fb_open(fb_info_t* fb, const char* filename) {
   uint32_t size = 0;
+  uint32_t fb_nr = 1;
+  uint32_t total_size = 0;
 
   memset(fb, 0x00, sizeof(fb_info_t));
 
   fb->fd = open(filename, O_RDWR);
   if (fb->fd < 0) {
+    log_warn("open: %s failed\n", filename);
     return -1;
   }
 
@@ -131,43 +136,48 @@ static inline int fb_open(fb_info_t* fb, const char* filename) {
   fb->var.xoffset = 0;
   fb->var.yoffset = 0;
   ioctl(fb->fd, FBIOPAN_DISPLAY, &(fb->var));
+  
+  size = fb_size(fb);
+  fb_nr = fb_number(fb);
+  total_size = fb_memsize(fb);
 
-  log_debug("fb_info_t: %s\n", filename);
-  log_debug("fb_info_t: xres=%d yres=%d bits_per_pixel=%d mem_size=%d\n", fb->var.xres,
-            fb->var.yres, fb->var.bits_per_pixel, fb_size(fb));
-  log_debug("fb_info_t: red(%d %d) green(%d %d) blue(%d %d)\n", fb->var.red.offset,
+  log_info("fb_info_t: %s\n", filename);
+  log_info("xres=%d yres=%d\n", fb->var.xres, fb->var.yres);
+  log_info("xres_virtual=%d yres_virtual=%d\n", fb->var.xres_virtual, fb->var.yres_virtual);
+  log_info("bits_per_pixel=%d line_length=%d\n", fb->var.bits_per_pixel, fb->fix.line_length);
+  log_info("fb_info_t: red(%d %d) green(%d %d) blue(%d %d)\n", fb->var.red.offset,
             fb->var.red.length, fb->var.green.offset, fb->var.green.length, fb->var.blue.offset,
             fb->var.blue.length);
+  log_info("xpanstep=%u ywrapstep=%u\n", fb->fix.xpanstep, fb->fix.ywrapstep);
+  log_info("fb_size=%u fb_total_size=%u fb_nr=%u smem_len=%u\n", size, total_size, fb_nr, fb->fix.smem_len);
 
-  size = fb_size(fb);
+
 #ifdef FTK_FB_NOMMAP
   // uclinux doesn't support MAP_SHARED or MAP_PRIVATE with PROT_WRITE, so no mmap at all is simpler
   fb->fbmem0 = (uint8_t*)(fb->fix.smem_start);
 #else
-  //assert(fb->fix.smem_len == fb_vsize(fb));
-  fb->fbmem0 = (uint8_t*)mmap(0, fb_vsize(fb), PROT_READ | PROT_WRITE, MAP_SHARED, fb->fd, 0);
+  fb->fbmem0 = (uint8_t*)mmap(0, total_size, PROT_READ | PROT_WRITE, MAP_SHARED, fb->fd, 0);
 #endif
 
   if (fb->fbmem0 == MAP_FAILED) {
-    log_debug("map framebuffer failed.\n");
+    perror("framebuffer");
+    log_error("map framebuffer failed.\n");
     goto fail;
   }
 
-  memset(fb->fbmem0, 0xff, size);
-
+  log_info("fb_open clear\n");
+  memset(fb->fbmem0, 0xff, total_size);
   if (fb_is_2fb(fb)) {
     fb->fbmem1 = fb->fbmem0 + size;
-    memset(fb->fbmem1, 0xff, size);
+  } else {
+    fb->fbmem1 = NULL;
   }
-
-  log_debug("line_length=%d mem_size=%d smem_len=%d\n", fb->fix.line_length, fb_size(fb),
-            fb->fix.smem_len);
-  log_debug("xres_virtual =%d yres_virtual=%d xpanstep=%d ywrapstep=%d\n", fb->var.xres_virtual,
-            fb->var.yres_virtual, fb->fix.xpanstep, fb->fix.ywrapstep);
+  log_info("fb_open ok\n");
 
   return 0;
 fail:
-  log_debug("%s is not a framebuffer.\n", filename);
+  perror("framebuffer");
+  log_warn("%s is not a framebuffer.\n", filename);
   close(fb->fd);
 
   return -1;
@@ -175,6 +185,9 @@ fail:
 
 static inline void fb_close(fb_info_t* fb) {
   if (fb != NULL) {
+    uint32_t total_size = fb_memsize(fb);
+
+    log_info("fb_close\n");
     if (fb_is_1fb(fb)) {
       if (fb->fbmem1 != NULL) {
         free(fb->fbmem1);
@@ -185,8 +198,9 @@ static inline void fb_close(fb_info_t* fb) {
       free(fb->offline_fb);
     }
 
-    munmap(fb->fbmem0, fb_vsize(fb));
+    munmap(fb->fbmem0, total_size);
     close(fb->fd);
+    log_info("fb_close ok\n");
   }
 
   return;

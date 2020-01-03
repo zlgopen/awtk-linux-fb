@@ -16,6 +16,7 @@ env['LIBS'] = ['awtk_linux_fb'] + env['LIBS']
 
 env.Program(os.path.join(BIN_DIR, 'mouse_test'), ["mouse_thread_test.c"])
 env.Program(os.path.join(BIN_DIR, 'input_test'), ["input_thread_test.c"])
+env.Program(os.path.join(BIN_DIR, 'fb_test'), ["fb_test.c"])
 
 if os.environ['TSLIB_LIB_DIR']:
   env.Program(os.path.join(BIN_DIR, 'tslib_test'), ["tslib_thread_test.c"])

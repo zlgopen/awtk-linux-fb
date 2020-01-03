@@ -68,14 +68,17 @@ STRIP=TOOLS_PREFIX+'strip',
 OS_LIBS = ['stdc++', 'pthread', 'rt', 'm', 'dl']
 
 #for android
+#TSLIB_LIB_DIR=''
+#TSLIB_INC_DIR=''
 #TOOLS_PREFIX='/opt/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/'
 #CC=TOOLS_PREFIX+'armv7a-linux-androideabi16-clang'
 #CXX=TOOLS_PREFIX+'armv7a-linux-androideabi16-clang++'
 #LD=TOOLS_PREFIX+'arm-linux-androideabi-ld'
 #AR=TOOLS_PREFIX+'arm-linux-androideabi-ar'
 #STRIP=TOOLS_PREFIX+'arm-linux-androideabi-strip'
-#OS_LIBS = ['stdc++', 'm', 'dl']
-#OS_FLAGS='-Wall -g -DFB_DEVICE_FILENAME=\\\"\"/dev/graphics/fb0\\\"\" '
+#OS_LINKFLAGS=' -static -Wl,--allow-multiple-definition '
+#OS_LIBS = ['stdc++', 'm']
+#OS_FLAGS='-Wall -Os -DFB_DEVICE_FILENAME=\\\"\"/dev/graphics/fb0\\\"\" '
 
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR '
 
