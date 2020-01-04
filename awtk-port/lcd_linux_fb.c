@@ -123,15 +123,15 @@ static ret_t lcd_mem_linux_swap(lcd_t* lcd) {
   fb_info_t* fb = (fb_info_t*)(lcd->impl_data);
   struct fb_var_screeninfo* var = &(fb->var);
 
+  ret = ioctl(fb->fd, FBIOPAN_DISPLAY, &(fb->var));
+  printf("FBIOPAN_DISPLAY ret=%d yoffset=%d\n", ret, var->yoffset);
+
   var->xoffset = 0;
   if (var->yoffset == 0) {
     var->yoffset = var->yres;
   } else {
     var->yoffset = 0;
   }
-
-  ret = ioctl(fb->fd, FBIOPAN_DISPLAY, &(fb->var));
-  printf("FBIOPAN_DISPLAY ret=%d yoffset=%d\n", ret, var->yoffset);
 
   return RET_OK;
 }

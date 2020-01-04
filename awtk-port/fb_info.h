@@ -135,7 +135,6 @@ static inline int fb_open(fb_info_t* fb, const char* filename) {
 
   fb->var.xoffset = 0;
   fb->var.yoffset = 0;
-  ioctl(fb->fd, FBIOPAN_DISPLAY, &(fb->var));
   
   size = fb_size(fb);
   fb_nr = fb_number(fb);
