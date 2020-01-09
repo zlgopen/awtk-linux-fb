@@ -83,7 +83,7 @@ main_loop_t* main_loop_init(int w, int h) {
   return_value_if_fail(lcd != NULL, NULL);
 
   native_window_raw_init(lcd);
-  loop = main_loop_simple_init(lcd->w, lcd->h);
+  loop = main_loop_simple_init(lcd->w, lcd->h, NULL, NULL);
   loop->base.destroy = main_loop_linux_destroy;
 
 #ifdef HAS_TSLIB
