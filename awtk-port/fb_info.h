@@ -91,21 +91,21 @@ static inline bool_t fb_is_rgb565(fb_info_t* fb) {
   }
 }
 
-static inline bool_t fb_is_bgra8888(fb_info_t* fb) {
+static inline bool_t fb_is_rgba8888(fb_info_t* fb) {
   struct fb_var_screeninfo* var = &(fb->var);
-  if (var->bits_per_pixel == 32 && var->blue.offset == 24 && var->green.offset == 16 &&
-      var->red.offset == 8 && var->blue.length == 8 && var->green.length == 8 &&
-      var->red.length == 8) {
+  if (var->bits_per_pixel == 32 && var->red.offset == 0 && var->green.offset == 8 &&
+      var->blue.offset == 16 && var->red.length == 8 && var->green.length == 8 &&
+      var->blue.length == 8) {
     return TRUE;
   } else {
     return FALSE;
   }
 }
 
-static inline bool_t fb_is_rgba8888(fb_info_t* fb) {
+static inline bool_t fb_is_bgra8888(fb_info_t* fb) {
   struct fb_var_screeninfo* var = &(fb->var);
-  if (var->bits_per_pixel == 32 && var->red.offset == 24 && var->green.offset == 16 &&
-      var->blue.offset == 8 && var->red.length == 8 && var->green.length == 8 &&
+  if (var->bits_per_pixel == 32 && var->blue.offset == 0 && var->green.offset == 8 &&
+      var->red.offset == 16 && var->red.length == 8 && var->green.length == 8 &&
       var->blue.length == 8) {
     return TRUE;
   } else {
