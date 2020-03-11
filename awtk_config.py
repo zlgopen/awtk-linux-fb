@@ -125,3 +125,6 @@ os.environ['GTEST_ROOT'] = GTEST_ROOT;
 os.environ['NATIVE_WINDOW'] = 'raw';
 os.environ['GRAPHIC_BUFFER'] = GRAPHIC_BUFFER;
 
+def has_custom_cc():
+    return True
+
