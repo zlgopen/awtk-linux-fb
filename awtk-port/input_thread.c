@@ -129,7 +129,7 @@ static int32_t map_key(uint8_t code) {
 }
 
 static ret_t input_dispatch(run_info_t* info) {
-  ret_t ret = info->dispatch(info->dispatch_ctx, &(info->req), "keyboard");
+  ret_t ret = info->dispatch(info->dispatch_ctx, &(info->req), "input");
   info->req.event.type = EVT_NONE;
 
   return ret;
@@ -183,16 +183,37 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
     }
     case EV_ABS: {
       switch (e.code) {
+        case ABS_MT_POSITION_X:
         case ABS_X: {
           req->pointer_event.x = e.value;
           break;
         }
+        case ABS_MT_POSITION_Y:
         case ABS_Y: {
           req->pointer_event.y = e.value;
           break;
         }
-        default:
+        case ABS_MT_TRACKING_ID: {
+          if (e.value > 0) {
+            req->event.type = EVT_POINTER_DOWN;
+          } else {
+            req->event.type = EVT_POINTER_UP;
+          }
           break;
+        }
+        case ABS_MT_SLOT:
+        case ABS_MT_TOUCH_MAJOR:
+        case ABS_MT_TOUCH_MINOR:
+        case ABS_MT_WIDTH_MAJOR:
+        case ABS_MT_WIDTH_MINOR:
+        case ABS_MT_PRESSURE:
+        case ABS_MT_BLOB_ID: {
+          break;
+        }
+        default: {
+          log_info("unkown code: e.type=%d code=%d value=%d\n", e.type, e.code, e.value);
+          break;
+        }
       }
 
       if (req->event.type == EVT_NONE) {
@@ -224,8 +245,10 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
           }
           break;
         }
-        default:
+        default: {
+          log_info("unkown code: e.type=%d code=%d value=%d\n", e.type, e.code, e.value);
           break;
+        }
       }
 
       if (req->event.type == EVT_NONE) {
@@ -241,13 +264,17 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
         case EVT_POINTER_UP: {
           return input_dispatch(info);
         }
-        default:
+        default: {
+          log_info("unkown code: e.type=%d code=%d value=%d\n", e.type, e.code, e.value);
           break;
+        }
       }
       break;
     }
-    default:
+    default: {
+      log_info("unkown type: e.type=%d code=%d value=%d\n", e.type, e.code, e.value);
       break;
+    }
   }
 
   return RET_OK;
