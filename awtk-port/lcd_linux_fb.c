@@ -32,11 +32,12 @@
 
 static fb_info_t s_fb;
 static int s_ttyfd = -1;
-
+static bool_t app_quited = FALSE;
 
 static void on_app_exit(void) {
   fb_info_t* fb = &s_fb;
 
+  app_quited = TRUE;
   if (s_ttyfd >= 0) {
     ioctl(s_ttyfd, KDSETMODE, KD_TEXT);
   }
@@ -44,6 +45,38 @@ static void on_app_exit(void) {
   fb_close(fb);
 
   log_debug("on_app_exit\n");
+}
+
+static void* pan_display_thread(void* ctx) {
+  uint32_t i = 0;
+  uint32_t cost = 0;
+  fb_info_t* fb = &s_fb;
+  int fb_nr = fb_number(fb);
+  uint32_t size = fb_size(fb);
+  lcd_mem_t* lcd = (lcd_mem_t*)ctx;
+  uint64_t last_pan_time = time_now_ms();
+  struct fb_var_screeninfo vi = (fb->var);
+
+  log_info("pan_display_thread start\n");
+  while (!app_quited) {
+    uint8_t* buff = fb->fbmem0 + size * i;
+    uint32_t start = time_now_ms();
+
+    vi.yoffset = i * fb_height(fb);
+    memcpy(buff, lcd->offline_fb, size);
+
+    if (ioctl(fb->fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
+      perror("active fb swap failed");
+    }
+
+    // cost = time_now_ms() - start;
+    // log_info("i=%u: cost=%u yoffset=%u buff=%p size=%u\n", i, cost, vi.yoffset, buff, size);
+
+    i = (i + 1) % fb_nr;
+  }
+  log_info("pan_display_thread end\n");
+
+  return NULL;
 }
 
 static void on_signal_int(int sig) {
@@ -104,59 +137,27 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
   return lcd;
 }
 
-static ret_t lcd_mem_linux_begin_frame(lcd_t* lcd, rect_t* dirty_rect) {
-  lcd_mem_t* lcd_mem = (lcd_mem_t*)(lcd);
-  fb_info_t* fb = (fb_info_t*)(lcd->impl_data);
-  struct fb_var_screeninfo* var = &(fb->var);
-
-  if (var->yoffset == 0) {
-    lcd_mem->offline_fb = fb->fbmem1;
-  } else {
-    lcd_mem->offline_fb = fb->fbmem0;
-  }
-
-  return RET_OK;
-}
-
-static ret_t lcd_mem_linux_swap(lcd_t* lcd) {
-  int ret = 0;
-  fb_info_t* fb = (fb_info_t*)(lcd->impl_data);
-  struct fb_var_screeninfo* var = &(fb->var);
-
-  ret = ioctl(fb->fd, FBIOPAN_DISPLAY, &(fb->var));
-  printf("FBIOPAN_DISPLAY ret=%d yoffset=%d\n", ret, var->yoffset);
-
-  var->xoffset = 0;
-  if (var->yoffset == 0) {
-    var->yoffset = var->yres;
-  } else {
-    var->yoffset = 0;
-  }
-
-  return RET_OK;
-}
-
 static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   lcd_t* lcd = NULL;
   int w = fb_width(fb);
   int h = fb_height(fb);
+  int size = fb_size(fb);
   int line_length = fb->fix.line_length;
   int bpp = fb->var.bits_per_pixel;
-  uint8_t* fbmem = (uint8_t*)(fb->fbmem0);
 
   if (bpp == 16) {
     if (fb_is_bgr565(fb)) {
-      lcd = lcd_mem_bgr565_create_single_fb(w, h, fbmem);
+      lcd = lcd_mem_bgr565_create(w, h, TRUE);
     } else if (fb_is_rgb565(fb)) {
-      lcd = lcd_mem_rgb565_create_single_fb(w, h, fbmem);
+      lcd = lcd_mem_rgb565_create(w, h, TRUE);
     } else {
       assert(!"not supported framebuffer format.");
     }
   } else if (bpp == 32) {
     if (fb_is_bgra8888(fb)) {
-      lcd = lcd_mem_bgra8888_create_single_fb(w, h, fbmem);
+      lcd = lcd_mem_bgra8888_create(w, h, TRUE);
     } else if (fb_is_rgba8888(fb)) {
-      lcd = lcd_mem_rgba8888_create_single_fb(w, h, fbmem);
+      lcd = lcd_mem_rgba8888_create(w, h, TRUE);
     } else {
       assert(!"not supported framebuffer format.");
     }
@@ -167,9 +168,8 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   }
 
   if (lcd != NULL) {
-    lcd->impl_data = fb;
-    lcd->swap = lcd_mem_linux_swap;
-    lcd->begin_frame = lcd_mem_linux_begin_frame;
+    pthread_t tid;
+    pthread_create(&tid, NULL, pan_display_thread, lcd);
     lcd_mem_set_line_length(lcd, line_length);
   }
 
@@ -179,12 +179,8 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
 static lcd_t* lcd_linux_create(fb_info_t* fb) {
   if (fb_is_1fb(fb)) {
     return lcd_linux_create_flushable(fb);
-  } else if (fb_is_2fb(fb)) {
-    return lcd_linux_create_swappable(fb);
-  } else if (fb_is_3fb(fb)) {
-    return NULL;
   } else {
-    return NULL;
+    return lcd_linux_create_swappable(fb);
   }
 }
 
