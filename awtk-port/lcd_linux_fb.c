@@ -20,9 +20,11 @@
  */
 
 #include <signal.h>
+#include <pthread.h>
 #include "fb_info.h"
 #include "tkc/mem.h"
 #include "base/lcd.h"
+#include "tkc/time_now.h"
 #include "awtk_global.h"
 #include "lcd_mem_others.h"
 #include "lcd/lcd_mem_bgr565.h"
@@ -32,12 +34,13 @@
 
 static fb_info_t s_fb;
 static int s_ttyfd = -1;
-static bool_t app_quited = FALSE;
+static bool_t s_app_quited = FALSE;
+static pthread_mutex_t s_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void on_app_exit(void) {
   fb_info_t* fb = &s_fb;
 
-  app_quited = TRUE;
+  s_app_quited = TRUE;
   if (s_ttyfd >= 0) {
     ioctl(s_ttyfd, KDSETMODE, KD_TEXT);
   }
@@ -47,34 +50,38 @@ static void on_app_exit(void) {
   log_debug("on_app_exit\n");
 }
 
-static void* pan_display_thread(void* ctx) {
+static void* display_thread(void* ctx) {
   uint32_t i = 0;
-  uint32_t cost = 0;
+  uint32_t index = 0;
   fb_info_t* fb = &s_fb;
   int fb_nr = fb_number(fb);
   uint32_t size = fb_size(fb);
   lcd_mem_t* lcd = (lcd_mem_t*)ctx;
-  uint64_t last_pan_time = time_now_ms();
   struct fb_var_screeninfo vi = (fb->var);
 
-  log_info("pan_display_thread start\n");
-  while (!app_quited) {
+  log_info("display_thread start\n");
+  while (!s_app_quited) {
     uint8_t* buff = fb->fbmem0 + size * i;
     uint32_t start = time_now_ms();
 
     vi.yoffset = i * fb_height(fb);
+    pthread_mutex_lock(&s_mutex);
     memcpy(buff, lcd->offline_fb, size);
+    pthread_mutex_unlock(&s_mutex);
 
     if (ioctl(fb->fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
       perror("active fb swap failed");
     }
 
-    // cost = time_now_ms() - start;
-    // log_info("i=%u: cost=%u yoffset=%u buff=%p size=%u\n", i, cost, vi.yoffset, buff, size);
-
-    i = (i + 1) % fb_nr;
+#if 0
+    log_info("index=%u: i=%u cost=%u yoffset=%u buff=%p size=%u\n", index, i, 
+        (time_now_ms() - start), vi.yoffset,
+        buff, size);
+#endif
+    index++;
+    i = index % fb_nr;
   }
-  log_info("pan_display_thread end\n");
+  log_info("display_thread end\n");
 
   return NULL;
 }
@@ -137,11 +144,26 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
   return lcd;
 }
 
+static ret_t lcd_mem_linux_lock(lcd_t* lcd, rect_t* dirty_rect) {
+  if (lcd->draw_mode != LCD_DRAW_OFFLINE) {
+    pthread_mutex_lock(&s_mutex);
+  }
+
+  return RET_OK;
+}
+
+static ret_t lcd_mem_linux_unlock(lcd_t* lcd) {
+  if (lcd->draw_mode != LCD_DRAW_OFFLINE) {
+    pthread_mutex_unlock(&s_mutex);
+  }
+
+  return RET_OK;
+}
+
 static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   lcd_t* lcd = NULL;
   int w = fb_width(fb);
   int h = fb_height(fb);
-  int size = fb_size(fb);
   int line_length = fb->fix.line_length;
   int bpp = fb->var.bits_per_pixel;
 
@@ -169,8 +191,10 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
 
   if (lcd != NULL) {
     pthread_t tid;
-    pthread_create(&tid, NULL, pan_display_thread, lcd);
+    pthread_create(&tid, NULL, display_thread, lcd);
     lcd_mem_set_line_length(lcd, line_length);
+    lcd->swap = lcd_mem_linux_unlock;
+    lcd->begin_frame = lcd_mem_linux_lock;
   }
 
   return lcd;
