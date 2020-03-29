@@ -31,7 +31,15 @@
 
 #ifndef EV_SYN
 #define EV_SYN 0x00
-#endif
+#endif /*EV_SYN*/
+
+#ifndef ABS_MT_SLOT
+#define ABS_MT_SLOT 0x2f
+#endif/*ABS_MT_SLOT*/
+
+#ifndef ABS_MT_PRESSURE 
+#define ABS_MT_PRESSURE 0x3a
+#endif/*ABS_MT_PRESSURE*/
 
 typedef struct _run_info_t {
   int fd;
