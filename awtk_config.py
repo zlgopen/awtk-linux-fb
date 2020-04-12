@@ -103,6 +103,8 @@ CPPPATH=[TK_ROOT,
   joinPath(TK_3RD_ROOT, 'nanovg/base'), 
   joinPath(TK_3RD_ROOT, 'libunibreak'), 
   joinPath(TK_3RD_ROOT, 'gpinyin/include'), 
+  joinPath(TK_3RD_ROOT, 'gtest/googletest'), 
+  joinPath(TK_3RD_ROOT, 'gtest/googletest/include'), 
   ] + OS_CPPPATH
 
 if TSLIB_LIB_DIR != '':

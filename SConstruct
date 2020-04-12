@@ -32,6 +32,7 @@ else:
 
 SConscriptFiles=[
   awtk.joinPath(TK_ROOT_VAR, '3rd/nanovg/SConscript'),
+  awtk.joinPath(TK_ROOT_VAR, '3rd/cjson/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/agg/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/agge/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/gpinyin/SConscript'), 
