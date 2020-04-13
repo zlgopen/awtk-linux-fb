@@ -52,11 +52,12 @@ typedef struct _fb_info_t {
 #define fb_memsize(fb) ((fb)->fix.smem_len)
 #define fb_size(fb) ((fb)->var.yres * (fb)->fix.line_length)
 #define fb_vsize(fb) ((fb)->var.yres_virtual * (fb)->fix.line_length)
-#define fb_number(fb) ((fb)->var.yres_virtual * (fb)->var.xres_virtual)/((fb)->var.yres * (fb)->var.xres);
+#define fb_number(fb) \
+  ((fb)->var.yres_virtual * (fb)->var.xres_virtual) / ((fb)->var.yres * (fb)->var.xres);
 
 #define fb_is_1fb(fb) ((fb)->var.yres_virtual < 2 * (fb)->var.yres)
-#define fb_is_2fb(fb) (fb_memsize(fb)/fb_size(fb) >= 2)
-#define fb_is_3fb(fb) 0//((fb)->var.yres_virtual == 3 * (fb)->var.yres)
+#define fb_is_2fb(fb) (fb_memsize(fb) / fb_size(fb) >= 2)
+#define fb_is_3fb(fb) 0  //((fb)->var.yres_virtual == 3 * (fb)->var.yres)
 
 static inline bool_t fb_is_bgra5551(fb_info_t* fb) {
   struct fb_var_screeninfo* var = &(fb->var);
@@ -135,7 +136,7 @@ static inline int fb_open(fb_info_t* fb, const char* filename) {
 
   fb->var.xoffset = 0;
   fb->var.yoffset = 0;
-  
+
   size = fb_size(fb);
   fb_nr = fb_number(fb);
   total_size = fb_memsize(fb);
@@ -145,11 +146,11 @@ static inline int fb_open(fb_info_t* fb, const char* filename) {
   log_info("xres_virtual=%d yres_virtual=%d\n", fb->var.xres_virtual, fb->var.yres_virtual);
   log_info("bits_per_pixel=%d line_length=%d\n", fb->var.bits_per_pixel, fb->fix.line_length);
   log_info("fb_info_t: red(%d %d) green(%d %d) blue(%d %d)\n", fb->var.red.offset,
-            fb->var.red.length, fb->var.green.offset, fb->var.green.length, fb->var.blue.offset,
-            fb->var.blue.length);
+           fb->var.red.length, fb->var.green.offset, fb->var.green.length, fb->var.blue.offset,
+           fb->var.blue.length);
   log_info("xpanstep=%u ywrapstep=%u\n", fb->fix.xpanstep, fb->fix.ywrapstep);
-  log_info("fb_size=%u fb_total_size=%u fb_nr=%u smem_len=%u\n", size, total_size, fb_nr, fb->fix.smem_len);
-
+  log_info("fb_size=%u fb_total_size=%u fb_nr=%u smem_len=%u\n", size, total_size, fb_nr,
+           fb->fix.smem_len);
 
 #ifdef FTK_FB_NOMMAP
   // uclinux doesn't support MAP_SHARED or MAP_PRIVATE with PROT_WRITE, so no mmap at all is simpler

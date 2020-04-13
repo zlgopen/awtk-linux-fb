@@ -34,19 +34,19 @@
 
 #ifndef FB_DEVICE_FILENAME
 #define FB_DEVICE_FILENAME "/dev/fb0"
-#endif/*FB_DEVICE_FILENAME*/
+#endif /*FB_DEVICE_FILENAME*/
 
 #ifndef TS_DEVICE_FILENAME
 #define TS_DEVICE_FILENAME "/dev/input/event0"
-#endif/*TS_DEVICE_FILENAME*/
+#endif /*TS_DEVICE_FILENAME*/
 
 #ifndef KB_DEVICE_FILENAME
 #define KB_DEVICE_FILENAME "/dev/input/event1"
-#endif/*KB_DEVICE_FILENAME*/
+#endif /*KB_DEVICE_FILENAME*/
 
 #ifndef MICE_DEVICE_FILENAME
 #define MICE_DEVICE_FILENAME "/dev/input/mice"
-#endif/*MICE_DEVICE_FILENAME*/
+#endif /*MICE_DEVICE_FILENAME*/
 
 static ret_t main_loop_linux_destroy(main_loop_t* l) {
   main_loop_simple_t* loop = (main_loop_simple_t*)l;

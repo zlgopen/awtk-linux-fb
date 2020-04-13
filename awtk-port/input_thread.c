@@ -35,11 +35,11 @@
 
 #ifndef ABS_MT_SLOT
 #define ABS_MT_SLOT 0x2f
-#endif/*ABS_MT_SLOT*/
+#endif /*ABS_MT_SLOT*/
 
-#ifndef ABS_MT_PRESSURE 
+#ifndef ABS_MT_PRESSURE
 #define ABS_MT_PRESSURE 0x3a
-#endif/*ABS_MT_PRESSURE*/
+#endif /*ABS_MT_PRESSURE*/
 
 typedef struct _run_info_t {
   int fd;
@@ -49,6 +49,7 @@ typedef struct _run_info_t {
   char* filename;
   input_dispatch_t dispatch;
 
+  bool_t pressed;
   event_queue_req_t req;
 } run_info_t;
 
@@ -267,17 +268,28 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
     }
     case EV_SYN: {
       switch (req->event.type) {
-        case EVT_POINTER_DOWN:
-        case EVT_POINTER_MOVE:
+        case EVT_POINTER_DOWN: {
+          info->pressed = TRUE;
+          req->pointer_event.pressed = TRUE;
+          break;
+        }
+        case EVT_POINTER_MOVE: {
+          req->pointer_event.pressed = info->pressed;
+          break;
+        }
         case EVT_POINTER_UP: {
-          return input_dispatch(info);
+          info->pressed = FALSE;
+          ;
+          req->pointer_event.pressed = TRUE;
+          break;
         }
         default: {
           log_info("unkown code: e.type=%d code=%d value=%d\n", e.type, e.code, e.value);
           break;
         }
       }
-      break;
+
+      return input_dispatch(info);
     }
     default: {
       log_info("unkown type: e.type=%d code=%d value=%d\n", e.type, e.code, e.value);
