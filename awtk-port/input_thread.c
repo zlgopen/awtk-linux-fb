@@ -279,7 +279,6 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
         }
         case EVT_POINTER_UP: {
           info->pressed = FALSE;
-          ;
           req->pointer_event.pressed = TRUE;
           break;
         }
