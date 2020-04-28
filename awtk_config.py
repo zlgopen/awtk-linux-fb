@@ -106,7 +106,14 @@ CFLAGS=COMMON_CFLAGS
 LINKFLAGS=OS_LINKFLAGS;
 LIBPATH=[LIB_DIR] + OS_LIBPATH
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
-LIBS=['awtk', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'tkc', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
+
+STATIC_LIBS =['awtk_global', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'streams', 'compressors', 'miniz', 'ubjson', 'tkc', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
+SHARED_LIBS=['awtk'] + OS_LIBS;
+
+AWTK_DLL_DEPS_LIBS = ['agge'] + OS_LIBS
+OS_WHOLE_ARCHIVE =' -Wl,--whole-archive -lawtk_global -lextwidgets -lwidgets -lbase -lgpinyin -ltkc -lstreams -lubjson -lcompressors -lminiz -llinebreak -Wl,--no-whole-archive'
+
+LIBS=STATIC_LIBS
 
 CPPPATH=[TK_ROOT, 
   TK_SRC, 
@@ -142,6 +149,10 @@ os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
 os.environ['GTEST_ROOT'] = GTEST_ROOT;
 os.environ['NATIVE_WINDOW'] = 'raw';
 os.environ['GRAPHIC_BUFFER'] = GRAPHIC_BUFFER;
+
+os.environ['OS_WHOLE_ARCHIVE'] = OS_WHOLE_ARCHIVE;
+os.environ['AWTK_DLL_DEPS_LIBS'] = ';'.join(AWTK_DLL_DEPS_LIBS)
+os.environ['STATIC_LIBS'] = ';'.join(STATIC_LIBS)
 
 def has_custom_cc():
     return True
