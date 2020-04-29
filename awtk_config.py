@@ -93,11 +93,11 @@ OS_LIBS = ['stdc++', 'pthread', 'rt', 'm', 'dl']
 #LD=TOOLS_PREFIX+'arm-linux-androideabi-ld'
 #AR=TOOLS_PREFIX+'arm-linux-androideabi-ar'
 #STRIP=TOOLS_PREFIX+'arm-linux-androideabi-strip'
-#OS_LINKFLAGS=' -static -Wl,--allow-multiple-definition '
+#OS_LINKFLAGS='-Wl,--allow-multiple-definition '
 #OS_LIBS = ['stdc++', 'm']
 #OS_FLAGS='-Wall -Os -DFB_DEVICE_FILENAME=\\\"\"/dev/graphics/fb0\\\"\" '
 
-COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR '
+COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR -fPIC '
 
 if TSLIB_LIB_DIR != '':
   COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DHAS_TSLIB '
@@ -110,8 +110,8 @@ CCFLAGS=OS_FLAGS + COMMON_CCFLAGS
 STATIC_LIBS =['awtk_global', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'streams', 'compressors', 'miniz', 'ubjson', 'tkc', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
 SHARED_LIBS=['awtk'] + OS_LIBS;
 
-AWTK_DLL_DEPS_LIBS = ['agge'] + OS_LIBS
-OS_WHOLE_ARCHIVE =' -Wl,--whole-archive -lawtk_global -lextwidgets -lwidgets -lbase -lgpinyin -ltkc -lstreams -lubjson -lcompressors -lminiz -llinebreak -Wl,--no-whole-archive'
+AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg'] + OS_LIBS
+OS_WHOLE_ARCHIVE =' -Wl,--whole-archive -lawtk_global -lextwidgets -lwidgets -lawtk_linux_fb -lbase -lgpinyin -ltkc -lstreams -lubjson -lcompressors -lminiz -llinebreak -Wl,--no-whole-archive'
 
 LIBS=STATIC_LIBS
 
