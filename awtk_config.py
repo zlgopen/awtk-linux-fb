@@ -104,11 +104,14 @@ if TSLIB_LIB_DIR != '':
 
 CFLAGS=COMMON_CFLAGS
 LINKFLAGS=OS_LINKFLAGS;
-LIBPATH=[LIB_DIR] + OS_LIBPATH
+LIBPATH=[LIB_DIR, BIN_DIR] + OS_LIBPATH
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
 
 STATIC_LIBS =['awtk_global', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'streams', 'compressors', 'miniz', 'ubjson', 'tkc', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
-SHARED_LIBS=['awtk'] + OS_LIBS;
+if TSLIB_LIB_DIR != '':
+  SHARED_LIBS=['awtk', 'ts'] + OS_LIBS;
+else:
+  SHARED_LIBS=['awtk'] + OS_LIBS;
 
 AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg'] + OS_LIBS
 OS_WHOLE_ARCHIVE =' -Wl,--whole-archive -lawtk_global -lextwidgets -lwidgets -lawtk_linux_fb -lbase -lgpinyin -ltkc -lstreams -lubjson -lcompressors -lminiz -llinebreak -Wl,--no-whole-archive'
