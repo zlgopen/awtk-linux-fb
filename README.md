@@ -33,7 +33,10 @@ TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi
 #define FB_DEVICE_FILENAME "/dev/fb0"
 #define TS_DEVICE_FILENAME "/dev/input/event0"
 #define KB_DEVICE_FILENAME "/dev/input/event1"
+#define MICE_DEVICE_FILENAME "/dev/input/mouse0"
 ```
+
+> 注意：在有些平台下，如果设置 #define MICE_DEVICE_FILENAME "/dev/input/mice”，会出现触摸不灵的问题。通过hexdump /dev/input/mice命令发现，按下触摸屏或操作鼠标都会打印信息，即/dev/input/mice会同时接收触摸和鼠标事件。可通过"hexdump  /dev/input/xx" 命令选择正确的鼠标设备文件名。
 
 * 4.编译(请先安装scons)
 

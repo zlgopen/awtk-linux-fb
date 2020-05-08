@@ -68,17 +68,22 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
   }
 
   if (ret < 0) {
-    printf("%s:%d mouse read failed(ret=%d, errno=%d, fd=%d, filename=%s)\n", __func__, __LINE__,
-           ret, errno, info->fd, info->filename);
-    perror("Print mouse: ");
-
     sleep(2);
 
     if (access(info->filename, R_OK) == 0) {
       if (info->fd >= 0) {
         close(info->fd);
       }
+
       info->fd = open(info->filename, O_RDONLY);
+      if (info->fd < 0) {
+        log_debug("%s:%d: open mouse failed, fd=%d, filename=%s\n", __func__, __LINE__, info->fd,
+                  info->filename);
+        perror("print mouse: ");
+      } else {
+        log_debug("%s:%d: open mouse successful, fd=%d, filename=%s\n", __func__, __LINE__,
+                  info->fd, info->filename);
+      }
     }
   }
 
@@ -208,6 +213,13 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
 
 void* input_run(void* ctx) {
   run_info_t info = *(run_info_t*)ctx;
+  if (info.fd < 0) {
+    log_debug("%s:%d: open mouse failed, fd=%d, filename=%s\n", __func__, __LINE__, info.fd,
+              info.filename);
+  } else {
+    log_debug("%s:%d: open mouse successful, fd=%d, filename=%s\n", __func__, __LINE__, info.fd,
+              info.filename);
+  }
 
   TKMEM_FREE(ctx);
   while (input_dispatch_one_event(&info) == RET_OK)

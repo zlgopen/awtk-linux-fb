@@ -58,11 +58,8 @@ static ret_t tslib_dispatch_one_event(run_info_t* info) {
   event_queue_req_t* req = &(info->req);
 
   if (ret <= 0) {
-    printf("%s:%d tslib read failed(ret=%d, errno=%d, filename=%s)\n", __func__, __LINE__, ret,
-           errno, info->filename);
-    perror("Print tslib: ");
-
     sleep(2);
+
     if (access(info->filename, R_OK) == 0) {
       if (info->ts != NULL) {
         ts_close(info->ts);
@@ -70,6 +67,14 @@ static ret_t tslib_dispatch_one_event(run_info_t* info) {
       info->ts = ts_open(info->filename, 0);
       return_value_if_fail(info->ts != NULL, RET_OK);
       ts_config(info->ts);
+
+      if (info->ts == NULL) {
+        log_debug("%s:%d: open tslib failed, filename=%s\n", __func__, __LINE__, info->filename);
+        perror("print tslib: ");
+      } else {
+        log_debug("%s:%d: open tslib successful, filename=%s\n", __func__, __LINE__,
+                  info->filename);
+      }
     }
 
     return RET_OK;
@@ -101,6 +106,11 @@ static ret_t tslib_dispatch_one_event(run_info_t* info) {
 
 void* tslib_run(void* ctx) {
   run_info_t info = *(run_info_t*)ctx;
+  if (info.ts == NULL) {
+    log_debug("%s:%d: open tslib failed, filename=%s\n", __func__, __LINE__, info.filename);
+  } else {
+    log_debug("%s:%d: open tslib successful, filename=%s\n", __func__, __LINE__, info.filename);
+  }
 
   TKMEM_FREE(ctx);
   while (tslib_dispatch_one_event(&info) == RET_OK)

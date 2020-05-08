@@ -45,7 +45,7 @@
 #endif /*KB_DEVICE_FILENAME*/
 
 #ifndef MICE_DEVICE_FILENAME
-#define MICE_DEVICE_FILENAME "/dev/input/mice"
+#define MICE_DEVICE_FILENAME "/dev/input/mouse0"
 #endif /*MICE_DEVICE_FILENAME*/
 
 static ret_t main_loop_linux_destroy(main_loop_t* l) {
