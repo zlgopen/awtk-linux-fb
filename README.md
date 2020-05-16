@@ -78,7 +78,7 @@ sh ./release.sh ../awtk-examples/Chart-Demo/res_800_480 demo
 
 ## 其他问题
 
-#### 修改项目路径
+#### 1.修改项目路径
 
 默认情况下，scons 脚本假设以下文件夹在同一个目录
 
@@ -95,4 +95,15 @@ zlgopen
 TK_ROOT = joinPath(os.getcwd(), '../awtk')
 APP_ROOT=joinPath(os.getcwd(), '../awtk-examples/HelloWorld-Demo')
 ```
+
+#### 2.使用Direct Rendering Manager (DRM)
+
+缺省使用framebuffer，如果使用DRM，请修改awtk\_config.py，指定drm的路径。
+
+```
+#for drm
+OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
+OS_LIBS = OS_LIBS + ['drm']
+```
+> DRM目前只在虚拟机中测试过，如果有问题请参考 wtk-port/lcd\_linux\_drm.c 进行调试。
 

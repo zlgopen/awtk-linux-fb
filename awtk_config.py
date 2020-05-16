@@ -84,6 +84,10 @@ AR=TOOLS_PREFIX+'ar',
 STRIP=TOOLS_PREFIX+'strip',
 OS_LIBS = ['stdc++', 'pthread', 'rt', 'm', 'dl']
 
+#for drm
+#OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
+#OS_LIBS = OS_LIBS + ['drm']
+
 #for android
 #TSLIB_LIB_DIR=''
 #TSLIB_INC_DIR=''

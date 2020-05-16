@@ -211,7 +211,9 @@ static inline void fb_sync(fb_info_t* info) {
   int zero = 0;
   ret = ioctl(info->fd, FBIO_WAITFORVSYNC, &zero);
 
-  // log_debug("FBIO_WAITFORVSYNC: %d %d\n", ret, zero);
+  if (ret != 0) {
+    log_debug("FBIO_WAITFORVSYNC: %d %d\n", ret, zero);
+  }
 
   return;
 }

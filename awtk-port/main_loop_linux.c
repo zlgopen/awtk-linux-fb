@@ -30,11 +30,16 @@
 #include "input_thread.h"
 #include "mouse_thread.h"
 #include "lcd_linux_fb.h"
+#include "lcd_linux_drm.h"
 #include "main_loop_linux.h"
 
 #ifndef FB_DEVICE_FILENAME
 #define FB_DEVICE_FILENAME "/dev/fb0"
 #endif /*FB_DEVICE_FILENAME*/
+
+#ifndef DRM_DEVICE_FILENAME
+#define DRM_DEVICE_FILENAME "/dev/dri/card0"
+#endif /*DRM_DEVICE_FILENAME*/
 
 #ifndef TS_DEVICE_FILENAME
 #define TS_DEVICE_FILENAME "/dev/input/event0"
@@ -78,7 +83,11 @@ static void on_app_exit(void) {
 
 main_loop_t* main_loop_init(int w, int h) {
   main_loop_simple_t* loop = NULL;
+#ifdef WITH_LINUX_DRM
+  lcd_t* lcd = lcd_linux_drm_create(DRM_DEVICE_FILENAME);
+#else
   lcd_t* lcd = lcd_linux_fb_create(FB_DEVICE_FILENAME);
+#endif /*WITH_LINUX_DRM*/
 
   return_value_if_fail(lcd != NULL, NULL);
 

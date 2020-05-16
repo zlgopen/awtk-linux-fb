@@ -32,6 +32,8 @@
 #include "lcd/lcd_mem_bgra8888.h"
 #include "lcd/lcd_mem_rgba8888.h"
 
+#ifndef WITH_LINUX_DRM
+
 static fb_info_t s_fb;
 static int s_ttyfd = -1;
 static bool_t s_app_quited = FALSE;
@@ -227,3 +229,5 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
 
   return lcd;
 }
+
+#endif /*no WITH_LINUX_DRM*/
