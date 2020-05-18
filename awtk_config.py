@@ -84,10 +84,6 @@ AR=TOOLS_PREFIX+'ar',
 STRIP=TOOLS_PREFIX+'strip',
 OS_LIBS = ['stdc++', 'pthread', 'rt', 'm', 'dl']
 
-#for drm
-#OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
-#OS_LIBS = OS_LIBS + ['drm']
-
 #for android
 #TSLIB_LIB_DIR=''
 #TSLIB_INC_DIR=''
@@ -100,6 +96,10 @@ OS_LIBS = ['stdc++', 'pthread', 'rt', 'm', 'dl']
 #OS_LINKFLAGS='-Wl,--allow-multiple-definition '
 #OS_LIBS = ['stdc++', 'm']
 #OS_FLAGS='-Wall -Os -DFB_DEVICE_FILENAME=\\\"\"/dev/graphics/fb0\\\"\" '
+
+#for drm
+#OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
+#OS_LIBS = OS_LIBS + ['drm']
 
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR -fPIC '
 
