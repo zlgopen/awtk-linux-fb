@@ -1,9 +1,20 @@
 import os
 import platform
-
 import awtk_config as awtk
 
-DefaultEnvironment(CCFLAGS = awtk.CCFLAGS, 
+LCD_WIDTH = '800'
+LCD_HEIGHT = '480'
+
+LCD = ARGUMENTS.get('LCD', '')
+if len(LCD) > 0:
+  wh = LCD.split('_')
+  if len(wh) >= 1:
+    LCD_WIDTH = wh[0]
+  if len(wh) >= 2:
+    LCD_HEIGHT = wh[1]
+	
+APP_CCFLAGS = ' -DLCD_WIDTH=' + LCD_WIDTH + ' -DLCD_HEIGHT=' + LCD_HEIGHT + ' ' 
+DefaultEnvironment(CCFLAGS = awtk.CCFLAGS + APP_CCFLAGS, 
   CFLAGS = awtk.CFLAGS,
   CC=awtk.CC,
   CXX=awtk.CXX,
