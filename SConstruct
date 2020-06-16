@@ -2,18 +2,17 @@ import os
 import platform
 import awtk_config as awtk
 
-LCD_WIDTH = '800'
-LCD_HEIGHT = '480'
+APP_CCFLAGS = ' '
 
 LCD = ARGUMENTS.get('LCD', '')
 if len(LCD) > 0:
   wh = LCD.split('_')
-  if len(wh) >= 1:
-    LCD_WIDTH = wh[0]
   if len(wh) >= 2:
-    LCD_HEIGHT = wh[1]
-	
-APP_CCFLAGS = ' -DLCD_WIDTH=' + LCD_WIDTH + ' -DLCD_HEIGHT=' + LCD_HEIGHT + ' ' 
+    APP_CCFLAGS = ' -DLCD_WIDTH=' + wh[0] + ' -DLCD_HEIGHT=' + wh[1] + ' '
+  else:
+    print('LCD param input format error, e.g. LCD=800_480')
+    exit(0)
+
 DefaultEnvironment(CCFLAGS = awtk.CCFLAGS + APP_CCFLAGS, 
   CFLAGS = awtk.CFLAGS,
   CC=awtk.CC,
