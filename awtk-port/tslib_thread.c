@@ -57,7 +57,9 @@ static ret_t tslib_dispatch_one_event(run_info_t* info) {
 
   event_queue_req_t* req = &(info->req);
 
-  if (ret <= 0) {
+  if (ret == 0) {
+    return RET_OK;
+  } else if (ret < 0) {
     sleep(2);
 
     if (access(info->filename, R_OK) == 0) {

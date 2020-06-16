@@ -52,6 +52,18 @@ scons
 scons APP=../awtk-examples/HelloWorld-Demo
 ```
 
+有些Demo包含了两套不同LCD大小的资源，如：Chart-Demo
+
+* 编译Chart-Demo，并使用LCD为800 * 480的资源：
+
+```
+scons APP=../awtk-examples/Chart-Demo
+```
+* 编译Chart-Demo，并使用LCD为480 * 272的资源：
+
+```
+scons APP=../awtk-examples/Chart-Demo LCD=480_272
+```
 * 5.生成发布包
 
 对于内置的 demoui 例子
