@@ -102,6 +102,8 @@ OS_LIBS = ['stdc++', 'pthread', 'rt', 'm', 'dl']
 #OS_LIBS = OS_LIBS + ['drm']
 
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR -fPIC '
+COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_DATA_READER_WRITER=1 '
+COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_EVENT_RECORDER_PLAYER=1 '
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DWITH_WIDGET_TYPE_CHECK=1 '
 
 if TSLIB_LIB_DIR != '':
@@ -112,14 +114,14 @@ LINKFLAGS=OS_LINKFLAGS;
 LIBPATH=[LIB_DIR, BIN_DIR] + OS_LIBPATH
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
 
-STATIC_LIBS =['awtk_global', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'streams', 'compressors', 'miniz', 'ubjson', 'tkc', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
+STATIC_LIBS =['awtk_global', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'streams', 'conf_io', 'compressors', 'miniz', 'ubjson', 'tkc', 'nanovg-agge', 'agge', 'nanovg', 'linebreak'] + OS_LIBS
 if TSLIB_LIB_DIR != '':
   SHARED_LIBS=['awtk', 'ts'] + OS_LIBS;
 else:
   SHARED_LIBS=['awtk'] + OS_LIBS;
 
 AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg'] + OS_LIBS
-OS_WHOLE_ARCHIVE =' -Wl,--whole-archive -lawtk_global -lextwidgets -lwidgets -lawtk_linux_fb -lbase -lgpinyin -ltkc -lstreams -lubjson -lcompressors -lminiz -llinebreak -Wl,--no-whole-archive'
+OS_WHOLE_ARCHIVE =' -Wl,--whole-archive -lawtk_global -lextwidgets -lwidgets -lawtk_linux_fb -lbase -lgpinyin -ltkc -lstreams -lconf_io -lubjson -lcompressors -lminiz -llinebreak -Wl,--no-whole-archive'
 
 LIBS=STATIC_LIBS
 
