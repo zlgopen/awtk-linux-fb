@@ -27,6 +27,13 @@ TSLIB_INC_DIR='/opt/28x/tslib/include'
 TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
 ```
 
+> 如果不需要tslib，不定义 TSLIB\_LIB\_DIR 和 TSLIB\_INC\_DIR 即可。如：
+
+```
+#TOOLS_PREFIX=''
+#TSLIB_LIB_DIR=''
+```
+
 * 3.编辑 awtk-port/main\_loop\_linux.c 修改输入设备的文件名
 
 ```
