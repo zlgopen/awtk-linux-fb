@@ -76,6 +76,7 @@ TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi
 #for pc build
 #TOOLS_PREFIX=''
 #TSLIB_LIB_DIR=''
+TARGET_ARCH = platform.architecture();
 
 CC=TOOLS_PREFIX+'gcc',
 CXX=TOOLS_PREFIX+'g++',
