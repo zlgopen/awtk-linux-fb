@@ -78,7 +78,6 @@ static void on_app_exit(void) {
   tk_thread_destroy(s_kb_thread);
   tk_thread_destroy(s_mice_thread);
   tk_thread_destroy(s_ts_thread);
-  lcd_destroy(s_lcd);
 }
 
 main_loop_t* main_loop_init(int w, int h) {
