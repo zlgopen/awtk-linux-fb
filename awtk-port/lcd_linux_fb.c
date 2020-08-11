@@ -38,6 +38,7 @@ static fb_info_t s_fb;
 static int s_ttyfd = -1;
 static bool_t s_app_quited = FALSE;
 static pthread_mutex_t s_mutex = PTHREAD_MUTEX_INITIALIZER;
+static lcd_begin_frame_t lcd_begin_frame_fun = NULL;
 
 static void on_app_exit(void) {
   fb_info_t* fb = &s_fb;
@@ -147,11 +148,15 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
 }
 
 static ret_t lcd_mem_linux_lock(lcd_t* lcd, rect_t* dirty_rect) {
+  ret_t ret = RET_OK;
   if (lcd->draw_mode != LCD_DRAW_OFFLINE) {
     pthread_mutex_lock(&s_mutex);
+    if (lcd_begin_frame_fun != NULL) {
+      ret = lcd_begin_frame_fun(lcd, dirty_rect);
+    }
   }
 
-  return RET_OK;
+  return ret;
 }
 
 static ret_t lcd_mem_linux_unlock(lcd_t* lcd) {
@@ -195,6 +200,7 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
     pthread_t tid;
     pthread_create(&tid, NULL, display_thread, lcd);
     lcd_mem_set_line_length(lcd, line_length);
+    lcd_begin_frame_fun = lcd->begin_frame;
     lcd->swap = lcd_mem_linux_unlock;
     lcd->begin_frame = lcd_mem_linux_lock;
   }
