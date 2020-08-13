@@ -20,10 +20,11 @@
  */
 
 #include <signal.h>
-#include <pthread.h>
 #include "fb_info.h"
 #include "tkc/mem.h"
 #include "base/lcd.h"
+#include "tkc/mutex.h"
+#include "tkc/thread.h"
 #include "tkc/time_now.h"
 #include "awtk_global.h"
 #include "lcd_mem_others.h"
@@ -34,10 +35,13 @@
 
 #ifndef WITH_LINUX_DRM
 
+#define DISPLAY_SLEEP_TIME 16
+
 static fb_info_t s_fb;
 static int s_ttyfd = -1;
+static tk_mutex_t* s_mutex = NULL;
 static bool_t s_app_quited = FALSE;
-static pthread_mutex_t s_mutex = PTHREAD_MUTEX_INITIALIZER;
+static tk_thread_t* s_t_display = NULL;
 static lcd_begin_frame_t lcd_begin_frame_fun = NULL;
 
 static void on_app_exit(void) {
@@ -46,6 +50,17 @@ static void on_app_exit(void) {
   s_app_quited = TRUE;
   if (s_ttyfd >= 0) {
     ioctl(s_ttyfd, KDSETMODE, KD_TEXT);
+  }
+
+  log_info("wait for display thread quited \r\n");
+
+  if (s_t_display != NULL) {
+    tk_thread_join(s_t_display);
+    tk_thread_destroy(s_t_display);
+  }
+
+  if (s_mutex != NULL) {
+    tk_mutex_destroy(s_mutex);
   }
 
   fb_close(fb);
@@ -64,16 +79,23 @@ static void* display_thread(void* ctx) {
 
   log_info("display_thread start\n");
   while (!s_app_quited) {
-    uint8_t* buff = fb->fbmem0 + size * i;
+    int32_t sleep_time = 0;
+    uint32_t diff_time = 0;
     uint32_t start = time_now_ms();
+    uint8_t* buff = fb->fbmem0 + size * i;
 
     vi.yoffset = i * fb_height(fb);
-    pthread_mutex_lock(&s_mutex);
+    tk_mutex_lock(s_mutex);
     memcpy(buff, lcd->offline_fb, size);
-    pthread_mutex_unlock(&s_mutex);
+    tk_mutex_unlock(s_mutex);
 
     if (ioctl(fb->fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
       perror("active fb swap failed");
+    }
+    diff_time = time_now_ms() - start;
+    sleep_time = DISPLAY_SLEEP_TIME - diff_time;
+    if (sleep_time > 0) {
+      sleep_ms(sleep_time);
     }
 
 #if 0
@@ -150,7 +172,7 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
 static ret_t lcd_mem_linux_lock(lcd_t* lcd, rect_t* dirty_rect) {
   ret_t ret = RET_OK;
   if (lcd->draw_mode != LCD_DRAW_OFFLINE) {
-    pthread_mutex_lock(&s_mutex);
+    tk_mutex_lock(s_mutex);
     if (lcd_begin_frame_fun != NULL) {
       ret = lcd_begin_frame_fun(lcd, dirty_rect);
     }
@@ -161,7 +183,7 @@ static ret_t lcd_mem_linux_lock(lcd_t* lcd, rect_t* dirty_rect) {
 
 static ret_t lcd_mem_linux_unlock(lcd_t* lcd) {
   if (lcd->draw_mode != LCD_DRAW_OFFLINE) {
-    pthread_mutex_unlock(&s_mutex);
+    tk_mutex_unlock(s_mutex);
   }
 
   return RET_OK;
@@ -171,22 +193,23 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   lcd_t* lcd = NULL;
   int w = fb_width(fb);
   int h = fb_height(fb);
-  int line_length = fb->fix.line_length;
   int bpp = fb->var.bits_per_pixel;
+  int line_length = fb->fix.line_length;
+  uint8_t* buff = (uint8_t*)TKMEM_ALLOC(fb_size(fb));
 
   if (bpp == 16) {
     if (fb_is_bgr565(fb)) {
-      lcd = lcd_mem_bgr565_create(w, h, TRUE);
+      lcd = lcd_mem_bgr565_create_single_fb(w, h, buff);
     } else if (fb_is_rgb565(fb)) {
-      lcd = lcd_mem_rgb565_create(w, h, TRUE);
+      lcd = lcd_mem_rgb565_create_single_fb(w, h, buff);
     } else {
       assert(!"not supported framebuffer format.");
     }
   } else if (bpp == 32) {
     if (fb_is_bgra8888(fb)) {
-      lcd = lcd_mem_bgra8888_create(w, h, TRUE);
+      lcd = lcd_mem_bgra8888_create_single_fb(w, h, buff);
     } else if (fb_is_rgba8888(fb)) {
-      lcd = lcd_mem_rgba8888_create(w, h, TRUE);
+      lcd = lcd_mem_rgba8888_create_single_fb(w, h, buff);
     } else {
       assert(!"not supported framebuffer format.");
     }
@@ -197,12 +220,15 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   }
 
   if (lcd != NULL) {
-    pthread_t tid;
-    pthread_create(&tid, NULL, display_thread, lcd);
-    lcd_mem_set_line_length(lcd, line_length);
-    lcd_begin_frame_fun = lcd->begin_frame;
     lcd->swap = lcd_mem_linux_unlock;
     lcd->begin_frame = lcd_mem_linux_lock;
+    ((lcd_mem_t*)lcd)->own_offline_fb = TRUE;
+    lcd_mem_set_line_length(lcd, line_length);
+
+    s_mutex = tk_mutex_create();
+
+    s_t_display = tk_thread_create(display_thread, lcd);
+    tk_thread_start(s_t_display);
   }
 
   return lcd;
