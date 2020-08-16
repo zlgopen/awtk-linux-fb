@@ -45,6 +45,7 @@ SConscriptFiles=[
   awtk.joinPath(TK_ROOT_VAR, '3rd/cjson/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/agg/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/agge/SConscript'),
+  awtk.joinPath(TK_ROOT_VAR, '3rd/fribidi/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/gpinyin/SConscript'), 
   awtk.joinPath(TK_ROOT_VAR, '3rd/libunibreak/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/miniz/SConscript'),
