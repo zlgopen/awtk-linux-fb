@@ -3,7 +3,7 @@
 #example: ./release.sh ../awtk-examples/HelloWorld-Demo exename
 
 EXE_NAME=demoui
-APP_ROOT="../awtk/demos"
+APP_ROOT="../awtk"
 
 if [ $1 ]; then
   if [ ! -d $1 ]; then
