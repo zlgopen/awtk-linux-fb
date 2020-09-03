@@ -50,6 +50,8 @@ typedef struct _fb_info_t {
 #define fb_width(fb) ((fb)->var.xres)
 #define fb_height(fb) ((fb)->var.yres)
 #define fb_memsize(fb) ((fb)->fix.smem_len)
+#define fb_bpp(fb) ((fb)->var.bits_per_pixel)
+#define fb_line_length(fb) ((fb)->fix.line_length)
 #define fb_size(fb) ((fb)->var.yres * (fb)->fix.line_length)
 #define fb_vsize(fb) ((fb)->var.yres_virtual * (fb)->fix.line_length)
 #define fb_number(fb) \

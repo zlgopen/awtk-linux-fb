@@ -28,6 +28,8 @@
 #include "tkc/time_now.h"
 #include "awtk_global.h"
 #include "lcd_mem_others.h"
+#include "blend/image_g2d.h"
+#include "base/system_info.h"
 #include "lcd/lcd_mem_bgr565.h"
 #include "lcd/lcd_mem_rgb565.h"
 #include "lcd/lcd_mem_bgra8888.h"
@@ -68,6 +70,36 @@ static void on_app_exit(void) {
   log_debug("on_app_exit\n");
 }
 
+static ret_t lcd_linux_init_drawing_fb(lcd_mem_t* mem, bitmap_t* fb) {
+  return_value_if_fail(mem != NULL && fb != NULL, RET_BAD_PARAMS);
+
+  memset(fb, 0x00, sizeof(bitmap_t));
+
+  fb->w = mem->base.w;
+  fb->h = mem->base.h;
+  fb->format = mem->format;
+  fb->buffer = mem->offline_gb;
+  graphic_buffer_attach(mem->offline_gb, mem->offline_fb, fb->w, fb->h);
+  bitmap_set_line_length(fb, mem->line_length);
+
+  return RET_OK;
+}
+
+static ret_t lcd_linux_init_online_fb(lcd_mem_t* mem, bitmap_t* fb, uint8_t* buff, uint32_t w, uint32_t h, uint32_t line_length) {
+  return_value_if_fail(mem != NULL && fb != NULL && buff != NULL, RET_BAD_PARAMS);
+
+  memset(fb, 0x00, sizeof(bitmap_t));
+
+  fb->w = w;
+  fb->h = h;
+  fb->format = mem->format;
+  fb->buffer = mem->online_gb;
+  graphic_buffer_attach(mem->online_gb, buff, w, h);
+  bitmap_set_line_length(fb, line_length);
+
+  return RET_OK;
+}
+
 static void* display_thread(void* ctx) {
   uint32_t i = 0;
   uint32_t index = 0;
@@ -75,6 +107,7 @@ static void* display_thread(void* ctx) {
   int fb_nr = fb_number(fb);
   uint32_t size = fb_size(fb);
   lcd_mem_t* lcd = (lcd_mem_t*)ctx;
+  lcd_orientation_t o = LCD_ORIENTATION_0;
   struct fb_var_screeninfo vi = (fb->var);
 
   log_info("display_thread start\n");
@@ -86,7 +119,43 @@ static void* display_thread(void* ctx) {
 
     vi.yoffset = i * fb_height(fb);
     tk_mutex_lock(s_mutex);
-    memcpy(buff, lcd->offline_fb, size);
+    o = system_info()->lcd_orientation;
+    if (o == LCD_ORIENTATION_0) {
+      ret_t ret = RET_FAIL;
+#ifdef WITH_G2D
+      bitmap_t online_fb;
+      bitmap_t offline_fb;
+      rect_t r = {0, 0, fb_width(fb), fb_height(fb)};
+
+      lcd_linux_init_drawing_fb(lcd, &offline_fb);
+      lcd_linux_init_online_fb(lcd, &online_fb, buff, fb_width(fb), fb_height(fb), fb_line_length(fb));
+
+      ret = image_copy(&online_fb, &offline_fb, &r, r.x, r.y);
+#endif /*WITH_G2D*/
+      if (ret != RET_OK) {
+        memcpy(buff, lcd->offline_fb, size);
+      }
+    } else {
+      rect_t r = {0};
+      bitmap_t online_fb;
+      bitmap_t offline_fb;
+      if (o == LCD_ORIENTATION_180) {
+        r.x = 0;
+        r.y = 0;
+        r.w = fb_width(fb);
+        r.h = fb_height(fb);
+      } else {
+        r.x = 0;
+        r.y = 0;
+        r.w = fb_height(fb);
+        r.h = fb_width(fb);
+      }
+
+      lcd_linux_init_drawing_fb(lcd, &offline_fb);
+      lcd_linux_init_online_fb(lcd, &online_fb, buff, fb_width(fb), fb_height(fb), fb_line_length(fb));
+
+      image_rotate(&online_fb, &offline_fb, &r, o);
+    }
     tk_mutex_unlock(s_mutex);
 
     if (ioctl(fb->fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
@@ -127,10 +196,10 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
   lcd_t* lcd = NULL;
   int w = fb_width(fb);
   int h = fb_height(fb);
-  int line_length = fb->fix.line_length;
+  int line_length = fb_line_length(fb);
 
+  int bpp = fb_bpp(fb);
   int size = fb_size(fb);
-  int bpp = fb->var.bits_per_pixel;
   uint8_t* online_fb = (uint8_t*)(fb->fbmem0);
 
   fb->fbmem1 = (uint8_t*)malloc(size);
@@ -193,8 +262,8 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   lcd_t* lcd = NULL;
   int w = fb_width(fb);
   int h = fb_height(fb);
-  int bpp = fb->var.bits_per_pixel;
-  int line_length = fb->fix.line_length;
+  int bpp = fb_bpp(fb);
+  int line_length = fb_line_length(fb);
   uint8_t* buff = (uint8_t*)TKMEM_ALLOC(fb_size(fb));
 
   if (bpp == 16) {
@@ -220,7 +289,10 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   }
 
   if (lcd != NULL) {
+    lcd_begin_frame_fun = lcd->begin_frame;
+
     lcd->swap = lcd_mem_linux_unlock;
+    lcd->flush = lcd_mem_linux_unlock;
     lcd->begin_frame = lcd_mem_linux_lock;
     ((lcd_mem_t*)lcd)->own_offline_fb = TRUE;
     lcd_mem_set_line_length(lcd, line_length);
