@@ -142,3 +142,13 @@ Frame buffer device information:
 ```
 
 > 双缓冲判断请参考 awtk-port/fb_info.h 中的代码
+
+#### 修改屏幕分辨率的方法
+
+比如要调整屏幕为 800x480x32bit，虚拟分辨率为 800x960（双缓冲）时，可以用 fbset 命令进行设置：
+
+```
+sudo fbset -g 800 480 800 960 32
+```
+
+> 这种方法同样适用于真正的嵌入式 Linux 板子设备
