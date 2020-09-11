@@ -314,6 +314,22 @@ static lcd_t* lcd_linux_create(fb_info_t* fb) {
   }
 }
 
+static bool_t check_if_run_in_vmware() {
+  bool_t run_in_vmware = FALSE;
+
+  FILE* dmidecode = popen("dmidecode -s system-product-name", "r");
+  if (dmidecode) {
+    char system_product_name[32] = {0};
+    char* result = fgets(system_product_name, sizeof(system_product_name) - 1, dmidecode);
+
+    if (result && strstr(result, "VMware")) {
+      run_in_vmware = TRUE;
+    }
+    pclose(dmidecode);
+  }
+  return run_in_vmware;
+}
+
 lcd_t* lcd_linux_fb_create(const char* filename) {
   lcd_t* lcd = NULL;
   fb_info_t* fb = &s_fb;
@@ -323,6 +339,13 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
     s_ttyfd = open("/dev/tty1", O_RDWR);
     if (s_ttyfd >= 0) {
       ioctl(s_ttyfd, KDSETMODE, KD_GRAPHICS);
+    }
+
+    // fix FBIOPUT_VSCREENINFO block issue when run in vmware double fb mode
+    if (check_if_run_in_vmware()) {
+      log_info("run in vmware and fix FBIOPUT_VSCREENINFO block issue\n");
+      fb->var.activate = FB_ACTIVATE_INV_MODE;
+      fb->var.pixclock = 60;
     }
 
     lcd = lcd_linux_create(fb);
