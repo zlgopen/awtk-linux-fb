@@ -54,8 +54,7 @@ typedef struct _fb_info_t {
 #define fb_line_length(fb) ((fb)->fix.line_length)
 #define fb_size(fb) ((fb)->var.yres * (fb)->fix.line_length)
 #define fb_vsize(fb) ((fb)->var.yres_virtual * (fb)->fix.line_length)
-#define fb_number(fb) \
-  fb_memsize(fb) / fb_size(fb);
+#define fb_number(fb) (fb_memsize(fb) / fb_size(fb))
 
 #define fb_is_1fb(fb) ((fb)->var.yres_virtual < 2 * (fb)->var.yres)
 #define fb_is_2fb(fb) (fb_memsize(fb) / fb_size(fb) >= 2)
@@ -218,6 +217,22 @@ static inline void fb_sync(fb_info_t* info) {
   }
 
   return;
+}
+
+static inline bool_t check_if_run_in_vmware() {
+  bool_t run_in_vmware = FALSE;
+
+  FILE* dmidecode = popen("dmidecode -s system-product-name", "r");
+  if (dmidecode) {
+    char system_product_name[32] = {0};
+    char* result = fgets(system_product_name, sizeof(system_product_name) - 1, dmidecode);
+
+    if (result && strstr(result, "VMware")) {
+      run_in_vmware = TRUE;
+    }
+    pclose(dmidecode);
+  }
+  return run_in_vmware;
 }
 
 #endif /*TK_FB_INFO_H*/

@@ -63,9 +63,13 @@ static ret_t main_loop_linux_destroy(main_loop_t* l) {
 }
 
 ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* e, const char* msg) {
-  main_loop_queue_event((main_loop_t*)ctx, e);
-  input_dispatch_print(ctx, e, msg);
-
+  main_loop_t* l = (main_loop_t*)ctx;
+  if (l != NULL && l->queue_event != NULL) {
+    main_loop_queue_event(l, e);
+    input_dispatch_print(ctx, e, msg);
+  } else {
+    return RET_BAD_PARAMS;
+  }
   return RET_OK;
 }
 
@@ -75,9 +79,15 @@ static tk_thread_t* s_mice_thread = NULL;
 static tk_thread_t* s_ts_thread = NULL;
 
 static void on_app_exit(void) {
-  tk_thread_destroy(s_kb_thread);
-  tk_thread_destroy(s_mice_thread);
-  tk_thread_destroy(s_ts_thread);
+  if (s_kb_thread != NULL) {
+    tk_thread_destroy(s_kb_thread);
+  }
+  if (s_mice_thread != NULL) {
+    tk_thread_destroy(s_mice_thread);
+  }
+  if (s_ts_thread != NULL) {
+    tk_thread_destroy(s_ts_thread);
+  }
 }
 
 main_loop_t* main_loop_init(int w, int h) {

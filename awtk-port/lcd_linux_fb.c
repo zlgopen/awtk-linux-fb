@@ -23,10 +23,10 @@
 #include "fb_info.h"
 #include "tkc/mem.h"
 #include "base/lcd.h"
-#include "tkc/mutex.h"
 #include "tkc/thread.h"
-#include "tkc/time_now.h"
 #include "awtk_global.h"
+#include "tkc/time_now.h"
+#include "tkc/semaphore.h"
 #include "lcd_mem_others.h"
 #include "blend/image_g2d.h"
 #include "base/system_info.h"
@@ -37,19 +37,26 @@
 
 #ifndef WITH_LINUX_DRM
 
-#define DISPLAY_SLEEP_TIME 16
+#ifndef DISPLAY_WAIT_TIME
+#define DISPLAY_WAIT_TIME 5000
+#endif
 
 static fb_info_t s_fb;
 static int s_ttyfd = -1;
-static tk_mutex_t* s_mutex = NULL;
+static int32_t s_buff_index = 0;
 static bool_t s_app_quited = FALSE;
 static tk_thread_t* s_t_display = NULL;
-static lcd_begin_frame_t lcd_begin_frame_fun = NULL;
+static tk_semaphore_t* s_read_sema = NULL;
+static tk_semaphore_t* s_wirte_sema = NULL;
 
 static void on_app_exit(void) {
   fb_info_t* fb = &s_fb;
 
   s_app_quited = TRUE;
+  if (s_read_sema != NULL) {
+    tk_semaphore_post(s_read_sema);
+    sleep_ms(16);
+  }
   if (s_ttyfd >= 0) {
     ioctl(s_ttyfd, KDSETMODE, KD_TEXT);
   }
@@ -61,10 +68,14 @@ static void on_app_exit(void) {
     tk_thread_destroy(s_t_display);
   }
 
-  if (s_mutex != NULL) {
-    tk_mutex_destroy(s_mutex);
+  if (s_read_sema != NULL) {
+    tk_semaphore_destroy(s_read_sema);
   }
 
+  if (s_wirte_sema != NULL) {
+    tk_semaphore_destroy(s_wirte_sema);
+  }
+  
   fb_close(fb);
 
   log_debug("on_app_exit\n");
@@ -100,81 +111,85 @@ static ret_t lcd_linux_init_online_fb(lcd_mem_t* mem, bitmap_t* fb, uint8_t* buf
   return RET_OK;
 }
 
-static void* display_thread(void* ctx) {
-  uint32_t i = 0;
-  uint32_t index = 0;
+static ret_t lcd_linux_flush(lcd_t* base) {
+  
+  uint8_t* buff = NULL;
   fb_info_t* fb = &s_fb;
   int fb_nr = fb_number(fb);
   uint32_t size = fb_size(fb);
-  lcd_mem_t* lcd = (lcd_mem_t*)ctx;
-  lcd_orientation_t o = LCD_ORIENTATION_0;
+  lcd_mem_t* lcd = (lcd_mem_t*)base;
+  lcd_orientation_t o = system_info()->lcd_orientation;
+
+  return_value_if_fail(lcd != NULL && fb != NULL && s_buff_index < fb_nr, RET_BAD_PARAMS);
+  
+  buff = fb->fbmem0 + size * s_buff_index;
+  if (o == LCD_ORIENTATION_0) {
+    ret_t ret = RET_FAIL;
+#ifdef WITH_G2D
+    bitmap_t online_fb;
+    bitmap_t offline_fb;
+    rect_t r = {0, 0, fb_width(fb), fb_height(fb)};
+
+    lcd_linux_init_drawing_fb(lcd, &offline_fb);
+    lcd_linux_init_online_fb(lcd, &online_fb, buff, fb_width(fb), fb_height(fb), fb_line_length(fb));
+
+    ret = image_copy(&online_fb, &offline_fb, &r, r.x, r.y);
+#endif /*WITH_G2D*/
+    if (ret != RET_OK) {
+      memcpy(buff, lcd->offline_fb, size);
+    }
+  } else {
+    rect_t r = {0};
+    bitmap_t online_fb;
+    bitmap_t offline_fb;
+    if (o == LCD_ORIENTATION_180) {
+      r.x = 0;
+      r.y = 0;
+      r.w = fb_width(fb);
+      r.h = fb_height(fb);
+    } else {
+      r.x = 0;
+      r.y = 0;
+      r.w = fb_height(fb);
+      r.h = fb_width(fb);
+    }
+
+    lcd_linux_init_drawing_fb(lcd, &offline_fb);
+    lcd_linux_init_online_fb(lcd, &online_fb, buff, fb_width(fb), fb_height(fb), fb_line_length(fb));
+
+    image_rotate(&online_fb, &offline_fb, &r, o);
+  }
+  return RET_OK;
+}
+
+static void* display_thread(void* ctx) {
+  fb_info_t* fb = &s_fb;
+  int fb_nr = fb_number(fb);
   struct fb_var_screeninfo vi = (fb->var);
 
   log_info("display_thread start\n");
+
   while (!s_app_quited) {
-    int32_t sleep_time = 0;
-    uint32_t diff_time = 0;
-    uint32_t start = time_now_ms();
-    uint8_t* buff = fb->fbmem0 + size * i;
 
-    vi.yoffset = i * fb_height(fb);
-    tk_mutex_lock(s_mutex);
-    o = system_info()->lcd_orientation;
-    if (o == LCD_ORIENTATION_0) {
-      ret_t ret = RET_FAIL;
-#ifdef WITH_G2D
-      bitmap_t online_fb;
-      bitmap_t offline_fb;
-      rect_t r = {0, 0, fb_width(fb), fb_height(fb)};
-
-      lcd_linux_init_drawing_fb(lcd, &offline_fb);
-      lcd_linux_init_online_fb(lcd, &online_fb, buff, fb_width(fb), fb_height(fb), fb_line_length(fb));
-
-      ret = image_copy(&online_fb, &offline_fb, &r, r.x, r.y);
-#endif /*WITH_G2D*/
-      if (ret != RET_OK) {
-        memcpy(buff, lcd->offline_fb, size);
+    if (s_buff_index < fb_nr) {
+      vi.yoffset = s_buff_index * fb_height(fb);
+      if (tk_semaphore_wait(s_read_sema, DISPLAY_WAIT_TIME) == RET_OK) {
+        if (s_app_quited) {
+          break;
+        }
+        if (ioctl(fb->fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
+          perror("active fb swap failed");
+        }
+        s_buff_index++;
+        if (s_buff_index >= fb_nr) {
+          s_buff_index = 0;
+        }
+        tk_semaphore_post(s_wirte_sema);
       }
-    } else {
-      rect_t r = {0};
-      bitmap_t online_fb;
-      bitmap_t offline_fb;
-      if (o == LCD_ORIENTATION_180) {
-        r.x = 0;
-        r.y = 0;
-        r.w = fb_width(fb);
-        r.h = fb_height(fb);
-      } else {
-        r.x = 0;
-        r.y = 0;
-        r.w = fb_height(fb);
-        r.h = fb_width(fb);
-      }
-
-      lcd_linux_init_drawing_fb(lcd, &offline_fb);
-      lcd_linux_init_online_fb(lcd, &online_fb, buff, fb_width(fb), fb_height(fb), fb_line_length(fb));
-
-      image_rotate(&online_fb, &offline_fb, &r, o);
+      
     }
-    tk_mutex_unlock(s_mutex);
-
-    if (ioctl(fb->fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
-      perror("active fb swap failed");
-    }
-    diff_time = time_now_ms() - start;
-    sleep_time = DISPLAY_SLEEP_TIME - diff_time;
-    if (sleep_time > 0) {
-      sleep_ms(sleep_time);
-    }
-
-#if 0
-    log_info("index=%u: i=%u cost=%u yoffset=%u buff=%p size=%u\n", index, i, 
-        (time_now_ms() - start), vi.yoffset,
-        buff, size);
-#endif
-    index++;
-    i = index % fb_nr;
   }
+
   log_info("display_thread end\n");
 
   return NULL;
@@ -238,24 +253,18 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
   return lcd;
 }
 
-static ret_t lcd_mem_linux_lock(lcd_t* lcd, rect_t* dirty_rect) {
+static ret_t lcd_mem_linux_wirte_buff(lcd_t* lcd) {
   ret_t ret = RET_OK;
   if (lcd->draw_mode != LCD_DRAW_OFFLINE) {
-    tk_mutex_lock(s_mutex);
-    if (lcd_begin_frame_fun != NULL) {
-      ret = lcd_begin_frame_fun(lcd, dirty_rect);
+    if (tk_semaphore_wait(s_wirte_sema, DISPLAY_WAIT_TIME) == RET_OK) {
+      ret = lcd_linux_flush(lcd);
+      tk_semaphore_post(s_read_sema);
+
+      return_value_if_fail(ret == RET_OK, ret);
     }
   }
 
   return ret;
-}
-
-static ret_t lcd_mem_linux_unlock(lcd_t* lcd) {
-  if (lcd->draw_mode != LCD_DRAW_OFFLINE) {
-    tk_mutex_unlock(s_mutex);
-  }
-
-  return RET_OK;
 }
 
 static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
@@ -289,15 +298,14 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   }
 
   if (lcd != NULL) {
-    lcd_begin_frame_fun = lcd->begin_frame;
 
-    lcd->swap = lcd_mem_linux_unlock;
-    lcd->flush = lcd_mem_linux_unlock;
-    lcd->begin_frame = lcd_mem_linux_lock;
+    lcd->swap = lcd_mem_linux_wirte_buff;
+    lcd->flush = lcd_mem_linux_wirte_buff;
     ((lcd_mem_t*)lcd)->own_offline_fb = TRUE;
     lcd_mem_set_line_length(lcd, line_length);
 
-    s_mutex = tk_mutex_create();
+    s_read_sema = tk_semaphore_create(0, NULL);
+    s_wirte_sema = tk_semaphore_create(1, NULL);
 
     s_t_display = tk_thread_create(display_thread, lcd);
     tk_thread_start(s_t_display);
@@ -312,22 +320,6 @@ static lcd_t* lcd_linux_create(fb_info_t* fb) {
   } else {
     return lcd_linux_create_swappable(fb);
   }
-}
-
-static bool_t check_if_run_in_vmware() {
-  bool_t run_in_vmware = FALSE;
-
-  FILE* dmidecode = popen("dmidecode -s system-product-name", "r");
-  if (dmidecode) {
-    char system_product_name[32] = {0};
-    char* result = fgets(system_product_name, sizeof(system_product_name) - 1, dmidecode);
-
-    if (result && strstr(result, "VMware")) {
-      run_in_vmware = TRUE;
-    }
-    pclose(dmidecode);
-  }
-  return run_in_vmware;
 }
 
 lcd_t* lcd_linux_fb_create(const char* filename) {
