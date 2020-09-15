@@ -1,5 +1,7 @@
 import os
 import platform
+import shutil
+import atexit
 import awtk_config as awtk
 
 APP_CCFLAGS = ' '
@@ -13,7 +15,14 @@ if len(LCD) > 0:
     print('LCD param input format error, e.g. LCD=800_480')
     exit(0)
 
-DefaultEnvironment(CCFLAGS = awtk.CCFLAGS + APP_CCFLAGS, 
+APP_ROOT = ARGUMENTS.get('APP', '')
+if len (APP_ROOT) > 0:
+  app_sconstruct = awtk.joinPath(APP_ROOT, 'SConstruct')
+  if not os.path.exists(APP_ROOT) or not os.path.exists(app_sconstruct):
+    print('APP: ' + APP_ROOT + ' not found!')
+    exit(0)
+
+env = DefaultEnvironment(CCFLAGS = awtk.CCFLAGS + APP_CCFLAGS, 
   CFLAGS = awtk.CFLAGS,
   CC=awtk.CC,
   CXX=awtk.CXX,
@@ -29,17 +38,13 @@ DefaultEnvironment(CCFLAGS = awtk.CCFLAGS + APP_CCFLAGS,
   OS_SUBSYSTEM_WINDOWS=awtk.OS_SUBSYSTEM_WINDOWS
 )
 
-APP_ROOT=ARGUMENTS.get('APP', '')
 TK_ROOT_VAR = awtk.joinPath(awtk.VAR_DIR, 'awtk')
 VariantDir(TK_ROOT_VAR, awtk.TK_ROOT)
 
 if APP_ROOT == '':
   APP_PROJ_VAR = [awtk.joinPath(TK_ROOT_VAR, 'demos/SConscript')]
 else:
-  (APP_PATH, APP_NAME) = os.path.split(APP_ROOT)
-  APP_ROOT_VAR = awtk.joinPath(awtk.VAR_DIR, APP_NAME)
-  APP_PROJ_VAR = [awtk.joinPath(APP_ROOT_VAR, 'src/SConscript')]
-  VariantDir(APP_ROOT_VAR, APP_ROOT)
+  APP_PROJ_VAR = []
 
 SConscriptFiles=[
   awtk.joinPath(TK_ROOT_VAR, '3rd/nanovg/SConscript'),
@@ -61,3 +66,31 @@ SConscriptFiles=[
   ] + APP_PROJ_VAR;
 
 SConscript(SConscriptFiles)
+
+
+def build_app():
+  if APP_ROOT == '':
+    return
+
+  print('======================== build app ========================')
+
+  app_bin = awtk.joinPath(APP_ROOT, 'bin')
+  linux_fb_bin = os.environ['BIN_DIR'];
+
+  if env.GetOption('clean'):
+    cmd = 'cd ' + APP_ROOT + ' && scons -c'
+    print(cmd)
+    os.system(cmd)
+  else:
+    cmd = 'cd ' + APP_ROOT + ' && scons LINUX_FB=true'
+    if len(LCD) > 0:
+      cmd += ' LCD=' + LCD
+    print(cmd)
+    os.system(cmd)
+
+    files = os.listdir(app_bin)
+    for file in files:
+      print('copy ' + awtk.joinPath(app_bin, file) + ' to ' + linux_fb_bin)
+      shutil.copy(awtk.joinPath(app_bin, file), linux_fb_bin)
+
+atexit.register(build_app)
