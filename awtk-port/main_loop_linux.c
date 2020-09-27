@@ -62,9 +62,33 @@ static ret_t main_loop_linux_destroy(main_loop_t* l) {
   return RET_OK;
 }
 
-ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* e, const char* msg) {
+ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* evt, const char* msg) {
   main_loop_t* l = (main_loop_t*)ctx;
+  event_queue_req_t event = *evt;
+  event_queue_req_t* e = &event;
+
   if (l != NULL && l->queue_event != NULL) {
+    switch (e->event.type) {
+      case EVT_KEY_DOWN:
+      case EVT_KEY_UP:
+      case EVT_KEY_LONG_PRESS: {
+        e->event.size = sizeof(e->key_event);
+        break;
+      }
+      case EVT_POINTER_DOWN:
+      case EVT_POINTER_MOVE:
+      case EVT_POINTER_UP: {
+        e->event.size = sizeof(e->pointer_event);
+        break;
+      }
+      case EVT_WHEEL: {
+        e->event.size = sizeof(e->wheel_event);
+        break;
+      }
+      default:
+        break;
+    }
+
     main_loop_queue_event(l, e);
     input_dispatch_print(ctx, e, msg);
   } else {
