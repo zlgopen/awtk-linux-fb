@@ -20,8 +20,18 @@ LIB_DIR          = joinPath(BUILD_DIR, 'lib')
 VAR_DIR          = joinPath(BUILD_DIR, 'var')
 TK_DEMO_ROOT     = joinPath(TK_ROOT, 'demos')
 
-LCD='LINUX_FB'
-NANOVG_BACKEND='AGGE'
+# lcd devices
+LCD_DEICES='fb'
+# LCD_DEICES='drm'
+# LCD_DEICES='egl_for_fsl'
+# LCD_DEICES='egl_for_x11'
+
+if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
+  LCD='LINUX_FB'
+  NANOVG_BACKEND='AGGE'
+else if LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
+  LCD='FB_GL'
+  NANOVG_BACKEND=''
 
 #INPUT_ENGINE='null'
 #INPUT_ENGINE='spinyin'
@@ -31,8 +41,14 @@ INPUT_ENGINE='pinyin'
 
 COMMON_CCFLAGS=' -DHAS_STD_MALLOC -DHAS_STDIO -DWITH_VGCANVAS -DWITH_UNICODE_BREAK -DLINUX'
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_ASSET_LOADER -DWITH_FS_RES ' 
-COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_STB_FONT  -DWITH_TEXT_BIDI=1 '
-COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_WIDGET_TYPE_CHECK'
+COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_STB_FONT -DWITH_TEXT_BIDI=1 '
+
+if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
+  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE '
+else if LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
+  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_GLES2 -DWITH_NANOVG_GL -DWITH_NANOVG_GPU '
+
+
 
 if INPUT_ENGINE == 't9':
     COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DWITH_IME_T9 '
@@ -101,9 +117,18 @@ OS_LIBS = ['stdc++', 'pthread', 'rt', 'm', 'dl']
 #OS_LIBS = ['stdc++', 'm']
 #OS_FLAGS='-Wall -Os -DFB_DEVICE_FILENAME=\\\"\"/dev/graphics/fb0\\\"\" '
 
-#for drm
-#OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
-#OS_LIBS = OS_LIBS + ['drm']
+if LCD_DEICES =='drm' :
+  #for drm
+  OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
+  OS_LIBS = OS_LIBS + ['drm']
+else if LCD_DEICES =='egl_for_fsl':
+  #for egl for fsl
+  OS_FLAGS=OS_FLAGS + ' -DEGL_API_FB '
+  OS_LIBS = OS_LIBS + [ 'GLESv2', 'EGL']
+else if LCD_DEICES =='egl_for_x11' 
+  #for egl for fsl
+  OS_FLAGS=OS_FLAGS + ' -fPIC '
+  OS_LIBS = OS_LIBS + [ 'X11', 'EGL', 'GLESv2' ]
 
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR -fPIC '
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_DATA_READER_WRITER=1 '
@@ -164,9 +189,14 @@ os.environ['TSLIB_LIB_DIR'] = TSLIB_LIB_DIR;
 os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
 os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
 os.environ['GTEST_ROOT'] = GTEST_ROOT;
-os.environ['NATIVE_WINDOW'] = 'raw';
 os.environ['TOOLS_NAME'] = '';
 os.environ['GRAPHIC_BUFFER'] = GRAPHIC_BUFFER;
+
+if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
+  os.environ['NATIVE_WINDOW'] = 'raw';
+else if LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
+  os.environ['NATIVE_WINDOW'] = 'fb_gl';
+
 
 os.environ['OS_WHOLE_ARCHIVE'] = OS_WHOLE_ARCHIVE;
 os.environ['AWTK_DLL_DEPS_LIBS'] = ';'.join(AWTK_DLL_DEPS_LIBS)
