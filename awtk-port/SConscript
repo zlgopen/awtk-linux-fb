@@ -4,10 +4,18 @@ import copy
 BIN_DIR = os.environ['BIN_DIR'];
 LIB_DIR = os.environ['LIB_DIR'];
 env = DefaultEnvironment().Clone()
-SOURCES = ['mouse_thread.c', 'input_thread.c', 'input_dispatcher.c', 'lcd_linux_fb.c', 'lcd_linux_drm.c', 'main_loop_linux.c', 'lcd_linux_egl.c', 'lcd_mem_others.c' ]
+SOURCES = [
+  'input_thread/mouse_thread.c', 
+  'input_thread/input_thread.c', 
+  'input_thread/input_dispatcher.c', 
+  'lcd_linux/lcd_linux_fb.c', 
+  'lcd_linux/lcd_linux_drm.c', 
+  'lcd_linux/lcd_linux_egl.c', 
+  'lcd_linux/lcd_mem_others.c' ,
+  'main_loop_linux.c' ]
 
 if os.environ['TSLIB_LIB_DIR']:
-  SOURCES = ['tslib_thread.c'] + SOURCES;
+  SOURCES = ['input_thread/tslib_thread.c'] + SOURCES;
 
 env.Library(os.path.join(LIB_DIR, 'awtk_linux_fb'), SOURCES)
 

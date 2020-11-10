@@ -19,7 +19,7 @@
  *
  */
 
-#include "input_thread/mouse_thread.h"
+#include "mouse_thread.h"
 
 int main(int argc, char* argv[]) {
   tk_thread_t* thread = NULL;

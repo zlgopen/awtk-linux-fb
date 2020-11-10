@@ -136,7 +136,7 @@ main_loop_t* main_loop_init(int w, int h) {
 
   return_value_if_fail(lcd != NULL, NULL);
 
-#ifndef WITH_LINUX_EGL
+#ifdef WITH_LINUX_EGL
   s_lcd = lcd;
 #else
   native_window_raw_init(lcd);

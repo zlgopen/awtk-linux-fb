@@ -19,7 +19,7 @@
  *
  */
 
-#include "input_thread/tslib_thread.h"
+#include "tslib_thread.h"
 
 int main(int argc, char* argv[]) {
   tk_thread_t* thread = NULL;

@@ -19,7 +19,7 @@
  *
  */
 
-#include "input_thread/input_thread.h"
+#include "input_thread.h"
 
 int main(int argc, char* argv[]) {
   tk_thread_t* thread = NULL;

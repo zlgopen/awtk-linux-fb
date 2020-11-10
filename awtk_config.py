@@ -20,6 +20,9 @@ LIB_DIR          = joinPath(BUILD_DIR, 'lib')
 VAR_DIR          = joinPath(BUILD_DIR, 'var')
 TK_DEMO_ROOT     = joinPath(TK_ROOT, 'demos')
 
+LCD_DIR        = joinPath(TK_LINUX_FB_ROOT, 'awtk-port/lcd_linux')
+INPUT_DIR      = joinPath(TK_LINUX_FB_ROOT, 'awtk-port/input_thread')
+
 # lcd devices
 LCD_DEICES='fb'
 # LCD_DEICES='drm'
@@ -29,7 +32,7 @@ LCD_DEICES='fb'
 if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
   LCD='LINUX_FB'
   NANOVG_BACKEND='AGGE'
-else if LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
+elif LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
   LCD='FB_GL'
   NANOVG_BACKEND=''
 
@@ -45,7 +48,7 @@ COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMA
 
 if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE '
-else if LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
+elif LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_GLES2 -DWITH_NANOVG_GL -DWITH_NANOVG_GPU '
 
 
@@ -121,11 +124,11 @@ if LCD_DEICES =='drm' :
   #for drm
   OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
   OS_LIBS = OS_LIBS + ['drm']
-else if LCD_DEICES =='egl_for_fsl':
+elif LCD_DEICES =='egl_for_fsl':
   #for egl for fsl
   OS_FLAGS=OS_FLAGS + ' -DEGL_API_FB '
   OS_LIBS = OS_LIBS + [ 'GLESv2', 'EGL']
-else if LCD_DEICES =='egl_for_x11' 
+elif LCD_DEICES =='egl_for_x11' :
   #for egl for fsl
   OS_FLAGS=OS_FLAGS + ' -fPIC '
   OS_LIBS = OS_LIBS + [ 'X11', 'EGL', 'GLESv2' ]
@@ -157,8 +160,8 @@ LIBS=STATIC_LIBS
 CPPPATH=[TK_ROOT, 
   TK_SRC, 
   TK_3RD_ROOT, 
-  joinPath(CWD, 'lcd_linux'), 
-  joinPath(CWD, 'input_thread'), 
+  LCD_DIR, 
+  INPUT_DIR, 
   joinPath(TK_SRC, 'ext_widgets'), 
   joinPath(TK_ROOT, 'tools'), 
   joinPath(TK_3RD_ROOT, 'agge'), 
@@ -178,6 +181,7 @@ if TSLIB_LIB_DIR != '':
   CPPPATH = [TSLIB_INC_DIR] + CPPPATH;
 
 os.environ['LCD'] = LCD
+os.environ['LCD_DEICES'] = LCD_DEICES
 os.environ['TARGET_ARCH'] = 'arm'
 os.environ['BIN_DIR'] = BIN_DIR;
 os.environ['LIB_DIR'] = LIB_DIR;
@@ -194,7 +198,7 @@ os.environ['GRAPHIC_BUFFER'] = GRAPHIC_BUFFER;
 
 if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
   os.environ['NATIVE_WINDOW'] = 'raw';
-else if LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
+elif LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
   os.environ['NATIVE_WINDOW'] = 'fb_gl';
 
 
