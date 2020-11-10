@@ -1,7 +1,7 @@
 ﻿/**
- * File:   input_thread_test.c
+ * File:   lcd_mem_others.h
  * Author: AWTK Develop Team
- * Brief:  test input thread
+ * Brief:  support other special format linux framebuffers
  *
  * Copyright (c) 2018 - 2020  Guangzhou ZHIYUAN Electronics Co.,Ltd.
  *
@@ -15,22 +15,20 @@
 /**
  * History:
  * ================================================================
- * 2018-09-07 Li XianJing <xianjimli@hotmail.com> created
+ * 2019-06-17 Li XianJing <xianjimli@hotmail.com> created
  *
  */
 
-#include "input_thread.h"
+#ifndef LCD_MEM_OTHERS_H
+#define LCD_MEM_OTHERS_H
 
-int main(int argc, char* argv[]) {
-  tk_thread_t* thread = NULL;
-  if (argc < 2) {
-    printf("%s filename\n", argv[0]);
-    return 0;
-  }
+#include "fb_info.h"
+#include "lcd/lcd_mem_special.h"
 
-  thread = input_thread_run(argv[1], input_dispatch_print, NULL, 320, 480);
+BEGIN_C_DECLS
 
-  tk_thread_join(thread);
+lcd_t* lcd_mem_bgra5551_create(fb_info_t* fb);
 
-  return 0;
-}
+END_C_DECLS
+
+#endif /*LCD_MEM_OTHERS_H*/

@@ -4,8 +4,7 @@ import copy
 BIN_DIR = os.environ['BIN_DIR'];
 LIB_DIR = os.environ['LIB_DIR'];
 env = DefaultEnvironment().Clone()
-
-SOURCES = ['mouse_thread.c', 'input_thread.c', 'input_dispatcher.c', 'lcd_linux_fb.c', 'lcd_linux_drm.c', 'main_loop_linux.c', 'lcd_mem_others.c']
+SOURCES = ['mouse_thread.c', 'input_thread.c', 'input_dispatcher.c', 'lcd_linux_fb.c', 'lcd_linux_drm.c', 'main_loop_linux.c', 'lcd_linux_egl.c', 'lcd_mem_others.c' ]
 
 if os.environ['TSLIB_LIB_DIR']:
   SOURCES = ['tslib_thread.c'] + SOURCES;
@@ -14,9 +13,9 @@ env.Library(os.path.join(LIB_DIR, 'awtk_linux_fb'), SOURCES)
 
 env['LIBS'] = ['awtk_linux_fb'] + env['LIBS']
 
-env.Program(os.path.join(BIN_DIR, 'mouse_test'), ["mouse_thread_test.c"])
-env.Program(os.path.join(BIN_DIR, 'input_test'), ["input_thread_test.c"])
-env.Program(os.path.join(BIN_DIR, 'fb_test'), ["fb_test.c"])
+env.Program(os.path.join(BIN_DIR, 'mouse_test'), ["test/mouse_thread_test.c"])
+env.Program(os.path.join(BIN_DIR, 'input_test'), ["test/input_thread_test.c"])
+env.Program(os.path.join(BIN_DIR, 'fb_test'), ["test/fb_test.c"])
 
 if os.environ['TSLIB_LIB_DIR']:
-  env.Program(os.path.join(BIN_DIR, 'tslib_test'), ["tslib_thread_test.c"])
+  env.Program(os.path.join(BIN_DIR, 'tslib_test'), ["test/tslib_thread_test.c"])

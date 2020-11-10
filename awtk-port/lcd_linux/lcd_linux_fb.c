@@ -35,7 +35,7 @@
 #include "lcd/lcd_mem_bgra8888.h"
 #include "lcd/lcd_mem_rgba8888.h"
 
-#ifndef WITH_LINUX_DRM
+#if !defined(WITH_LINUX_DRM) && !defined(WITH_LINUX_DRM)
 
 #ifndef DISPLAY_WAIT_TIME
 #define DISPLAY_WAIT_TIME 5000
@@ -349,4 +349,4 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
   return lcd;
 }
 
-#endif /*no WITH_LINUX_DRM*/
+#endif

@@ -1,7 +1,7 @@
 ﻿/**
- * File:   mouse_thread_test.c
+ * File:   input_thread_test.c
  * Author: AWTK Develop Team
- * Brief:  test mouse thread
+ * Brief:  test input thread
  *
  * Copyright (c) 2018 - 2020  Guangzhou ZHIYUAN Electronics Co.,Ltd.
  *
@@ -19,7 +19,7 @@
  *
  */
 
-#include "mouse_thread.h"
+#include "input_thread/input_thread.h"
 
 int main(int argc, char* argv[]) {
   tk_thread_t* thread = NULL;
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  thread = mouse_thread_run(argv[1], input_dispatch_print, NULL, 320, 480);
+  thread = input_thread_run(argv[1], input_dispatch_print, NULL, 320, 480);
 
   tk_thread_join(thread);
 

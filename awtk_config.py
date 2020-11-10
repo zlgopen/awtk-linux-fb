@@ -132,6 +132,8 @@ LIBS=STATIC_LIBS
 CPPPATH=[TK_ROOT, 
   TK_SRC, 
   TK_3RD_ROOT, 
+  joinPath(CWD, 'lcd_linux'), 
+  joinPath(CWD, 'input_thread'), 
   joinPath(TK_SRC, 'ext_widgets'), 
   joinPath(TK_ROOT, 'tools'), 
   joinPath(TK_3RD_ROOT, 'agge'), 

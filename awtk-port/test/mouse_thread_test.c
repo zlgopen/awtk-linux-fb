@@ -1,7 +1,7 @@
 ﻿/**
- * File:   tslib_thread_test.c
+ * File:   mouse_thread_test.c
  * Author: AWTK Develop Team
- * Brief:  test tslib thread
+ * Brief:  test mouse thread
  *
  * Copyright (c) 2018 - 2020  Guangzhou ZHIYUAN Electronics Co.,Ltd.
  *
@@ -19,7 +19,7 @@
  *
  */
 
-#include "tslib_thread.h"
+#include "input_thread/mouse_thread.h"
 
 int main(int argc, char* argv[]) {
   tk_thread_t* thread = NULL;
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  thread = tslib_thread_run(argv[1], input_dispatch_print, NULL, 320, 480);
+  thread = mouse_thread_run(argv[1], input_dispatch_print, NULL, 320, 480);
 
   tk_thread_join(thread);
 

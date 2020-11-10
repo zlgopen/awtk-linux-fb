@@ -1,0 +1,240 @@
+/**
+ * File:   egl_devices.c
+ * Author: AWTK Develop Team
+ * Brief:  egl devices for x11
+ *
+ * Copyright (c) 2020 - 2020  Guangzhou ZHIYUAN Electronics Co.,Ltd.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * License file for more details.
+ *
+ */
+
+/**
+ * History:
+ * ================================================================
+ * 2020-11-06 Lou ZhiMing <luozhiming@zlg.com> created
+ *
+ */
+
+#include <signal.h>
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
+#include <GLES2/gl2.h>
+#include <EGL/egl.h>
+#include "../egl_devices.h"
+
+typedef struct _egl_devices_x11_context_t {
+  Window win;
+  Display* x_display;
+  EGLDisplay egl_display;
+  EGLContext egl_context;
+  EGLSurface egl_surface;
+} egl_devices_x11_context_t;
+
+static void DeInit_GLES(egl_devices_x11_context_t* ctx) {
+  ////  cleaning up...
+  eglDestroyContext(ctx->egl_display, ctx->egl_context);
+  eglDestroySurface(ctx->egl_display, ctx->egl_surface);
+  eglTerminate(ctx->egl_display);
+  XDestroyWindow(ctx->x_display, ctx->win);
+  XCloseDisplay(ctx->x_display);
+}
+
+static int Init_GLES(egl_devices_x11_context_t* ctx) {
+  ///////  the X11 part  //////////////////////////////////////////////////////////////////
+  // in the first part the program opens a connection to the X11 window manager
+  //
+
+  ctx->x_display = XOpenDisplay(NULL);  // open the standard display (the primary screen)
+  if (ctx->x_display == NULL) {
+    assert(0);
+    return 1;
+  }
+
+  Window root =
+      DefaultRootWindow(ctx->x_display);  // get the root window (usually the whole screen)
+
+  XSetWindowAttributes swa;
+  swa.event_mask = ExposureMask | PointerMotionMask | KeyPressMask;
+
+  ctx->win = XCreateWindow(  // create a window with the provided parameters
+      ctx->x_display, root, 0, 0, 1280, 800, 0, CopyFromParent, InputOutput, CopyFromParent,
+      CWEventMask, &swa);
+
+  XSetWindowAttributes xattr;
+  Atom atom;
+  int one = 1;
+
+  xattr.override_redirect = False;
+  XChangeWindowAttributes(ctx->x_display, ctx->win, CWOverrideRedirect, &xattr);
+
+  atom = XInternAtom(ctx->x_display, "_NET_WM_STATE_FULLSCREEN", False);
+  XChangeProperty(ctx->x_display, ctx->win, XInternAtom(ctx->x_display, "_NET_WM_STATE", False),
+                  XA_ATOM, 32, PropModeReplace, (unsigned char*)&atom, 1);
+
+  XChangeProperty(ctx->x_display, ctx->win,
+                  XInternAtom(ctx->x_display, "_HILDON_NON_COMPOSITED_WINDOW", False), XA_INTEGER,
+                  32, PropModeReplace, (unsigned char*)&one, 1);
+
+  XWMHints hints;
+  hints.input = True;
+  hints.flags = InputHint;
+  XSetWMHints(ctx->x_display, ctx->win, &hints);
+
+  XMapWindow(ctx->x_display, ctx->win);             // make the window visible on the screen
+  XStoreName(ctx->x_display, ctx->win, "GL test");  // give the window a name
+
+  //// get identifiers for the provided atom name strings
+  Atom wm_state = XInternAtom(ctx->x_display, "_NET_WM_STATE", False);
+  Atom fullscreen = XInternAtom(ctx->x_display, "_NET_WM_STATE_FULLSCREEN", False);
+
+  XEvent xev;
+  memset(&xev, 0, sizeof(xev));
+
+  xev.type = ClientMessage;
+  xev.xclient.window = ctx->win;
+  xev.xclient.message_type = wm_state;
+  xev.xclient.format = 32;
+  xev.xclient.data.l[0] = 1;
+  xev.xclient.data.l[1] = fullscreen;
+  XSendEvent(  // send an event mask to the X-server
+      ctx->x_display, DefaultRootWindow(ctx->x_display), False, SubstructureNotifyMask, &xev);
+
+  ///////  the egl part  //////////////////////////////////////////////////////////////////
+  //  egl provides an interface to connect the graphics related functionality of openGL ES
+  //  with the windowing interface and functionality of the native operation system (X11
+  //  in our case.
+
+  ctx->egl_display = eglGetDisplay((EGLNativeDisplayType)ctx->x_display);
+  if (ctx->egl_display == EGL_NO_DISPLAY) {
+    assert(0);
+    return 1;
+  }
+
+  if (!eglInitialize(ctx->egl_display, NULL, NULL)) {
+    assert(0);
+    return 1;
+  }
+
+  eglBindAPI(EGL_OPENGL_ES_API);
+
+  EGLint attr[] = {
+      // some attributes to set up our egl-interface
+      // EGL_BUFFER_SIZE, 32,
+      // EGL_RENDERABLE_TYPE,
+      // EGL_OPENGL_ES2_BIT,
+      EGL_SAMPLES,
+      0,
+      EGL_RED_SIZE,
+      8,
+      EGL_GREEN_SIZE,
+      8,
+      EGL_BLUE_SIZE,
+      8,
+      EGL_ALPHA_SIZE,
+      EGL_DONT_CARE,
+      EGL_STENCIL_SIZE,
+      8,
+      EGL_DEPTH_SIZE,
+      0,
+      EGL_SURFACE_TYPE,
+      EGL_WINDOW_BIT,
+      EGL_MIN_SWAP_INTERVAL,
+      0,
+      EGL_NONE,
+  };
+
+  EGLConfig ecfg;
+  EGLint num_config;
+  if (!eglChooseConfig(ctx->egl_display, attr, &ecfg, 1, &num_config)) {
+    assert(0);
+    return 1;
+  }
+
+  if (num_config != 1) {
+    assert(0);
+    return 1;
+  }
+
+  ctx->egl_surface = eglCreateWindowSurface(ctx->egl_display, ecfg, ctx->win, NULL);
+  if (ctx->egl_surface == EGL_NO_SURFACE) {
+    assert(0);
+    return 1;
+  }
+
+  //// egl-contexts collect all state descriptions needed required for operation
+  EGLint ctxattr[] = {EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
+  ctx->egl_context = eglCreateContext(ctx->egl_display, ecfg, EGL_NO_CONTEXT, ctxattr);
+  if (ctx->egl_context == EGL_NO_CONTEXT) {
+    assert(0);
+    return 1;
+  }
+
+  //// associate the egl-context with the egl-surface
+  eglMakeCurrent(ctx->egl_display, ctx->egl_surface, ctx->egl_surface, ctx->egl_context);
+
+  if (!eglSwapInterval(ctx->egl_display, 0)) {
+    assert(0);
+    return 1;
+  }
+  return 0;
+}
+
+void* egl_devices_create(const char* filename) {
+  egl_devices_fsl_context_t* ctx = TKMEM_ZALLOC(egl_devices_fsl_context_t);
+  return_value_if_fail(ctx != NULL, NULL);
+
+  (void)filename;
+  Init_GLES(ctx);
+  return (void*)ctx;
+}
+
+ret_t egl_devices_dispose(void* ctx) {
+  egl_devices_fsl_context_t* context = (egl_devices_fsl_context_t*)ctx;
+  return_value_if_fail(context != NULL, RET_BAD_PARAMS);
+  DeInit_GLES(context);
+  return RET_OK;
+}
+
+float_t egl_devices_get_ratio(void* ctx) {
+  (void)ctx;
+  return 1.0f;
+}
+
+int32_t egl_devices_get_width(void* ctx) {
+  EGLint width = 0;
+  egl_devices_fsl_context_t* context = (egl_devices_fsl_context_t*)ctx;
+  return_value_if_fail(context != NULL, RET_BAD_PARAMS);
+
+  eglQuerySurface(context->egldisplay, context->eglsurface, EGL_WIDTH, &width);
+  return (int32_t)width;
+}
+
+int32_t egl_devices_get_height(void* ctx) {
+  EGLint height = 0;
+  egl_devices_fsl_context_t* context = (egl_devices_fsl_context_t*)ctx;
+  return_value_if_fail(context != NULL, RET_BAD_PARAMS);
+
+  eglQuerySurface(context->egldisplay, context->eglsurface, EGL_HEIGHT, &height);
+  return (int32_t)height;
+}
+
+ret_t egl_devices_make_current(void* ctx) {
+  egl_devices_fsl_context_t* context = (egl_devices_fsl_context_t*)ctx;
+  return_value_if_fail(context != NULL, RET_BAD_PARAMS);
+
+  eglMakeCurrent(context->egl_display, context->egl_surface, context->egl_surface, context->egl_context);
+  return eglGetError() == EGL_SUCCESS ? RET_OK : RET_FAIL;
+}
+
+ret_t egl_devices_swap_buffers(void* ctx) {
+  egl_devices_fsl_context_t* context = (egl_devices_fsl_context_t*)ctx;
+  return_value_if_fail(context != NULL, RET_BAD_PARAMS);
+
+  eglSwapBuffers(context->egl_display, context->egl_surface);
+  return eglGetError() == EGL_SUCCESS ? RET_OK : RET_FAIL;
+}

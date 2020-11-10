@@ -8,3 +8,4 @@ release.zip
 release.tar.gz
 release
 .sconsign.dblite
+.vscode/*.*
