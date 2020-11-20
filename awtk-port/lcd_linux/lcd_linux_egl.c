@@ -23,8 +23,10 @@
 
 #include <signal.h>
 #include "tkc/mem.h"
+#include "glad/glad.h"
+#include "awtk_global.h"
 #include "lcd_linux_egl.h"
-#include "egl_devices/egl_devices.h"
+#include "../egl_devices/egl_devices.h"
 #include "native_window/native_window_fb_gl.h"
 
 static void on_app_exit(void) {
@@ -98,7 +100,7 @@ lcd_egl_context_t* lcd_linux_egl_create(const char* filename) {
 
   return lcd;
 error :
-  lcd_linux_egl_dispose(ctx);
+  lcd_linux_egl_dispose(lcd);
   return NULL;
 }
 

@@ -46,6 +46,9 @@ if APP_ROOT == '':
 else:
   APP_PROJ_VAR = []
 
+if os.environ['LCD_DEICES'] =='egl_for_fsl' or os.environ['LCD_DEICES'] =='egl_for_x11' :
+  APP_PROJ_VAR += [awtk.joinPath(TK_ROOT_VAR, '3rd/glad/SConscript')]
+
 SConscriptFiles=[
   awtk.joinPath(TK_ROOT_VAR, '3rd/nanovg/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/cjson/SConscript'),
