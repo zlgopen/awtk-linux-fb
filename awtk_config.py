@@ -28,11 +28,17 @@ LCD_DEICES='fb'
 # LCD_DEICES='drm'
 # LCD_DEICES='egl_for_fsl'
 # LCD_DEICES='egl_for_x11'
+# LCD_DEICES='egl_for_rpi'
+
+def lcd_deices_is_egl(lcd_deices):
+  if LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' or LCD_DEICES =='egl_for_x11' :
+    return True
+  return False
 
 if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
   LCD='LINUX_FB'
   NANOVG_BACKEND='AGGE'
-elif LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
+elif lcd_deices_is_egl(LCD_DEICES) :
   LCD='FB_GL'
   NANOVG_BACKEND=''
 
@@ -50,7 +56,7 @@ if LCD_DEICES =='fb' :
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE '
 elif LCD_DEICES =='drm' :
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_LINUX_DRM '
-elif LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
+elif lcd_deices_is_egl(LCD_DEICES) :
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_GLES2 -DWITH_NANOVG_GL -DWITH_NANOVG_GPU -DWITH_LINUX_EGL '
 
 
@@ -134,6 +140,11 @@ elif LCD_DEICES =='egl_for_x11' :
   #for egl for fsl
   OS_FLAGS=OS_FLAGS + ' -fPIC '
   OS_LIBS=OS_LIBS + [ 'X11', 'EGL', 'GLESv2' ]
+elif LCD_DEICES =='egl_for_rpi' :
+  #for egl for rpi
+  OS_LIBPATH += ['/opt/vc/lib']
+  OS_CPPPATH += ['/opt/vc/include']
+  OS_LIBS=OS_LIBS + [ 'brcmEGL', 'brcmGLESv2', 'bcm_host' ]
 
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR -fPIC '
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_DATA_READER_WRITER=1 '
@@ -154,7 +165,7 @@ if TSLIB_LIB_DIR != '':
 else:
   SHARED_LIBS=['awtk'] + OS_LIBS;
 
-if LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
+if lcd_deices_is_egl(LCD_DEICES) :
   STATIC_LIBS += ['glad']
 
 AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg'] + OS_LIBS
@@ -205,7 +216,7 @@ os.environ['GRAPHIC_BUFFER'] = GRAPHIC_BUFFER;
 
 if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
   os.environ['NATIVE_WINDOW'] = 'raw';
-elif LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' :
+elif lcd_deices_is_egl(LCD_DEICES) :
   os.environ['NATIVE_WINDOW'] = 'fb_gl';
 
 

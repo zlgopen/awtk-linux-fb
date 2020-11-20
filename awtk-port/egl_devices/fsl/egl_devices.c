@@ -127,7 +127,7 @@ ret_t egl_devices_make_current(void* ctx) {
   egl_devices_fsl_context_t* context = (egl_devices_fsl_context_t*)ctx;
   return_value_if_fail(context != NULL, RET_BAD_PARAMS);
 
-  eglMakeCurrent(context->egldisplay, context->eglsurface, ctx->eglsurface, ctx->eglcontext);
+  eglMakeCurrent(context->egldisplay, context->eglsurface, context->eglsurface, context->eglcontext);
   return eglGetError() == EGL_SUCCESS ? RET_OK : RET_FAIL;
 }
 
