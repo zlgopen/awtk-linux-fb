@@ -6,6 +6,11 @@ OS_NAME = platform.system()
 def joinPath(root, subdir):
   return os.path.normpath(os.path.join(root, subdir))
 
+def lcd_deices_is_egl(lcd_deices):
+  if lcd_deices =='egl_for_fsl' or lcd_deices =='egl_for_x11' or lcd_deices =='egl_for_rpi' :
+    return True
+  return False
+
 CWD=os.path.normpath(os.path.abspath(os.path.dirname(__file__)));
 
 TK_LINUX_FB_ROOT = CWD
@@ -29,11 +34,6 @@ LCD_DEICES='fb'
 # LCD_DEICES='egl_for_fsl'
 # LCD_DEICES='egl_for_x11'
 # LCD_DEICES='egl_for_rpi'
-
-def lcd_deices_is_egl(lcd_deices):
-  if LCD_DEICES =='egl_for_fsl' or LCD_DEICES =='egl_for_x11' or LCD_DEICES =='egl_for_x11' :
-    return True
-  return False
 
 if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
   LCD='LINUX_FB'
@@ -145,6 +145,7 @@ elif LCD_DEICES =='egl_for_rpi' :
   OS_LIBPATH += ['/opt/vc/lib']
   OS_CPPPATH += ['/opt/vc/include']
   OS_LIBS=OS_LIBS + [ 'brcmEGL', 'brcmGLESv2', 'bcm_host' ]
+  COMMON_CCFLAGS += ' -DWITH_GLAD_SPECIAL_OPENGL_LIB=\\\"\"/opt/vc/lib/libbrcmGLESv2.so\\\"\" '
 
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR -fPIC '
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_DATA_READER_WRITER=1 '
@@ -159,16 +160,19 @@ LINKFLAGS=OS_LINKFLAGS;
 LIBPATH=[LIB_DIR, BIN_DIR] + OS_LIBPATH
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
 
-STATIC_LIBS =['awtk_global', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'streams', 'conf_io', 'compressors', 'miniz', 'ubjson', 'tkc_static', 'nanovg-agge', 'agge', 'nanovg', 'linebreak', 'fribidi'] + OS_LIBS
+STATIC_LIBS =['awtk_global', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'streams', 'conf_io', 'compressors', 'miniz', 'ubjson', 'tkc_static', 'linebreak', 'fribidi'] + OS_LIBS
 if TSLIB_LIB_DIR != '':
   SHARED_LIBS=['awtk', 'ts'] + OS_LIBS;
 else:
   SHARED_LIBS=['awtk'] + OS_LIBS;
 
-if lcd_deices_is_egl(LCD_DEICES) :
-  STATIC_LIBS += ['glad']
+if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
+  STATIC_LIBS += ['nanovg-agge', 'agge', 'nanovg']
+  AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg'] + OS_LIBS
+elif lcd_deices_is_egl(LCD_DEICES) :
+  STATIC_LIBS += ['glad', 'nanovg']
+  AWTK_DLL_DEPS_LIBS = ['glad', 'nanovg'] + OS_LIBS
 
-AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg'] + OS_LIBS
 OS_WHOLE_ARCHIVE =' -Wl,--whole-archive -lfribidi -lawtk_global -lextwidgets -lwidgets -lawtk_linux_fb -lbase -lgpinyin -ltkc_static -lstreams -lconf_io -lubjson -lcompressors -lminiz -llinebreak -Wl,--no-whole-archive'
 
 LIBS=STATIC_LIBS

@@ -26,9 +26,10 @@
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include "bcm_host.h"
 #include "tkc/mem.h"
 #include "../egl_devices.h"
+#define bool_t 1
+#include "bcm_host.h"
 
 typedef struct _egl_devices_rpi_context_t {
   uint32_t screen_width;
@@ -136,10 +137,10 @@ void* egl_devices_create(const char* filename) {
   printf("\n");
 
   glViewport(0, 0, (GLsizei) ctx->screen_width, (GLsizei) ctx->screen_height);
-  glClearColor(1, 0, 0, 1);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearStencil(0);
   glStencilMask(0xffffffff);
-  glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   return (void*)ctx;
 }
