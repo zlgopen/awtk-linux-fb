@@ -65,7 +65,7 @@ static ret_t lcd_linux_gles_make_current(native_window_t* win) {
   return ret;
 }
 
-ret_t lcd_linux_egl_dispose(lcd_egl_context_t* lcd) {
+ret_t lcd_linux_egl_destroy(lcd_egl_context_t* lcd) {
   ret_t ret = RET_OK;
   return_value_if_fail(lcd != NULL, RET_BAD_PARAMS);
   ret = egl_devices_dispose(lcd->elg_ctx);
@@ -100,7 +100,7 @@ lcd_egl_context_t* lcd_linux_egl_create(const char* filename) {
 
   return lcd;
 error :
-  lcd_linux_egl_dispose(lcd);
+  lcd_linux_egl_destroy(lcd);
   return NULL;
 }
 
