@@ -22,7 +22,6 @@
 #ifndef TK_LCD_LINUX_EGL_H
 #define TK_LCD_LINUX_EGL_H
 
-#include  <EGL/egl.h>
 #include "base/types_def.h"
 
 BEGIN_C_DECLS

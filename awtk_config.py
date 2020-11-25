@@ -160,17 +160,17 @@ LINKFLAGS=OS_LINKFLAGS;
 LIBPATH=[LIB_DIR, BIN_DIR] + OS_LIBPATH
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
 
-STATIC_LIBS =['awtk_global', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'streams', 'conf_io', 'compressors', 'miniz', 'ubjson', 'tkc_static', 'linebreak', 'fribidi'] + OS_LIBS
+STATIC_LIBS =['awtk_global', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'streams', 'conf_io', 'compressors', 'miniz', 'ubjson', 'tkc_static', 'linebreak', 'fribidi']
 if TSLIB_LIB_DIR != '':
   SHARED_LIBS=['awtk', 'ts'] + OS_LIBS;
 else:
   SHARED_LIBS=['awtk'] + OS_LIBS;
 
 if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
-  STATIC_LIBS += ['nanovg-agge', 'agge', 'nanovg']
+  STATIC_LIBS = STATIC_LIBS + ['nanovg-agge', 'agge', 'nanovg']  + OS_LIBS
   AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg'] + OS_LIBS
 elif lcd_deices_is_egl(LCD_DEICES) :
-  STATIC_LIBS += ['glad', 'nanovg']
+  STATIC_LIBS = STATIC_LIBS + ['glad', 'nanovg']  + OS_LIBS
   AWTK_DLL_DEPS_LIBS = ['glad', 'nanovg'] + OS_LIBS
 
 OS_WHOLE_ARCHIVE =' -Wl,--whole-archive -lfribidi -lawtk_global -lextwidgets -lwidgets -lawtk_linux_fb -lbase -lgpinyin -ltkc_static -lstreams -lconf_io -lubjson -lcompressors -lminiz -llinebreak -Wl,--no-whole-archive'
