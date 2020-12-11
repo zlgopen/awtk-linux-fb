@@ -1,5 +1,5 @@
 /**
- * File:   lcd_linux_egl.c
+ * File:   egl_devices.h
  * Author: AWTK Develop Team
  * Brief:  linux egl lcd
  *
