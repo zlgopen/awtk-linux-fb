@@ -97,7 +97,7 @@ sh ./release.sh ../awtk-examples/Chart-Demo/res_800_480 demo
 
 ## 文档
 
-* [如何搭建 Ubuntu 调试环境](README.UbuntuVM.md)
+* [如何搭建 Ubuntu 调试环境](docs/how_to_use_in_vmware.md)
 
 ## 其他问题
 
