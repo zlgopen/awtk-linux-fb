@@ -56,7 +56,7 @@ scons
 也可以指定生成其他 Demo，生成结果在 build/bin 文件夹下的 demo 文件
 
 ```
-scons APP=../awtk-examples/HelloWorld-Demo
+scons APP=../awtk-examples/HelloWorld.Xml-Demo
 ```
 
 有些 Demo 包含了两套不同 LCD 大小的资源，如：Chart-Demo
@@ -82,8 +82,7 @@ sh ./release.sh
 对于其他 Demo，需要加入资源文件夹参数，指向应用程序 assets 的父目录
 
 ```
-sh ./release.sh ../awtk-examples/HelloWorld-Demo/res demo
-sh ./release.sh ../awtk-examples/Chart-Demo/res_800_480 demo
+sh ./release.sh ../awtk-examples/HelloWorld.Xml-Demo/res demo
 ```
 
 * 6. 运行
@@ -101,7 +100,7 @@ sh ./release.sh ../awtk-examples/Chart-Demo/res_800_480 demo
 
 ## 其他问题
 
-#### 1. 修改项目路径
+#### 1. 项目路径
 
 默认情况下，scons 脚本假设以下文件夹在同一个目录
 
@@ -112,20 +111,20 @@ zlgopen
   |-- awtk-linux-fb
 ```
 
-如果实际存放的路径与默认不同，则需要修改以下 awtk-linux-fb/SConstruct 代码，例如：
-
-```
-TK_ROOT = joinPath(os.getcwd(), '../awtk')
-APP_ROOT=joinPath(os.getcwd(), '../awtk-examples/HelloWorld-Demo')
-```
-
 #### 2. 使用 Direct Rendering Manager (DRM)
 
-缺省使用 framebuffer，如果使用 DRM，请修改 awtk\_config.py，指定 drm 的路径。
+缺省使用 framebuffer，如果使用 DRM，请修改 awtk\_config.py，指定 LCD_DEICES 和 drm 的路径。
 
 ```
+LCD_DEICES='drm'
+
 #for drm
 OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
 OS_LIBS = OS_LIBS + ['drm']
 ```
 > DRM 目前只在虚拟机中测试过，如果有问题请参考 wtk-port/lcd\_linux\_drm.c 进行调试。
+
+#### 3. 使用 EGL 硬件加速
+
+缺省使用 framebuffer，如果使用 EGL，请参考文档 [how_to_use_egl.md](docs/how_to_use_egl.md)。
+
