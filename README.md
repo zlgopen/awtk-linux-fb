@@ -90,8 +90,8 @@ sh ./release.sh ../awtk-examples/HelloWorld.Xml-Demo/res demo
 把 release.tar.gz 上传到开发板，并解压，然后运行：
 
 ```
-./release/bin/demoui
-./release/bin/demo
+sudo ./release/bin/demoui
+sudo ./release/bin/demo
 ```
 
 ## 文档
