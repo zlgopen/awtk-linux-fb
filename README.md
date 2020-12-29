@@ -102,7 +102,7 @@ sudo ./release/bin/demo
 
 #### 1. 项目路径
 
-默认情况下，scons 脚本假设以下文件夹在同一个目录
+默认情况下，scons 脚本假设以下文件夹在同一个目录。
 
 ```
 zlgopen
@@ -127,4 +127,12 @@ OS_LIBS = OS_LIBS + ['drm']
 #### 3. 使用 EGL 硬件加速
 
 缺省使用 framebuffer，如果使用 EGL，请参考文档 [how_to_use_egl.md](docs/how_to_use_egl.md)。
+
+#### 4. 编译动态链接库方式
+
+请修改 awtk\_config.py，将 os.environ['WITH_AWTK_SO'] 标记为 true。
+
+```
+os.environ['WITH_AWTK_SO'] = 'true'
+```
 

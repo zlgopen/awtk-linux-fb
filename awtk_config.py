@@ -219,6 +219,7 @@ os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
 os.environ['GTEST_ROOT'] = GTEST_ROOT;
 os.environ['TOOLS_NAME'] = '';
 os.environ['GRAPHIC_BUFFER'] = GRAPHIC_BUFFER;
+#os.environ['WITH_AWTK_SO'] = 'true'
 
 if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
   os.environ['NATIVE_WINDOW'] = 'raw';
