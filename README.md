@@ -128,9 +128,9 @@ OS_LIBS = OS_LIBS + ['drm']
 
 缺省使用 framebuffer，如果使用 EGL，请参考文档 [how_to_use_egl.md](docs/how_to_use_egl.md)。
 
-#### 4. 编译动态链接库方式
+#### 4. 编译输出 AWTK 动态链接库文件
 
-请修改 awtk\_config.py，将 os.environ['WITH_AWTK_SO'] 标记为 true。
+请修改 awtk\_config.py，将 os.environ['WITH_AWTK_SO'] 标记为 true，则执行 scons 会同时输出 libawtk.so 等动态链接库文件。
 
 ```
 os.environ['WITH_AWTK_SO'] = 'true'
