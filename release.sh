@@ -21,5 +21,5 @@ echo "EXE_NAME = ${EXE_NAME}"
 echo "APP_ROOT = ${APP_ROOT}" 
 
 rm -rf release release.tar.gz
-python ../awtk/scripts/release.py ${EXE_NAME} ${APP_ROOT}
+python3 ../awtk/scripts/release.py ${EXE_NAME} ${APP_ROOT}
 tar -czf release.tar.gz release/

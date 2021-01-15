@@ -1,5 +1,6 @@
 import os
 import platform
+import shutil
 
 OS_NAME = platform.system()
 
@@ -100,6 +101,11 @@ TSLIB_LIB_DIR='/opt/28x/tslib/lib'
 TSLIB_INC_DIR='/opt/28x/tslib/include'
 TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
 #TOOLS_PREFIX='/opt/poky/1.7/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-'
+
+#TSLIB_LIB_DIR=''
+#TSLIB_INC_DIR=''
+#TOOLS_PREFIX='/opt/v3s/mango/tools/external-toolchain/bin/arm-linux-gnueabi-'
+#OS_FLAGS='-std=gnu99 -mthumb -mabi=aapcs-linux -mlittle-endian -fdata-sections -ffunction-sections -mcpu=cortex-a7 -mtune=cortex-a7 -mfpu=fpv4-sp-d16 -mfloat-abi=softfp '
 
 #for pc build
 #TOOLS_PREFIX=''
@@ -219,7 +225,7 @@ os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
 os.environ['GTEST_ROOT'] = GTEST_ROOT;
 os.environ['TOOLS_NAME'] = '';
 os.environ['GRAPHIC_BUFFER'] = GRAPHIC_BUFFER;
-#os.environ['WITH_AWTK_SO'] = 'true'
+os.environ['WITH_AWTK_SO'] = 'true'
 
 if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
   os.environ['NATIVE_WINDOW'] = 'raw';
@@ -234,3 +240,18 @@ os.environ['STATIC_LIBS'] = ';'.join(STATIC_LIBS)
 def has_custom_cc():
     return True
 
+def copySharedLib(src, dst, name):
+  src = os.path.join(src, 'build/bin/lib'+name+'.so')
+  src = os.path.normpath(src);
+  dst = os.path.normpath(dst);
+
+  if os.path.dirname(src) == dst:
+      return
+
+  if not os.path.exists(src):
+    print('Can\'t find ' + src + '. Please build '+name+'before!')
+  else:
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+    shutil.copy(src, dst)
+    print(src + '==>' + dst);
