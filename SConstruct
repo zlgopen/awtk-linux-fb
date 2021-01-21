@@ -60,6 +60,7 @@ SConscriptFiles=[
   awtk.joinPath(TK_ROOT_VAR, '3rd/miniz/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, 'src/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, 'src/streams/SConscript'),
+  awtk.joinPath(TK_ROOT_VAR, 'src/csv/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, 'src/conf_io/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, 'src/ubjson/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, 'src/compressors/SConscript'),
