@@ -465,9 +465,6 @@ static ret_t drm_vsync(int fd) {
     if (ret < 0) {
       fprintf(stderr, "select() failed with %d: %m\n", errno);
       break;
-    } else if (FD_ISSET(0, &fds)) {
-      fprintf(stderr, "exit due to user-input\n");
-      break;
     } else if (FD_ISSET(fd, &fds)) {
       drmHandleEvent(fd, &ev);
       log_debug("flip done\n");
