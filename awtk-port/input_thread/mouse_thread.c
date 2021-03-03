@@ -46,7 +46,9 @@ typedef struct _run_info_t {
     int8_t d[3];
     struct input_event e; /* for EasyARM-iMX280A_283A_287A */
   } data;
-
+  bool_t left_pressed;
+  bool_t rigth_pressed;
+  bool_t middle_pressed;
   event_queue_req_t req;
 } run_info_t;
 
@@ -55,6 +57,49 @@ static ret_t input_dispatch(run_info_t* info) {
   info->req.event.type = EVT_NONE;
 
   return ret;
+}
+
+static ret_t input_dispatch_set_mouse_event(run_info_t* info, event_queue_req_t* req, bool_t left, bool_t right, bool_t middle, bool_t normal) {
+  if (normal) {
+    if (info->left_pressed || info->rigth_pressed || info->middle_pressed) {
+      if (info->left_pressed) {
+        info->left_pressed = FALSE;
+        req->event.type = EVT_POINTER_UP;
+        req->pointer_event.pressed = FALSE;
+      }
+      if (info->rigth_pressed) {
+        info->rigth_pressed = FALSE;
+        req->event.type = EVT_CONTEXT_MENU;
+      }
+      if (info->middle_pressed) {
+        info->middle_pressed = FALSE;
+        req->event.type = EVT_KEY_UP;
+        req->key_event.key = TK_KEY_WHEEL;
+      }
+    } else {
+      req->event.type = EVT_POINTER_MOVE;
+    }
+  } else {
+    if (left) {
+      if (!info->left_pressed) {
+        info->left_pressed = TRUE;
+        req->pointer_event.pressed = TRUE;
+        req->event.type = EVT_POINTER_DOWN;
+      } else {
+        req->event.type = EVT_POINTER_MOVE;
+      }
+    } else if (middle) {
+      info->middle_pressed = TRUE;
+      req->event.type = EVT_KEY_DOWN;
+      req->key_event.key = TK_KEY_WHEEL;
+    } else if (right) {      
+      info->rigth_pressed = TRUE;
+      req->event.type = EVT_POINTER_MOVE;
+    } else {
+      req->event.type = EVT_POINTER_MOVE;
+    }
+  }
+  return RET_OK;
 }
 
 static ret_t input_dispatch_one_event(run_info_t* info) {
@@ -88,9 +133,10 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
   }
 
   if (ret == 3) {
-    int left = info->data.d[0] & 0x1;
-    // int right = info->data.d[0] & 0x2;
-    // int middle = info->data.d[0] & 0x4;
+    bool_t left = info->data.d[0] & 0x1;
+    bool_t right = info->data.d[0] & 0x2;
+    bool_t middle = info->data.d[0] & 0x4;
+    bool_t normal = !(info->data.d[0] & 0x7);
     int x = info->data.d[1];
     int y = info->data.d[2];
 
@@ -110,32 +156,19 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
       info->y = info->max_y;
     }
 
-    if (left) {
-      if (!req->pointer_event.pressed) {
-        req->pointer_event.pressed = TRUE;
-        req->event.type = EVT_POINTER_DOWN;
-      } else {
-        req->event.type = EVT_POINTER_MOVE;
-      }
-    } else {
-      if (req->pointer_event.pressed) {
-        req->pointer_event.pressed = FALSE;
-        req->event.type = EVT_POINTER_UP;
-      } else {
-        req->event.type = EVT_POINTER_MOVE;
-      }
-    }
     req->pointer_event.x = info->x;
     req->pointer_event.y = info->y;
 
+    input_dispatch_set_mouse_event(info, req, left, right, middle, normal);
     input_dispatch(info);
   } else if (ret == sizeof(info->data.e)) {
     switch (info->data.e.type) {
       case EV_KEY: {
-        if (info->data.e.code == BTN_LEFT || info->data.e.code == BTN_RIGHT ||
-            info->data.e.code == BTN_MIDDLE || info->data.e.code == BTN_TOUCH) {
-          req->event.type = info->data.e.value ? EVT_POINTER_DOWN : EVT_POINTER_UP;
-        }
+        bool_t left = info->data.e.value && (info->data.e.code == BTN_LEFT || info->data.e.code == BTN_TOUCH);
+        bool_t right = info->data.e.value && info->data.e.code == BTN_RIGHT;
+        bool_t middle = info->data.e.value && info->data.e.code == BTN_MIDDLE;
+        bool_t normal = !(left || right || middle);
+        input_dispatch_set_mouse_event(info, req, left, right, middle, normal);
         break;
       }
       case EV_ABS: {
@@ -193,6 +226,9 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
       }
       case EV_SYN: {
         switch (req->event.type) {
+          case EVT_KEY_UP:
+          case EVT_KEY_DOWN:
+          case EVT_CONTEXT_MENU:
           case EVT_POINTER_DOWN:
           case EVT_POINTER_MOVE:
           case EVT_POINTER_UP: {
