@@ -202,7 +202,7 @@ static void on_signal_int(int sig) {
 static ret_t (*lcd_mem_linux_flush_defalut)(lcd_t* lcd);
 static ret_t lcd_mem_linux_flush(lcd_t* lcd) {
   fb_info_t* fb = (fb_info_t*)(lcd->impl_data);
-  fb_sync(fb);
+  //fb_sync(fb);
 
   if (lcd_mem_linux_flush_defalut) {
     lcd_mem_linux_flush_defalut(lcd);
