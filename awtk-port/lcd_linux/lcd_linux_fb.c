@@ -45,35 +45,13 @@ static fb_info_t s_fb;
 static int s_ttyfd = -1;
 static int32_t s_buff_index = 0;
 static bool_t s_app_quited = FALSE;
-static tk_thread_t* s_t_display = NULL;
-static tk_semaphore_t* s_read_sema = NULL;
-static tk_semaphore_t* s_wirte_sema = NULL;
 
 static void on_app_exit(void) {
   fb_info_t* fb = &s_fb;
 
   s_app_quited = TRUE;
-  if (s_read_sema != NULL) {
-    tk_semaphore_post(s_read_sema);
-    sleep_ms(16);
-  }
   if (s_ttyfd >= 0) {
     ioctl(s_ttyfd, KDSETMODE, KD_TEXT);
-  }
-
-  log_info("wait for display thread quited \r\n");
-
-  if (s_t_display != NULL) {
-    tk_thread_join(s_t_display);
-    tk_thread_destroy(s_t_display);
-  }
-
-  if (s_read_sema != NULL) {
-    tk_semaphore_destroy(s_read_sema);
-  }
-
-  if (s_wirte_sema != NULL) {
-    tk_semaphore_destroy(s_wirte_sema);
   }
   
   fb_close(fb);
@@ -162,39 +140,6 @@ static ret_t lcd_linux_flush(lcd_t* base) {
   return RET_OK;
 }
 
-static void* display_thread(void* ctx) {
-  fb_info_t* fb = &s_fb;
-  int fb_nr = fb_number(fb);
-  struct fb_var_screeninfo vi = (fb->var);
-
-  log_info("display_thread start\n");
-
-  while (!s_app_quited) {
-
-    if (s_buff_index < fb_nr) {
-      vi.yoffset = s_buff_index * fb_height(fb);
-      if (tk_semaphore_wait(s_read_sema, DISPLAY_WAIT_TIME) == RET_OK) {
-        if (s_app_quited) {
-          break;
-        }
-        if (ioctl(fb->fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
-          perror("active fb swap failed");
-        }
-        s_buff_index++;
-        if (s_buff_index >= fb_nr) {
-          s_buff_index = 0;
-        }
-        tk_semaphore_post(s_wirte_sema);
-      }
-      
-    }
-  }
-
-  log_info("display_thread end\n");
-
-  return NULL;
-}
-
 static void on_signal_int(int sig) {
   tk_quit();
 }
@@ -259,13 +204,22 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
 
 static ret_t lcd_mem_linux_wirte_buff(lcd_t* lcd) {
   ret_t ret = RET_OK;
-  if (lcd->draw_mode != LCD_DRAW_OFFLINE) {
-    if (tk_semaphore_wait(s_wirte_sema, DISPLAY_WAIT_TIME) == RET_OK) {
-      ret = lcd_linux_flush(lcd);
-      tk_semaphore_post(s_read_sema);
+  fb_info_t* fb = &s_fb;
+  int fb_nr = fb_number(fb);
+  struct fb_var_screeninfo vi = (fb->var);
 
-      return_value_if_fail(ret == RET_OK, ret);
+  if (lcd->draw_mode != LCD_DRAW_OFFLINE) {
+    int dummy = 0;
+    ioctl(fb->fd, FBIO_WAITFORVSYNC, &dummy);
+
+    s_buff_index++;
+    if (s_buff_index >= fb_nr) {
+      s_buff_index = 0;
     }
+    ret = lcd_linux_flush(lcd);
+
+    vi.yoffset = s_buff_index * fb_height(fb);
+    ioctl(fb->fd, FBIOPAN_DISPLAY, &vi);
   }
 
   return ret;
@@ -307,12 +261,6 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
     lcd->flush = lcd_mem_linux_wirte_buff;
     ((lcd_mem_t*)lcd)->own_offline_fb = TRUE;
     lcd_mem_set_line_length(lcd, line_length);
-
-    s_read_sema = tk_semaphore_create(0, NULL);
-    s_wirte_sema = tk_semaphore_create(1, NULL);
-
-    s_t_display = tk_thread_create(display_thread, lcd);
-    tk_thread_start(s_t_display);
   }
 
   return lcd;
