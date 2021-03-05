@@ -467,7 +467,6 @@ static ret_t drm_vsync(int fd) {
       break;
     } else if (FD_ISSET(fd, &fds)) {
       drmHandleEvent(fd, &ev);
-      log_debug("flip done\n");
       break;
     }
   }
@@ -478,6 +477,7 @@ static ret_t drm_vsync(int fd) {
 /*awtk related*/
 
 static ret_t lcd_bgra8888_flush(lcd_t* lcd) {
+  static int inited = 0;
   int ret = 0;
   uint32_t x = 0;
   uint32_t y = 0;
@@ -492,6 +492,14 @@ static ret_t lcd_bgra8888_flush(lcd_t* lcd) {
   uint32_t* dst = (uint32_t*)(buf->map);
   uint32_t* src = (uint32_t*)(special->lcd_mem->offline_fb);
 
+  dev->front_buf ^= 1;
+  if (inited) {
+    dev->pflip_pending = true;
+    drm_vsync(fd);
+  } else {
+    inited = 1;
+  }
+
   for (y = 0; y < lcd->h; y++) {
     for (x = 0; x < lcd->w; x++) {
       dst[x] = src[x];
@@ -505,10 +513,6 @@ static ret_t lcd_bgra8888_flush(lcd_t* lcd) {
     log_error("cannot flip CRTC for connector %u (%d): %m\n", dev->conn, errno);
     return RET_FAIL;
   } else {
-    dev->front_buf ^= 1;
-    dev->pflip_pending = true;
-    drm_vsync(fd);
-
     return RET_OK;
   }
 }
