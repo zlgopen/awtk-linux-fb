@@ -199,11 +199,14 @@ static void on_signal_int(int sig) {
   tk_quit();
 }
 
-static ret_t lcd_mem_linux_sync(lcd_t* lcd) {
+static ret_t (*lcd_mem_linux_flush_defalut)(lcd_t* lcd);
+static ret_t lcd_mem_linux_flush(lcd_t* lcd) {
   fb_info_t* fb = (fb_info_t*)(lcd->impl_data);
-
   fb_sync(fb);
 
+  if (lcd_mem_linux_flush_defalut) {
+    lcd_mem_linux_flush_defalut(lcd);
+  }
   return RET_OK;
 }
 
@@ -246,7 +249,8 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
 
   if (lcd != NULL) {
     lcd->impl_data = fb;
-    lcd->sync = lcd_mem_linux_sync;
+    lcd_mem_linux_flush_defalut = lcd->flush;
+    lcd->flush = lcd_mem_linux_flush;
     lcd_mem_set_line_length(lcd, line_length);
   }
 
