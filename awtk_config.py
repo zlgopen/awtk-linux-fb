@@ -136,7 +136,6 @@ OS_LIBS = ['stdc++', 'pthread', 'rt', 'm', 'dl']
 #OS_FLAGS='-Wall -Os -DFB_DEVICE_FILENAME=\\\"\"/dev/graphics/fb0\\\"\" '
 
 OS_LINKFLAGS= OS_LINKFLAGS + ' -Wl,-rpath=./bin ' 
-OS_LINKFLAGS= OS_LINKFLAGS + ' -Wl,-rpath=' + os.path.abspath(TK_BIN_DIR) + ' '
 
 if LCD_DEICES =='drm' :
   #for drm
