@@ -102,8 +102,6 @@ static ret_t lcd_linux_flush(lcd_t* base) {
   
   buff = fb->fbmem0 + size * s_buff_index;
   if (o == LCD_ORIENTATION_0) {
-    ret_t ret = RET_FAIL;
-#ifdef WITH_G2D
     bitmap_t online_fb;
     bitmap_t offline_fb;
     rect_t r = {0, 0, fb_width(fb), fb_height(fb)};
@@ -111,11 +109,7 @@ static ret_t lcd_linux_flush(lcd_t* base) {
     lcd_linux_init_drawing_fb(lcd, &offline_fb);
     lcd_linux_init_online_fb(lcd, &online_fb, buff, fb_width(fb), fb_height(fb), fb_line_length(fb));
 
-    ret = image_copy(&online_fb, &offline_fb, &r, r.x, r.y);
-#endif /*WITH_G2D*/
-    if (ret != RET_OK) {
-      memcpy(buff, lcd->offline_fb, size);
-    }
+    image_copy(&online_fb, &offline_fb, &r, r.x, r.y);
   } else {
     rect_t r = {0};
     bitmap_t online_fb;
@@ -146,7 +140,7 @@ static void on_signal_int(int sig) {
 
 static ret_t (*lcd_mem_linux_flush_defalut)(lcd_t* lcd);
 static ret_t lcd_mem_linux_flush(lcd_t* lcd) {
-  fb_info_t* fb = (fb_info_t*)(lcd->impl_data);
+  //fb_info_t* fb = (fb_info_t*)(lcd->impl_data);
   //fb_sync(fb);
 
   if (lcd_mem_linux_flush_defalut) {
@@ -285,11 +279,12 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
       ioctl(s_ttyfd, KDSETMODE, KD_GRAPHICS);
     }
 
-    // fix FBIOPUT_VSCREENINFO block issue when run in vmware double fb mode
+    // fix FBIOPAN_DISPLAY block issue when run in vmware double fb mode
     if (check_if_run_in_vmware()) {
-      log_info("run in vmware and fix FBIOPUT_VSCREENINFO block issue\n");
-      fb->var.activate = FB_ACTIVATE_INV_MODE;
-      fb->var.pixclock = 60;
+      log_info("run in vmware and fix FBIOPAN_DISPLAY block issue\n");
+      // if memset/memcpy the entire fb then call FBIOPAN_DISPLAY immediately, 
+      // the ubuntu in vmware will stuck by unknown reason, sleep for avoid this bug
+      usleep(500000);
     }
 
     lcd = lcd_linux_create(fb);
