@@ -53,7 +53,7 @@ static void on_app_exit(void) {
   if (s_ttyfd >= 0) {
     ioctl(s_ttyfd, KDSETMODE, KD_TEXT);
   }
-  
+
   fb_close(fb);
 
   log_debug("on_app_exit\n");
@@ -90,7 +90,6 @@ static ret_t lcd_linux_init_online_fb(lcd_mem_t* mem, bitmap_t* fb, uint8_t* buf
 }
 
 static ret_t lcd_linux_flush(lcd_t* base) {
-  
   uint8_t* buff = NULL;
   fb_info_t* fb = &s_fb;
   int fb_nr = fb_number(fb);
@@ -99,7 +98,7 @@ static ret_t lcd_linux_flush(lcd_t* base) {
   lcd_orientation_t o = system_info()->lcd_orientation;
 
   return_value_if_fail(lcd != NULL && fb != NULL && s_buff_index < fb_nr, RET_BAD_PARAMS);
-  
+
   buff = fb->fbmem0 + size * s_buff_index;
   if (o == LCD_ORIENTATION_0) {
     bitmap_t online_fb;
@@ -284,6 +283,8 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
       log_info("run in vmware and fix FBIOPAN_DISPLAY block issue\n");
       // if memset/memcpy the entire fb then call FBIOPAN_DISPLAY immediately, 
       // the ubuntu in vmware will stuck by unknown reason, sleep for avoid this bug
+      fb->var.activate = FB_ACTIVATE_INV_MODE;
+      fb->var.pixclock = 60;
       usleep(500000);
     }
 

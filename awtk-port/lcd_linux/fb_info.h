@@ -167,7 +167,7 @@ static inline int fb_open(fb_info_t* fb, const char* filename) {
   }
 
   log_info("fb_open clear\n");
-  memset(fb->fbmem0, 0xff, total_size);
+  //memset(fb->fbmem0, 0xff, total_size);
   if (fb_is_2fb(fb)) {
     fb->fbmem1 = fb->fbmem0 + size;
   } else {
