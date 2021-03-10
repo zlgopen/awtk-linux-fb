@@ -136,3 +136,21 @@ OS_LIBS = OS_LIBS + ['drm']
 os.environ['WITH_AWTK_SO'] = 'true'
 ```
 
+#### 5. 上传文件到开发板的方法
+
+如果开发板支持 ssh，可以使用 scp 命令上传文件或文件夹，比如上传文件：
+
+```
+# 开发板ip：192.168.1.136
+# 登录用户名：root
+# 上传文件 release.tar.gz 到 /opt 目录
+scp release.tar.gz root@192.168.1.136:/opt/release.tar.gz
+```
+
+上传文件夹：
+
+```
+# 创建文件夹 ./release 中所有文件到 /opt/awtk 目录
+scp -r ./release root@192.168.1.136:/opt/awtk
+```
+
