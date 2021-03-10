@@ -4,51 +4,20 @@ awtk-linux-fb 是为嵌入式 linux 准备的，但为了调试方便，可以�
 
 ## 操作步骤
 
-##### 1. 在 grub 启动项增加字符模式启动
+##### 1. 在命令行执行 systemctl 命令切换图形和字符模式
 
-配置 Ubuntu 启动时显示 grub 菜单，先修改 **/etc/default/grub** 文件，把下面两行代码删除或注释掉：
-
-```
-#GRUB_HIDDEN_TIMEOUT=0
-#GRUB_HIDDEN_TIMEOUT_QUIET=true
-```
-
-更新 grub 配置，在命令输入：
+如果当前在图形桌面模式，执行下面的命令重启后进入字符模式：
 
 ```
-cd /etc/default
-sudo update-grub
+sudo systemctl set-default multi-user.target
+sudo reboot
 ```
 
-然后把字符模式启动项加入 grub 菜单，分辨率设置为 800x600，修改 **/etc/grub.d/40_custom** 文件，在文件末尾添加下面代码：
+如果当前在字符模式，执行下面的命令重启后进入桌面模式：
 
 ```
-menuentry 'Ubuntu Console' --class ubuntu --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-simple-1c9bae2b-e598-4cb5-8bda-5b6ea039b13f' {
-	recordfail
-	load_video
-	gfxmode $linux_gfx_mode
-	insmod gzio
-	if [ x$grub_platform = xxen ]; then insmod xzio; insmod lzopio; fi
-	insmod part_msdos
-	insmod ext2
-	set root='hd0,msdos1'
-	if [ x$feature_platform_search_hint = xy ]; then
-	  search --no-floppy --fs-uuid --set=root --hint-bios=hd0,msdos1 --hint-efi=hd0,msdos1 --hint-baremetal=ahci0,msdos1  1c9bae2b-e598-4cb5-8bda-5b6ea039b13f
-	else
-	  search --no-floppy --fs-uuid --set=root 1c9bae2b-e598-4cb5-8bda-5b6ea039b13f
-	fi
-        linux	/boot/vmlinuz-4.15.0-62-generic root=UUID=1c9bae2b-e598-4cb5-8bda-5b6ea039b13f ro find_preseed=/preseed.cfg auto noprompt priority=critical locale=en_US quiet 3 vga=788
-	initrd	/boot/initrd.img-4.15.0-62-generic
-}
-```
-
-> 可以从 boot/grub/grub.cfg 中拷贝 menuentry 'Ubuntu' 的代码段作为模板，然后修改为 menuentry 'Ubuntu Console'，并找到 quiet 后面加入 3 vga=788
-
-更新 grub 配置，在命令输入：
-
-```
-cd /etc/grub.d
-sudo grub-mkconfig -o /boot/grub/grub.cfg
+sudo systemctl set-default graphical.target
+sudo reboot
 ```
 
 ##### 2. 设置编译器
@@ -59,6 +28,14 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg
 #for pc build
 TOOLS_PREFIX=''
 TSLIB_LIB_DIR=''
+```
+
+也可以在该配置文件中选择使用 fb 模式或 drm 模式，新的系统建议使用 drm 模式，效率更高：
+
+```
+# lcd devices
+LCD_DEICES='fb'
+# LCD_DEICES='drm'
 ```
 
 ##### 3. 编译 demo 并抽取资源文件
