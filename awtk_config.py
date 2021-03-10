@@ -131,7 +131,7 @@ OS_LIBS = ['stdc++', 'pthread', 'rt', 'm', 'dl']
 #AR=TOOLS_PREFIX+'arm-linux-androideabi-ar'
 #STRIP=TOOLS_PREFIX+'arm-linux-androideabi-strip'
 #RANLIB=TOOLS_PREFIX+"arm-linux-androideabi-ranlib"
-#OS_LINKFLAGS='-static -Wl,--allow-multiple-definition '
+#OS_LINKFLAGS=' -Wl,--allow-multiple-definition '
 #OS_LIBS = ['stdc++', 'm']
 #OS_FLAGS='-Wall -Os -DFB_DEVICE_FILENAME=\\\"\"/dev/graphics/fb0\\\"\" '
 
