@@ -64,7 +64,6 @@ static ret_t main_loop_linux_destroy(main_loop_t* l) {
   main_loop_simple_reset(loop);
 
 #ifdef WITH_LINUX_EGL
-  lcd_linux_egl_destroy(s_lcd);
 #else
   native_window_raw_deinit();
 #endif

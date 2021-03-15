@@ -72,8 +72,12 @@ ret_t lcd_linux_egl_destroy(lcd_egl_context_t* lcd) {
   if (ret == RET_OK) {
     TKMEM_FREE(lcd);
   }
-  native_window_fb_gl_deinit();
   return ret;
+}
+
+static ret_t native_window_on_destroy(void* ctx, event_t* e) {
+  lcd_linux_egl_destroy((lcd_egl_context_t*)ctx);
+  return RET_REMOVE;
 }
 
 lcd_egl_context_t* lcd_linux_egl_create(const char* filename) {
@@ -91,6 +95,8 @@ lcd_egl_context_t* lcd_linux_egl_create(const char* filename) {
   win = native_window_fb_gl_init(lcd->w, lcd->h, lcd->ratio);
   goto_error_if_fail(win != NULL);
 
+  emitter_on(EMITTER(win), EVT_DESTROY, native_window_on_destroy, lcd);
+
   win->handle = (void*)lcd;
   native_window_fb_gl_set_swap_buffer_func(win, lcd_linux_gles_swap_buffer);
   native_window_fb_gl_set_make_current_func(win, lcd_linux_gles_make_current);
@@ -100,7 +106,7 @@ lcd_egl_context_t* lcd_linux_egl_create(const char* filename) {
 
   return lcd;
 error :
-  lcd_linux_egl_destroy(lcd);
+  native_window_fb_gl_deinit();
   return NULL;
 }
 
