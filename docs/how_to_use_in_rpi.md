@@ -11,7 +11,6 @@
 2. 修改 awtk-linux-fb/awtk_config.py 文件的编译器和编译选项
 
    ```
-   OS_FLAGS='-g -Wall -Os -mfloat-abi=hard '
    #for pc build
    TOOLS_PREFIX=''
    TSLIB_LIB_DIR=''
@@ -26,15 +25,12 @@
    sudo release/bin/demoui
    ```
 
-<div STYLE="page-break-after: always;"></div>
-
 ### EGL-X11 模式
 
 1. 修改 raspi-config 开启 GL 加速
 
    ```
    sudo raspi-config
-   修改 GPU 内存分配 128MB 以上
    开启 GL full KMS 驱动
    ```
 
@@ -57,15 +53,15 @@
    sudo apt install libgles2-mesa libgles2-mesa-dev
    ```
 
-5. 修改 awtk-linux-fb/awtk_config.py 文件的 LCD_DEICES 模式，其他同 FrameBuffer 模式
+5. 修改 awtk-linux-fb/awtk_config.py 文件的 LCD_DEICES 模式
 
    ```
    # lcd devices
-   # LCD_DEICES='fb'
-   # LCD_DEICES='drm'
-   # LCD_DEICES='egl_for_fsl'
    LCD_DEICES='egl_for_x11'
-   # LCD_DEICES='egl_for_rpi'
+   
+   #for pc build
+   TOOLS_PREFIX=''
+   TSLIB_LIB_DIR=''
    ```
 
 6. 直接在树莓派中编译 awtk 并运行
@@ -76,27 +72,25 @@
    sh release.sh
    sudo release/bin/demoui
    ```
-<div STYLE="page-break-after: always;"></div>
 
-### EGL-rpi 模式
+### EGL-gbm 模式
 
-1. 修改 raspi-config 关闭 GL 加速
+1. 修改 raspi-config 开启 GL 加速
 
    ```
    sudo raspi-config
-   修改 GPU 内存分配 128MB 以上
-   选择 GL Legacy (关闭开启 GL 驱动)
+   开启 GL full KMS 驱动
    ```
 
-2. 修改 awtk-linux-fb/awtk_config.py 文件的 LCD_DEICES 模式，其他同 FrameBuffer 模式
+2. 修改 awtk-linux-fb/awtk_config.py 文件的 LCD_DEICES 模式
 
    ```
    # lcd devices
-   # LCD_DEICES='fb'
-   # LCD_DEICES='drm'
-   # LCD_DEICES='egl_for_fsl'
-   # LCD_DEICES='egl_for_x11'
-   LCD_DEICES='egl_for_rpi'
+   LCD_DEICES='egl_for_gbm'
+   
+   #for pc build
+   TOOLS_PREFIX=''
+   TSLIB_LIB_DIR=''
    ```
 
 3. 直接在树莓派中编译 awtk 并运行

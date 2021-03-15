@@ -8,7 +8,7 @@ def joinPath(root, subdir):
   return os.path.normpath(os.path.join(root, subdir))
 
 def lcd_deices_is_egl(lcd_deices):
-  if lcd_deices =='egl_for_fsl' or lcd_deices =='egl_for_x11' or lcd_deices =='egl_for_rpi' :
+  if lcd_deices =='egl_for_fsl' or lcd_deices =='egl_for_x11' or lcd_deices =='egl_for_gbm' :
     return True
   return False
 
@@ -34,7 +34,7 @@ LCD_DEICES='fb'
 # LCD_DEICES='drm'
 # LCD_DEICES='egl_for_fsl'
 # LCD_DEICES='egl_for_x11'
-# LCD_DEICES='egl_for_rpi'
+# LCD_DEICES='egl_for_gbm'
 
 if LCD_DEICES =='fb' or LCD_DEICES =='drm' :
   LCD='LINUX_FB'
@@ -149,12 +149,10 @@ elif LCD_DEICES =='egl_for_x11' :
   #for egl for fsl
   OS_FLAGS=OS_FLAGS + ' -fPIC '
   OS_LIBS=OS_LIBS + [ 'X11', 'EGL', 'GLESv2' ]
-elif LCD_DEICES =='egl_for_rpi' :
-  #for egl for rpi
-  OS_LIBPATH += ['/opt/vc/lib']
-  OS_CPPPATH += ['/opt/vc/include']
-  OS_LIBS=OS_LIBS + [ 'brcmEGL', 'brcmGLESv2', 'bcm_host' ]
-  COMMON_CCFLAGS += ' -DWITH_GLAD_SPECIAL_OPENGL_LIB=\\\"\"/opt/vc/lib/libbrcmGLESv2.so\\\"\" '
+elif LCD_DEICES =='egl_for_gbm' :
+  #for egl for gbm
+  OS_CPPPATH += ['/usr/include/libdrm', '/usr/include/GLES2']
+  OS_LIBS=OS_LIBS + [ 'drm', 'gbm', 'EGL', 'GLESv2' ]
 
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR -fPIC '
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_DATA_READER_WRITER=1 '

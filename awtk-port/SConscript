@@ -23,8 +23,8 @@ if LCD_DEICES =='egl_for_fsl' :
   SOURCES = Glob('egl_devices/fsl/*.c') + SOURCES;
 elif LCD_DEICES =='egl_for_x11' :
   SOURCES = Glob('egl_devices/x11/*.c') + SOURCES;
-elif LCD_DEICES =='egl_for_rpi' :
-  SOURCES = Glob('egl_devices/rpi/*.c') + SOURCES;
+elif LCD_DEICES =='egl_for_gbm' :
+  SOURCES = Glob('egl_devices/gbm/*.c') + SOURCES;
 
 env.Library(os.path.join(LIB_DIR, 'awtk_linux_fb'), SOURCES)
 
