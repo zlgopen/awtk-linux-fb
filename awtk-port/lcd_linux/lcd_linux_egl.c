@@ -65,19 +65,19 @@ static ret_t lcd_linux_gles_make_current(native_window_t* win) {
   return ret;
 }
 
-ret_t lcd_linux_egl_destroy(lcd_egl_context_t* lcd) {
+static ret_t lcd_linux_gles_destroy(native_window_t* win) {
   ret_t ret = RET_OK;
+  lcd_egl_context_t* lcd = NULL;
+  return_value_if_fail(win != NULL, RET_BAD_PARAMS);
+
+  lcd = (lcd_egl_context_t*)(win->handle);
   return_value_if_fail(lcd != NULL, RET_BAD_PARAMS);
+
   ret = egl_devices_dispose(lcd->elg_ctx);
   if (ret == RET_OK) {
     TKMEM_FREE(lcd);
   }
   return ret;
-}
-
-static ret_t native_window_on_destroy(void* ctx, event_t* e) {
-  lcd_linux_egl_destroy((lcd_egl_context_t*)ctx);
-  return RET_REMOVE;
 }
 
 lcd_egl_context_t* lcd_linux_egl_create(const char* filename) {
@@ -95,11 +95,10 @@ lcd_egl_context_t* lcd_linux_egl_create(const char* filename) {
   win = native_window_fb_gl_init(lcd->w, lcd->h, lcd->ratio);
   goto_error_if_fail(win != NULL);
 
-  emitter_on(EMITTER(win), EVT_DESTROY, native_window_on_destroy, lcd);
-
   win->handle = (void*)lcd;
   native_window_fb_gl_set_swap_buffer_func(win, lcd_linux_gles_swap_buffer);
   native_window_fb_gl_set_make_current_func(win, lcd_linux_gles_make_current);
+  native_window_fb_gl_set_destroy_func(win, lcd_linux_gles_destroy);
 
   atexit(on_app_exit);
   signal(SIGINT, on_signal_int);

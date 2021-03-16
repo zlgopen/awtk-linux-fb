@@ -35,8 +35,6 @@ typedef struct _lcd_egl_context_t {
 
 lcd_egl_context_t* lcd_linux_egl_create(const char* filename);
 
-ret_t lcd_linux_egl_destroy(lcd_egl_context_t* lcd);
-
 END_C_DECLS
 
 #endif /*TK_LCD_LINUX_EGL_H*/

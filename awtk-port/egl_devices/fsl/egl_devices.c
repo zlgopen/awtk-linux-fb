@@ -96,7 +96,7 @@ ret_t egl_devices_dispose(void* ctx) {
   eglTerminate(context->egldisplay);
   assert(eglGetError() == EGL_SUCCESS);
   eglReleaseThread();
-  
+
   TKMEM_FREE(context);
   return RET_OK;
 }
