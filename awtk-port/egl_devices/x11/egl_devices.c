@@ -203,6 +203,7 @@ ret_t egl_devices_dispose(void* ctx) {
   egl_devices_x11_context_t* context = (egl_devices_x11_context_t*)ctx;
   return_value_if_fail(context != NULL, RET_BAD_PARAMS);
   DeInit_GLES(context);
+  TKMEM_FREE(ctx);
   return RET_OK;
 }
 

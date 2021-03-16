@@ -54,13 +54,11 @@ typedef struct _egl_devices_gbm_context_t {
 } egl_devices_gbm_context_t;
 
 const EGLint attribute_list[] = {
+  EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
   EGL_RED_SIZE, 8,
   EGL_GREEN_SIZE, 8,
   EGL_BLUE_SIZE, 8,
-  EGL_ALPHA_SIZE, 8,
-  EGL_DEPTH_SIZE, 8,
-  EGL_STENCIL_SIZE, 8,
-  EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+  EGL_ALPHA_SIZE, 0,
   EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
   EGL_NONE
 };
@@ -144,6 +142,8 @@ static void init_ogl(egl_devices_gbm_context_t *ctx) {
   ctx->gbm_device = gbm_create_device (ctx->device);
   ctx->gbm_surface = gbm_surface_create (ctx->gbm_device, ctx->mode_info.hdisplay, ctx->mode_info.vdisplay, GBM_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT|GBM_BO_USE_RENDERING);
   ctx->egl_display = eglGetDisplay ((EGLNativeDisplayType)ctx->gbm_device);
+  ctx->screen_width = ctx->mode_info.hdisplay;
+  ctx->screen_height = ctx->mode_info.vdisplay;
   eglInitialize (ctx->egl_display, NULL ,NULL);
   eglBindAPI (EGL_OPENGL_API);
   eglGetConfigs(ctx->egl_display, NULL, 0, &egl_count);
@@ -210,6 +210,7 @@ ret_t egl_devices_dispose(void* ctx) {
   gbm_device_destroy (context->gbm_device);
 
   close (context->device);
+  TKMEM_FREE(ctx);
   return RET_OK;
 }
 
