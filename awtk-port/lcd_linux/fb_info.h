@@ -54,10 +54,10 @@ typedef struct _fb_info_t {
 #define fb_line_length(fb) ((fb)->fix.line_length)
 #define fb_size(fb) ((fb)->var.yres * (fb)->fix.line_length)
 #define fb_vsize(fb) ((fb)->var.yres_virtual * (fb)->fix.line_length)
-#define fb_number(fb) (fb_memsize(fb) / fb_size(fb))
+#define fb_number(fb) (fb_vsize(fb) / fb_size(fb))
 
 #define fb_is_1fb(fb) ((fb)->var.yres_virtual < 2 * (fb)->var.yres)
-#define fb_is_2fb(fb) (fb_memsize(fb) / fb_size(fb) >= 2)
+#define fb_is_2fb(fb) (fb_vsize(fb) / fb_size(fb) >= 2)
 #define fb_is_3fb(fb) 0  //((fb)->var.yres_virtual == 3 * (fb)->var.yres)
 
 static inline bool_t fb_is_bgra5551(fb_info_t* fb) {
