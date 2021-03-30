@@ -50,6 +50,7 @@ if awtk.lcd_deices_is_egl(os.environ['LCD_DEICES']) :
   APP_PROJ_VAR += [awtk.joinPath(TK_ROOT_VAR, '3rd/glad/SConscript')]
 
 SConscriptFiles=[
+  awtk.joinPath(TK_ROOT_VAR, '3rd/mbedtls/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/nanovg/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/cjson/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/agg/SConscript'),
