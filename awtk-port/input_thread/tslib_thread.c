@@ -58,6 +58,8 @@ static ret_t tslib_dispatch_one_event(run_info_t* info) {
   event_queue_req_t* req = &(info->req);
 
   if (ret == 0) {
+    log_warn("%s:%d: get tslib data failed, filename=%s\n", __func__, __LINE__, info->filename);
+    sleep(1);
     return RET_OK;
   } else if (ret < 0) {
     sleep(2);
