@@ -1,6 +1,6 @@
 # 在 qemu 中运行 AWTK
 
-[qemu](https://www.qemu.org) 能模拟一个更真实的 arm-linux 环境，有时用来调试和学习一下 framebuffer 的驱动，也是很有意思的事，这里写个文档供大家参考。
+虽然在 VMware 中也可以跑 awtk-linux-fb 版本，但是 [qemu](https://www.qemu.org) 能模拟一个更接近开发板的 arm-linux 环境。另外用来调试和学习一下 framebuffer 的驱动，也是很有意思的事。这里写个文档供大家参考。
 
 > 在 Ubuntu 20 上测试运行。
 
@@ -100,7 +100,7 @@ cd -
 
 * 进入 qemu 的中终端下启动 AWTK:
 
-> 用户名root密码为空
+> 用户名 root 密码为空
 
 ```
 cd /opt/release
@@ -115,9 +115,7 @@ vncviewer localhost
 
 可以看到并操作 AWTK 应用程序了：
 
-
 ![](images/qemu_awtk.png)
-
 
 ## 附
 
@@ -145,7 +143,6 @@ fbset 640x480-60
 
 ### debug kernel
 
-
 画蛇添足一下，如果希望调试 linux 内核，比如 framebuffer，可以这样：
 
 修改 start-qemu.sh，增加启动参数主机-s -S，让 qemu 启动 gdbserver，并等待 gdb 连接。然后启动 qemu。
@@ -166,7 +163,6 @@ export PATH="/opt/qemu/buildroot-2021.02.2/output/host/bin:${PATH}"
 exec qemu-system-arm -M vexpress-a9 -smp 1 -m 256 -kernel zImage -dtb vexpress-v2p-ca9.dtb -drive file=rootfs.ext2,if=sd,format=raw -append "console=ttyAMA0,115200 rootwait root=/dev/mmcblk0"  -net nic,model=lan9118 -net user  ${EXTRA_ARGS} -s -S
 )
 ```
-
 
 * 使用 arm-linux-gdb 连接到 qemu。
 
