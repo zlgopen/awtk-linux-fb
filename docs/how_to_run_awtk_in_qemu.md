@@ -95,10 +95,12 @@ cd -
 * 启动 qemu
 
 ```
-./start-qemu.sh graphic
+./start-qemu.sh
 ```
 
 * 进入 qemu 的中终端下启动 AWTK:
+
+> 用户名root密码为空
 
 ```
 cd /opt/release
@@ -119,9 +121,52 @@ vncviewer localhost
 
 ## 附
 
+### 修改分辨率
+
+* 增加配置
+
+vi /etc/fb.modes
+
+```
+mode "640x480-0"
+	# D: 0.000 MHz, H: 0.000 kHz, V: 0.000 Hz
+	geometry 640 480 640 480 16
+	timings 0 48 16 33 10 96 2
+	accel true
+	rgba 5/11,6/5,5/0,0/0
+endmode
+```
+
+* 使其生效
+
+```
+fbset 640x480-60
+```
+
+### debug kernel
+
+
 画蛇添足一下，如果希望调试 linux 内核，比如 framebuffer，可以这样：
 
 修改 start-qemu.sh，增加启动参数主机-s -S，让 qemu 启动 gdbserver，并等待 gdb 连接。然后启动 qemu。
+
+```
+#!/bin/sh
+(
+BINARIES_DIR="${0%/*}/"
+cd ${BINARIES_DIR}
+
+if [ "${1}" = "serial-only" ]; then
+    EXTRA_ARGS='-nographic'
+else
+    EXTRA_ARGS='-serial stdio'
+fi
+
+export PATH="/opt/qemu/buildroot-2021.02.2/output/host/bin:${PATH}"
+exec qemu-system-arm -M vexpress-a9 -smp 1 -m 256 -kernel zImage -dtb vexpress-v2p-ca9.dtb -drive file=rootfs.ext2,if=sd,format=raw -append "console=ttyAMA0,115200 rootwait root=/dev/mmcblk0"  -net nic,model=lan9118 -net user  ${EXTRA_ARGS} -s -S
+)
+```
+
 
 * 使用 arm-linux-gdb 连接到 qemu。
 
