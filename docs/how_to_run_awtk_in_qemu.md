@@ -171,6 +171,8 @@ exec qemu-system-arm -M vexpress-a9 -smp 1 -m 256 -kernel zImage -dtb vexpress-v
 * 使用 arm-linux-gdb 连接到 qemu。
 
 ```
+export PATH=$PATH:/opt/qemu/buildroot-2021.02.2/output/host/bin
+
 cd output/build/linux-5.10.7
 arm-linux-gdb vmlinux
 target remote :1234
