@@ -34,6 +34,8 @@
 #include "lcd/lcd_mem_rgb565.h"
 #include "lcd/lcd_mem_bgra8888.h"
 #include "lcd/lcd_mem_rgba8888.h"
+#include "lcd/lcd_mem_bgr888.h"
+#include "lcd/lcd_mem_rgb888.h"
 
 #if !defined(WITH_LINUX_DRM) && !defined(WITH_LINUX_DRM)
 
@@ -180,7 +182,13 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
       assert(!"not supported framebuffer format.");
     }
   } else if (bpp == 24) {
-    assert(!"not supported framebuffer format.");
+    if (fb_is_bgr888(fb)) {
+      lcd = lcd_mem_bgr888_create_double_fb(w, h, online_fb, fb->fbmem1);
+    } else if (fb_is_rgb888(fb)) {
+      lcd = lcd_mem_rgb888_create_double_fb(w, h, online_fb, fb->fbmem1);
+    } else {
+      assert(!"not supported framebuffer format.");
+    }
   } else {
     assert(!"not supported framebuffer format.");
   }
@@ -243,7 +251,13 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
       assert(!"not supported framebuffer format.");
     }
   } else if (bpp == 24) {
-    assert(!"not supported framebuffer format.");
+    if (fb_is_bgr888(fb)) {
+      lcd = lcd_mem_bgr888_create_single_fb(w, h, buff);
+    } else if (fb_is_rgb888(fb)) {
+      lcd = lcd_mem_rgb888_create_single_fb(w, h, buff);
+    } else {
+      assert(!"not supported framebuffer format.");
+    }
   } else {
     assert(!"not supported framebuffer format.");
   }

@@ -115,6 +115,28 @@ static inline bool_t fb_is_bgra8888(fb_info_t* fb) {
   }
 }
 
+static inline bool_t fb_is_rgb888(fb_info_t* fb) {
+  struct fb_var_screeninfo* var = &(fb->var);
+  if (var->bits_per_pixel == 24 && var->red.offset == 0 && var->green.offset == 8 &&
+      var->blue.offset == 16 && var->red.length == 8 && var->green.length == 8 &&
+      var->blue.length == 8) {
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
+static inline bool_t fb_is_bgr888(fb_info_t* fb) {
+  struct fb_var_screeninfo* var = &(fb->var);
+  if (var->bits_per_pixel == 24 && var->blue.offset == 0 && var->green.offset == 8 &&
+      var->red.offset == 16 && var->red.length == 8 && var->green.length == 8 &&
+      var->blue.length == 8) {
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
 #ifndef FBIO_WAITFORVSYNC
 #define FBIO_WAITFORVSYNC _IOW('F', 0x20, u_int32_t)
 #endif /*FBIO_WAITFORVSYNC*/
