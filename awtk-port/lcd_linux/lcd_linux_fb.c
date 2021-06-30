@@ -64,7 +64,7 @@ static void on_app_exit(void) {
   s_app_quited = TRUE;
   tk_semaphore_post(s_sem_spare);
   tk_semaphore_post(s_sem_ready);
-  sleep_ms(1000);
+  sleep_ms(200);
 
   if (s_t_fbswap) {
     tk_thread_join(s_t_fbswap);
