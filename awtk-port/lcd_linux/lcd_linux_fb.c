@@ -27,6 +27,7 @@
 #include "awtk_global.h"
 #include "tkc/time_now.h"
 #include "tkc/semaphore.h"
+#include "tkc/mutex.h"
 #include "lcd_mem_others.h"
 #include "blend/image_g2d.h"
 #include "base/system_info.h"
@@ -48,12 +49,38 @@ static int s_ttyfd = -1;
 static int32_t s_buff_index = 0;
 static bool_t s_app_quited = FALSE;
 
+static tk_thread_t* s_t_fbswap = NULL;
+static tk_semaphore_t* s_sem_spare = NULL;
+static tk_semaphore_t* s_sem_ready = NULL;
+static tk_mutex_t* s_lck_fblist = NULL;
+
 static void on_app_exit(void) {
   fb_info_t* fb = &s_fb;
 
-  s_app_quited = TRUE;
   if (s_ttyfd >= 0) {
     ioctl(s_ttyfd, KDSETMODE, KD_TEXT);
+  }
+
+  s_app_quited = TRUE;
+  tk_semaphore_post(s_sem_spare);
+  tk_semaphore_post(s_sem_ready);
+  sleep_ms(1000);
+
+  if (s_t_fbswap) {
+    tk_thread_join(s_t_fbswap);
+    tk_thread_destroy(s_t_fbswap);
+  }
+
+  if (s_sem_spare) {
+    tk_semaphore_destroy(s_sem_spare);
+  }
+
+  if (s_sem_ready) {
+    tk_semaphore_destroy(s_sem_ready);
+  }
+
+  if (s_lck_fblist) {
+    tk_mutex_destroy(s_lck_fblist);
   }
 
   fb_close(fb);
@@ -203,28 +230,124 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
   return lcd;
 }
 
+enum {
+  FB_TAG_UND = 0,
+  FB_TAG_SPARE,
+  FB_TAG_READY,
+  FB_TAG_BUSY
+};
+typedef struct fb_taged {
+  int fbid;
+  int tags;
+} fb_taged_t;
+
+#define FB_LIST_NUM 3
+static fb_taged_t s_fblist[FB_LIST_NUM];
+static void init_fblist(int num) {
+  memset(s_fblist, 0, sizeof(s_fblist));
+  for (int i = 0; i < num && i < FB_LIST_NUM; i++) {
+    s_fblist[i].fbid = i;
+    s_fblist[i].tags = FB_TAG_SPARE;
+  }
+}
+static fb_taged_t* get_spare_fb() {
+  for (int i = 0; i < FB_LIST_NUM; i++) {
+    if (s_fblist[i].tags == FB_TAG_SPARE) {
+      return &s_fblist[i];
+    }
+  }
+  return NULL;
+}
+static fb_taged_t* get_ready_fb() {
+  for (int i = 0; i < FB_LIST_NUM; i++) {
+    if (s_fblist[i].tags == FB_TAG_READY) {
+      return &s_fblist[i];
+    }
+  }
+  return NULL;
+}
+static fb_taged_t* get_busy_fb() {
+  for (int i = 0; i < FB_LIST_NUM; i++) {
+    if (s_fblist[i].tags == FB_TAG_BUSY) {
+      return &s_fblist[i];
+    }
+  }
+  return NULL;
+}
+
 static ret_t lcd_mem_linux_wirte_buff(lcd_t* lcd) {
   ret_t ret = RET_OK;
-  fb_info_t* fb = &s_fb;
-  int fb_nr = fb_number(fb);
-  struct fb_var_screeninfo vi = (fb->var);
+  if (s_app_quited) {
+    return ret;
+  }
 
   if (lcd->draw_mode != LCD_DRAW_OFFLINE) {
-    int dummy = 0;
-    ioctl(fb->fd, FBIO_WAITFORVSYNC, &dummy);
-
-    s_buff_index++;
-    if (s_buff_index >= fb_nr) {
-      s_buff_index = 0;
+    tk_semaphore_wait(s_sem_spare, -1);
+    if (s_app_quited) {
+      return ret;
     }
+int a = time_now_ms();
+    tk_mutex_lock(s_lck_fblist);
+    fb_taged_t* spare_fb = get_spare_fb();
+    assert(spare_fb);
+    s_buff_index = spare_fb->fbid;
+    tk_mutex_unlock(s_lck_fblist);
+int b = time_now_ms();
     ret = lcd_linux_flush(lcd);
-
-    vi.yoffset = s_buff_index * fb_height(fb);
-    ioctl(fb->fd, FBIOPAN_DISPLAY, &vi);
+int c = time_now_ms();
+    tk_mutex_lock(s_lck_fblist);
+    spare_fb->tags = FB_TAG_READY;
+    tk_semaphore_post(s_sem_ready);
+    tk_mutex_unlock(s_lck_fblist);
+int d = time_now_ms();
+//printf("---------lcd_mem_linux_wirte_buff abcd: %d, %d, %d, %d\n", a, b, c, d);
+int sched_yield(void);
+sched_yield();
   }
 
   return ret;
 }
+
+static void* fbswap_thread(void* ctx) {
+  fb_info_t* fb = &s_fb;
+  struct fb_var_screeninfo vi = (fb->var);
+
+  log_info("display_thread start\n");
+
+  while (!s_app_quited) {
+    tk_semaphore_wait(s_sem_ready, -1);
+    if (s_app_quited) {
+      break;
+    }
+int a = time_now_ms();
+    tk_mutex_lock(s_lck_fblist);
+    fb_taged_t* ready_fb = get_ready_fb();
+    assert(ready_fb);
+    int ready_fbid = ready_fb->fbid;
+    tk_mutex_unlock(s_lck_fblist);
+int b = time_now_ms();
+    vi.yoffset = ready_fbid * fb_height(fb);
+    ioctl(fb->fd, FBIOPAN_DISPLAY, &vi);
+int c = time_now_ms();
+    int dummy = 0;
+    ioctl(fb->fd, FBIO_WAITFORVSYNC, &dummy);
+int d = time_now_ms();
+    tk_mutex_lock(s_lck_fblist);
+    fb_taged_t* last_busy_fb = get_busy_fb();
+    if (last_busy_fb) {
+      last_busy_fb->tags = FB_TAG_SPARE;
+      tk_semaphore_post(s_sem_spare);
+    }
+    ready_fb->tags = FB_TAG_BUSY;
+    tk_mutex_unlock(s_lck_fblist);
+int e = time_now_ms();
+//printf("========fbswap_thread abcde: %d, %d, %d, %d, %d\n", a, b, c, d, e);
+  }
+
+  log_info("display_thread end\n");
+  return NULL;
+}
+
 
 static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   lcd_t* lcd = NULL;
@@ -265,9 +388,20 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   if (lcd != NULL) {
 
     lcd->swap = lcd_mem_linux_wirte_buff;
-    lcd->flush = lcd_mem_linux_wirte_buff;
+    lcd->flush = NULL;
     ((lcd_mem_t*)lcd)->own_offline_fb = TRUE;
     lcd_mem_set_line_length(lcd, line_length);
+
+
+printf("=========fb_number=%d\n", fb_number(fb));
+    init_fblist(fb_number(fb));
+printf("---------fb_number=%d\n", fb_number(fb));
+
+    s_lck_fblist = tk_mutex_create();
+    s_sem_spare = tk_semaphore_create(fb_number(fb), NULL);
+    s_sem_ready = tk_semaphore_create(0, NULL);
+    s_t_fbswap = tk_thread_create(fbswap_thread, lcd);
+    tk_thread_start(s_t_fbswap);
   }
 
   return lcd;
