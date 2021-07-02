@@ -37,7 +37,8 @@
 #include "lcd/lcd_mem_bgr888.h"
 #include "lcd/lcd_mem_rgb888.h"
 
-#if !defined(WITH_LINUX_DRM) && !defined(WITH_LINUX_DRM)
+#include "lcd_linux_fb.h"
+#if !defined(WITH_LINUX_DRM) && !defined(WITH_LINUX_EGL)
 
 #ifndef DISPLAY_WAIT_TIME
 #define DISPLAY_WAIT_TIME 5000
@@ -47,17 +48,23 @@ static fb_info_t s_fb;
 static int s_ttyfd = -1;
 static int32_t s_buff_index = 0;
 static bool_t s_app_quited = FALSE;
+static const char* s_filename = NULL;
+static void* s_fb_resize_func_ctx = NULL;
+static lcd_linux_fb_resize_func_t s_fb_resize_func = NULL;
 
-static void on_app_exit(void) {
-  fb_info_t* fb = &s_fb;
+static bool_t lcd_linux_fb_open(fb_info_t* fb, const char* filename);
 
-  s_app_quited = TRUE;
+static void lcd_linux_fb_close(fb_info_t* fb) {
   if (s_ttyfd >= 0) {
     ioctl(s_ttyfd, KDSETMODE, KD_TEXT);
   }
-
   fb_close(fb);
+}
 
+static void on_app_exit(void) {
+  fb_info_t* fb = &s_fb;
+  s_app_quited = TRUE;
+  lcd_linux_fb_close(fb);
   log_debug("on_app_exit\n");
 }
 
@@ -150,6 +157,42 @@ static ret_t lcd_mem_linux_flush(lcd_t* lcd) {
   return RET_OK;
 }
 
+static ret_t (*lcd_mem_linux_resize_defalut)(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length);
+static ret_t lcd_mem_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length) {
+  ret_t ret = RET_OK;
+  fb_info_t* fb = &s_fb;
+  bool_t is_1fb = fb_is_1fb(fb);
+  uint32_t fb_num = fb_number(fb);
+  lcd_mem_t* mem = (lcd_mem_t*)lcd;
+  return_value_if_fail(lcd != NULL && s_fb_resize_func != NULL, RET_BAD_PARAMS)
+  
+  if (lcd_mem_linux_resize_defalut != NULL) {
+    lcd_mem_linux_resize_defalut(lcd, w, h, line_length);
+  }
+
+  lcd_linux_fb_close(fb);
+
+  ret = s_fb_resize_func(fb_num, w, h, s_fb_resize_func_ctx);
+  return_value_if_fail(ret == RET_OK, ret);
+  return_value_if_fail(lcd_linux_fb_open(fb, s_filename), RET_FAIL);
+
+  if (fb_is_1fb(fb)) {
+    mem->online_fb = (uint8_t*)(fb->fbmem0);
+  } else {
+    s_buff_index = 0;
+    TKMEM_FREE(mem->offline_fb);
+  }
+  mem->offline_fb = (uint8_t*)TKMEM_ALLOC(fb_size(fb));
+  lcd_mem_set_line_length(lcd, fb_line_length(fb));
+  if (fb_is_1fb(fb)) {
+    lcd->impl_data = fb;
+    fb->fbmem1 = mem->offline_fb;
+  }
+
+  log_debug("lcd_linux_fb_resize \r\n");
+  return ret;
+}
+
 static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
   lcd_t* lcd = NULL;
   int w = fb_width(fb);
@@ -197,6 +240,8 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
     lcd->impl_data = fb;
     lcd_mem_linux_flush_defalut = lcd->flush;
     lcd->flush = lcd_mem_linux_flush;
+    lcd_mem_linux_resize_defalut = lcd->resize;
+    lcd->resize = lcd_mem_linux_resize;
     lcd_mem_set_line_length(lcd, line_length);
   }
 
@@ -266,6 +311,8 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
 
     lcd->swap = lcd_mem_linux_wirte_buff;
     lcd->flush = lcd_mem_linux_wirte_buff;
+    lcd_mem_linux_resize_defalut = lcd->resize;
+    lcd->resize = lcd_mem_linux_resize;
     ((lcd_mem_t*)lcd)->own_offline_fb = TRUE;
     lcd_mem_set_line_length(lcd, line_length);
   }
@@ -281,17 +328,49 @@ static lcd_t* lcd_linux_create(fb_info_t* fb) {
   }
 }
 
+ret_t lcd_linux_set_fb_resize_func(lcd_linux_fb_resize_func_t fb_resize_func, void* ctx) {
+  return_value_if_fail(fb_resize_func != NULL, RET_OK);
+  s_fb_resize_func = fb_resize_func;
+  s_fb_resize_func_ctx = ctx;
+  return RET_OK;
+}
+
+static bool_t lcd_linux_fb_open(fb_info_t* fb, const char* filename) {
+  if (fb_open(fb, filename) == 0) {
+    s_filename = filename;
+    s_ttyfd = open("/dev/tty1", O_RDWR);
+    if (s_ttyfd >= 0) {
+      ioctl(s_ttyfd, KDSETMODE, KD_GRAPHICS);
+    }
+    return TRUE;
+  }
+  return FALSE;
+}
+
+static ret_t lcd_linux_fb_resize_func(uint32_t fb_num, wh_t w, wh_t h, void* ctx) {
+  struct fb_var_screeninfo var_set;
+  int fh = open(s_filename, O_RDONLY);
+  return_value_if_fail(fh >=0, RET_FAIL);
+
+	ioctl(fh, FBIOGET_VSCREENINFO, &var_set);
+
+  var_set.xres = w;
+  var_set.yres = h;
+  var_set.xres_virtual = w;
+  var_set.yres_virtual = h * fb_num;
+  ioctl(fh, FBIOPUT_VSCREENINFO, &var_set);
+  close(fh);
+
+  return RET_OK;
+}
+
 lcd_t* lcd_linux_fb_create(const char* filename) {
   lcd_t* lcd = NULL;
   fb_info_t* fb = &s_fb;
   return_value_if_fail(filename != NULL, NULL);
 
-  if (fb_open(fb, filename) == 0) {
-    s_ttyfd = open("/dev/tty1", O_RDWR);
-    if (s_ttyfd >= 0) {
-      ioctl(s_ttyfd, KDSETMODE, KD_GRAPHICS);
-    }
-
+  if (lcd_linux_fb_open(fb, filename)) {
+    lcd_linux_set_fb_resize_func(lcd_linux_fb_resize_func, NULL);
     // fix FBIOPAN_DISPLAY block issue when run in vmware double fb mode
     if (check_if_run_in_vmware()) {
       log_info("run in vmware and fix FBIOPAN_DISPLAY block issue\n");

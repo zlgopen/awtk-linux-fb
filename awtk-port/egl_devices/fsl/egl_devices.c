@@ -101,6 +101,17 @@ ret_t egl_devices_dispose(void* ctx) {
   return RET_OK;
 }
 
+ret_t egl_devices_resize(void* ctx, uint32_t w, uint32_t h) {
+  (void)w;
+  (void)h;
+  (void)ctx;
+  return RET_OK;
+}
+
+lcd_linux_fb_resize_func_t egl_devices_get_default_resize_func() {
+  return NULL;
+}
+
 float_t egl_devices_get_ratio(void* ctx) {
   (void)ctx;
   return 1.0f;

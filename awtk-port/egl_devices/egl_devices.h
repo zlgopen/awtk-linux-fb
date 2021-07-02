@@ -23,11 +23,16 @@
 #define TK_EGL_DEVICES_H
 
 #include "base/types_def.h"
+#include "../lcd_linux/lcd_linux.h"
 
 BEGIN_C_DECLS
 
 void* egl_devices_create(const char* filename);
 ret_t egl_devices_dispose(void* ctx);
+
+ret_t egl_devices_resize(void* ctx, uint32_t w, uint32_t h);
+
+lcd_linux_fb_resize_func_t egl_devices_get_default_resize_func();
 
 float_t egl_devices_get_ratio(void* ctx);
 int32_t egl_devices_get_width(void* ctx);

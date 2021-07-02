@@ -22,6 +22,7 @@
 #ifndef TK_LCD_LINUX_EGL_H
 #define TK_LCD_LINUX_EGL_H
 
+#include "lcd_linux.h"
 #include "base/types_def.h"
 
 BEGIN_C_DECLS
@@ -31,6 +32,7 @@ typedef struct _lcd_egl_context_t {
   int32_t h;
   float_t ratio;
   void* elg_ctx;
+  void* native_window;
 } lcd_egl_context_t;
 
 lcd_egl_context_t* lcd_linux_egl_create(const char* filename);

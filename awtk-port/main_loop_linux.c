@@ -19,6 +19,7 @@
  *
  */
 
+#include "tkc/utils.h"
 #include "base/idle.h"
 #include "base/timer.h"
 #include "base/font_manager.h"
