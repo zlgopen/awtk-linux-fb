@@ -21,8 +21,8 @@ TK_3RD_ROOT      = joinPath(TK_ROOT, '3rd')
 GTEST_ROOT       = joinPath(TK_ROOT, '3rd/gtest/googletest')
 
 BUILD_DIR        = joinPath(TK_LINUX_FB_ROOT, 'build')
-BIN_DIR          = joinPath(BUILD_DIR, 'bin')
-LIB_DIR          = joinPath(BUILD_DIR, 'lib')
+BIN_DIR          = joinPath(TK_LINUX_FB_ROOT, 'bin')
+LIB_DIR          = joinPath(TK_LINUX_FB_ROOT, 'lib')
 VAR_DIR          = joinPath(BUILD_DIR, 'var')
 TK_DEMO_ROOT     = joinPath(TK_ROOT, 'demos')
 
@@ -249,7 +249,7 @@ def has_custom_cc():
     return True
 
 def copySharedLib(src, dst, name):
-  src = os.path.join(src, 'build/bin/lib'+name+'.so')
+  src = os.path.join(src, 'bin/lib'+name+'.so')
   src = os.path.normpath(src);
   dst = os.path.normpath(dst);
 
