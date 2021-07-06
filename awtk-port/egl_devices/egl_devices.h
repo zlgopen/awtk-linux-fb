@@ -35,6 +35,8 @@ int32_t egl_devices_get_height(void* ctx);
 
 ret_t egl_devices_make_current(void* ctx);
 ret_t egl_devices_swap_buffers(void* ctx);
+
+ret_t egl_devices_resize(void* ctx, uint32_t w, uint32_t h);
  
 END_C_DECLS
 

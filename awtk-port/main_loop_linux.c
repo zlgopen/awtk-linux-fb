@@ -54,9 +54,6 @@
 #define MICE_DEVICE_FILENAME "/dev/input/mouse0"
 #endif /*MICE_DEVICE_FILENAME*/
 
-#ifdef WITH_LINUX_EGL
-static lcd_egl_context_t* s_lcd = NULL;
-#endif
 
 static ret_t main_loop_linux_destroy(main_loop_t* l) {
   main_loop_simple_t* loop = (main_loop_simple_t*)l;
@@ -67,7 +64,6 @@ static ret_t main_loop_linux_destroy(main_loop_t* l) {
 #else
   native_window_raw_deinit();
 #endif
-
 
   return RET_OK;
 }
@@ -137,7 +133,6 @@ main_loop_t* main_loop_init(int w, int h) {
   return_value_if_fail(lcd != NULL, NULL);
 
 #ifdef WITH_LINUX_EGL
-  s_lcd = lcd;
 #else
   native_window_raw_init(lcd);
 #endif
