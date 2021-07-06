@@ -55,12 +55,26 @@ static bool_t s_app_quited = FALSE;
 static fb_info_t s_fb;
 static int s_ttyfd = -1;
 
-static void on_app_exit(void) {
-  fb_info_t* fb = &s_fb;
+static bool_t lcd_linux_fb_open(fb_info_t* fb, const char* filename) {
+  if (fb_open(fb, filename) == 0) {
+    s_ttyfd = open("/dev/tty1", O_RDWR);
+    if (s_ttyfd >= 0) {
+      ioctl(s_ttyfd, KDSETMODE, KD_GRAPHICS);
+    }
+    return TRUE;
+  }
+  return FALSE;
+}
 
+static void lcd_linux_fb_close(fb_info_t* fb) {
   if (s_ttyfd >= 0) {
     ioctl(s_ttyfd, KDSETMODE, KD_TEXT);
   }
+  fb_close(fb);
+}
+
+static void on_app_exit(void) {
+  fb_info_t* fb = &s_fb;
 
 #if __FB_ASYNC_SWAP
   s_app_quited = TRUE;
@@ -86,7 +100,7 @@ static void on_app_exit(void) {
   }
 #endif
 
-  fb_close(fb);
+  lcd_linux_fb_close(fb);
 
   log_debug("on_app_exit\n");
 }
@@ -458,12 +472,7 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
   fb_info_t* fb = &s_fb;
   return_value_if_fail(filename != NULL, NULL);
 
-  if (fb_open(fb, filename) == 0) {
-    s_ttyfd = open("/dev/tty1", O_RDWR);
-    if (s_ttyfd >= 0) {
-      ioctl(s_ttyfd, KDSETMODE, KD_GRAPHICS);
-    }
-
+  if (lcd_linux_fb_open(fb, filename)) {
     // fix FBIOPAN_DISPLAY block issue when run in vmware double fb mode
     if (check_if_run_in_vmware()) {
       log_info("run in vmware and fix FBIOPAN_DISPLAY block issue\n");
