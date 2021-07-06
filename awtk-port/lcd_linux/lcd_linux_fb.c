@@ -174,7 +174,7 @@ static void on_signal_int(int sig) {
 static ret_t (*lcd_mem_linux_flush_defalut)(lcd_t* lcd);
 static ret_t lcd_mem_linux_flush(lcd_t* lcd) {
 #if __FB_WAIT_VSYNC
-  fb_info_t* fb = (fb_info_t*)(lcd->impl_data);
+  fb_info_t* fb = &s_fb;
   fb_sync(fb);
 #endif
 
@@ -193,35 +193,33 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
   int line_length = fb_line_length(fb);
 
   int bpp = fb_bpp(fb);
-  int size = fb_size(fb);
   uint8_t* online_fb = (uint8_t*)(fb->fbmem0);
-
-  fb->fbmem1 = (uint8_t*)malloc(size);
-  return_value_if_fail(fb->fbmem1 != NULL, NULL);
+  uint8_t* offline_fb = (uint8_t*)(fb->fbmem_offline);
+  return_value_if_fail(offline_fb != NULL, NULL);
 
   if (bpp == 16) {
     if (fb_is_bgra5551(fb)) {
       lcd = lcd_mem_bgra5551_create(fb);
     } else if (fb_is_bgr565(fb)) {
-      lcd = lcd_mem_bgr565_create_double_fb(w, h, online_fb, fb->fbmem1);
+      lcd = lcd_mem_bgr565_create_double_fb(w, h, online_fb, offline_fb);
     } else if (fb_is_rgb565(fb)) {
-      lcd = lcd_mem_rgb565_create_double_fb(w, h, online_fb, fb->fbmem1);
+      lcd = lcd_mem_rgb565_create_double_fb(w, h, online_fb, offline_fb);
     } else {
       assert(!"not supported framebuffer format.");
     }
   } else if (bpp == 32) {
     if (fb_is_bgra8888(fb)) {
-      lcd = lcd_mem_bgra8888_create_double_fb(w, h, online_fb, fb->fbmem1);
+      lcd = lcd_mem_bgra8888_create_double_fb(w, h, online_fb, offline_fb);
     } else if (fb_is_rgba8888(fb)) {
-      lcd = lcd_mem_rgba8888_create_double_fb(w, h, online_fb, fb->fbmem1);
+      lcd = lcd_mem_rgba8888_create_double_fb(w, h, online_fb, offline_fb);
     } else {
       assert(!"not supported framebuffer format.");
     }
   } else if (bpp == 24) {
     if (fb_is_bgr888(fb)) {
-      lcd = lcd_mem_bgr888_create_double_fb(w, h, online_fb, fb->fbmem1);
+      lcd = lcd_mem_bgr888_create_double_fb(w, h, online_fb, offline_fb);
     } else if (fb_is_rgb888(fb)) {
-      lcd = lcd_mem_rgb888_create_double_fb(w, h, online_fb, fb->fbmem1);
+      lcd = lcd_mem_rgb888_create_double_fb(w, h, online_fb, offline_fb);
     } else {
       assert(!"not supported framebuffer format.");
     }
@@ -230,7 +228,6 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
   }
 
   if (lcd != NULL) {
-    lcd->impl_data = fb;
     lcd_mem_linux_flush_defalut = lcd->flush;
     lcd->flush = lcd_mem_linux_flush;
     lcd_mem_set_line_length(lcd, line_length);
@@ -396,29 +393,31 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   int h = fb_height(fb);
   int bpp = fb_bpp(fb);
   int line_length = fb_line_length(fb);
-  uint8_t* buff = (uint8_t*)TKMEM_ALLOC(fb_size(fb));
+
+  uint8_t* offline_fb = (uint8_t*)(fb->fbmem_offline);
+  return_value_if_fail(offline_fb != NULL, NULL);
 
   if (bpp == 16) {
     if (fb_is_bgr565(fb)) {
-      lcd = lcd_mem_bgr565_create_single_fb(w, h, buff);
+      lcd = lcd_mem_bgr565_create_single_fb(w, h, offline_fb);
     } else if (fb_is_rgb565(fb)) {
-      lcd = lcd_mem_rgb565_create_single_fb(w, h, buff);
+      lcd = lcd_mem_rgb565_create_single_fb(w, h, offline_fb);
     } else {
       assert(!"not supported framebuffer format.");
     }
   } else if (bpp == 32) {
     if (fb_is_bgra8888(fb)) {
-      lcd = lcd_mem_bgra8888_create_single_fb(w, h, buff);
+      lcd = lcd_mem_bgra8888_create_single_fb(w, h, offline_fb);
     } else if (fb_is_rgba8888(fb)) {
-      lcd = lcd_mem_rgba8888_create_single_fb(w, h, buff);
+      lcd = lcd_mem_rgba8888_create_single_fb(w, h, offline_fb);
     } else {
       assert(!"not supported framebuffer format.");
     }
   } else if (bpp == 24) {
     if (fb_is_bgr888(fb)) {
-      lcd = lcd_mem_bgr888_create_single_fb(w, h, buff);
+      lcd = lcd_mem_bgr888_create_single_fb(w, h, offline_fb);
     } else if (fb_is_rgb888(fb)) {
-      lcd = lcd_mem_rgb888_create_single_fb(w, h, buff);
+      lcd = lcd_mem_rgb888_create_single_fb(w, h, offline_fb);
     } else {
       assert(!"not supported framebuffer format.");
     }
@@ -427,10 +426,8 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   }
 
   if (lcd != NULL) {
-
     lcd->swap = lcd_mem_linux_wirte_buff;
     lcd->flush = lcd_mem_linux_wirte_buff;
-    ((lcd_mem_t*)lcd)->own_offline_fb = TRUE;
     lcd_mem_set_line_length(lcd, line_length);
 
     init_fblist(fb_number(fb));

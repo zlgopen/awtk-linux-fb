@@ -39,7 +39,7 @@
 typedef struct _fb_info_t {
   int fd;
   uint8_t* fbmem0;
-  uint8_t* fbmem1;
+  uint8_t* fbmem_offline;
   struct fb_fix_screeninfo fix;
   struct fb_var_screeninfo var;
 
@@ -190,13 +190,11 @@ static inline int fb_open(fb_info_t* fb, const char* filename) {
 
   log_info("fb_open clear\n");
   //memset(fb->fbmem0, 0xff, total_size);
-  if (fb_is_2fb(fb)) {
-    fb->fbmem1 = fb->fbmem0 + size;
-  } else {
-    fb->fbmem1 = NULL;
-  }
-  log_info("fb_open ok\n");
 
+  fb->fbmem_offline = (uint8_t*)malloc(size);
+  assert(fb->fbmem_offline);
+
+  log_info("fb_open ok\n");
   return 0;
 fail:
   perror("framebuffer");
@@ -211,10 +209,8 @@ static inline void fb_close(fb_info_t* fb) {
     uint32_t total_size = fb_memsize(fb);
 
     log_info("fb_close\n");
-    if (fb_is_1fb(fb)) {
-      if (fb->fbmem1 != NULL) {
-        free(fb->fbmem1);
-      }
+    if (fb->fbmem_offline != NULL) {
+      free(fb->fbmem_offline);
     }
 
     if (fb->offline_fb != NULL) {
