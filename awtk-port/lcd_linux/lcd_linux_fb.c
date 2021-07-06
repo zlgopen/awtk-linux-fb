@@ -26,8 +26,8 @@
 #include "tkc/thread.h"
 #include "awtk_global.h"
 #include "tkc/time_now.h"
-#include "tkc/semaphore.h"
 #include "tkc/mutex.h"
+#include "tkc/semaphore.h"
 #include "lcd_mem_others.h"
 #include "blend/image_g2d.h"
 #include "base/system_info.h"
@@ -40,19 +40,20 @@
 
 #if !defined(WITH_LINUX_DRM) && !defined(WITH_LINUX_DRM)
 
-#ifndef DISPLAY_WAIT_TIME
-#define DISPLAY_WAIT_TIME 5000
-#endif
+#define __FB_WAIT_VSYNC    1
+#define __FB_ASYNC_SWAP    0
+#define __FB_BUFFER_NUM    AUTO_1_2_3
 
-static fb_info_t s_fb;
-static int s_ttyfd = -1;
-static int32_t s_buff_index = 0;
-static bool_t s_app_quited = FALSE;
-
+#if __FB_ASYNC_SWAP
 static tk_thread_t* s_t_fbswap = NULL;
 static tk_semaphore_t* s_sem_spare = NULL;
 static tk_semaphore_t* s_sem_ready = NULL;
 static tk_mutex_t* s_lck_fblist = NULL;
+static bool_t s_app_quited = FALSE;
+#endif
+
+static fb_info_t s_fb;
+static int s_ttyfd = -1;
 
 static void on_app_exit(void) {
   fb_info_t* fb = &s_fb;
@@ -61,6 +62,7 @@ static void on_app_exit(void) {
     ioctl(s_ttyfd, KDSETMODE, KD_TEXT);
   }
 
+#if __FB_ASYNC_SWAP
   s_app_quited = TRUE;
   tk_semaphore_post(s_sem_spare);
   tk_semaphore_post(s_sem_ready);
@@ -82,6 +84,7 @@ static void on_app_exit(void) {
   if (s_lck_fblist) {
     tk_mutex_destroy(s_lck_fblist);
   }
+#endif
 
   fb_close(fb);
 
@@ -118,7 +121,9 @@ static ret_t lcd_linux_init_online_fb(lcd_mem_t* mem, bitmap_t* fb, uint8_t* buf
   return RET_OK;
 }
 
-static ret_t lcd_linux_flush(lcd_t* base) {
+static ret_t lcd_linux_flush(lcd_t* base, int fbid) {
+printf("==========lcd_linux_flush fbid=%d\n", fbid);
+
   uint8_t* buff = NULL;
   fb_info_t* fb = &s_fb;
   int fb_nr = fb_number(fb);
@@ -126,9 +131,9 @@ static ret_t lcd_linux_flush(lcd_t* base) {
   lcd_mem_t* lcd = (lcd_mem_t*)base;
   lcd_orientation_t o = system_info()->lcd_orientation;
 
-  return_value_if_fail(lcd != NULL && fb != NULL && s_buff_index < fb_nr, RET_BAD_PARAMS);
+  return_value_if_fail(lcd != NULL && fb != NULL && fbid < fb_nr, RET_BAD_PARAMS);
 
-  buff = fb->fbmem0 + size * s_buff_index;
+  buff = fb->fbmem0 + size * fbid;
   if (o == LCD_ORIENTATION_0) {
     bitmap_t online_fb;
     bitmap_t offline_fb;
@@ -168,12 +173,16 @@ static void on_signal_int(int sig) {
 
 static ret_t (*lcd_mem_linux_flush_defalut)(lcd_t* lcd);
 static ret_t lcd_mem_linux_flush(lcd_t* lcd) {
+#if __FB_WAIT_VSYNC
   fb_info_t* fb = (fb_info_t*)(lcd->impl_data);
   fb_sync(fb);
+#endif
 
   if (lcd_mem_linux_flush_defalut) {
     lcd_mem_linux_flush_defalut(lcd);
   }
+
+printf("---------lcd_mem_linux_flush VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);
   return RET_OK;
 }
 
@@ -275,6 +284,8 @@ static fb_taged_t* get_busy_fb() {
   return NULL;
 }
 
+#if __FB_ASYNC_SWAP
+
 static ret_t lcd_mem_linux_wirte_buff(lcd_t* lcd) {
   ret_t ret = RET_OK;
   if (s_app_quited) {
@@ -286,23 +297,23 @@ static ret_t lcd_mem_linux_wirte_buff(lcd_t* lcd) {
     if (s_app_quited) {
       return ret;
     }
-int a = time_now_ms();
+
     tk_mutex_lock(s_lck_fblist);
     fb_taged_t* spare_fb = get_spare_fb();
     assert(spare_fb);
-    s_buff_index = spare_fb->fbid;
     tk_mutex_unlock(s_lck_fblist);
-int b = time_now_ms();
-    ret = lcd_linux_flush(lcd);
-int c = time_now_ms();
+
+    ret = lcd_linux_flush(lcd, spare_fb->fbid);
+
     tk_mutex_lock(s_lck_fblist);
     spare_fb->tags = FB_TAG_READY;
     tk_semaphore_post(s_sem_ready);
     tk_mutex_unlock(s_lck_fblist);
-int d = time_now_ms();
-//printf("---------lcd_mem_linux_wirte_buff abcd: %d, %d, %d, %d\n", a, b, c, d);
-int sched_yield(void);
-sched_yield();
+
+    int sched_yield(void);
+    sched_yield();
+
+printf("==========lcd_mem_linux_wirte_buff VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);
   }
 
   return ret;
@@ -319,19 +330,21 @@ static void* fbswap_thread(void* ctx) {
     if (s_app_quited) {
       break;
     }
-int a = time_now_ms();
+
     tk_mutex_lock(s_lck_fblist);
     fb_taged_t* ready_fb = get_ready_fb();
     assert(ready_fb);
     int ready_fbid = ready_fb->fbid;
     tk_mutex_unlock(s_lck_fblist);
-int b = time_now_ms();
+
     vi.yoffset = ready_fbid * fb_height(fb);
     ioctl(fb->fd, FBIOPAN_DISPLAY, &vi);
-int c = time_now_ms();
+
+#if __FB_WAIT_VSYNC
     int dummy = 0;
     ioctl(fb->fd, FBIO_WAITFORVSYNC, &dummy);
-int d = time_now_ms();
+#endif
+
     tk_mutex_lock(s_lck_fblist);
     fb_taged_t* last_busy_fb = get_busy_fb();
     if (last_busy_fb) {
@@ -340,14 +353,42 @@ int d = time_now_ms();
     }
     ready_fb->tags = FB_TAG_BUSY;
     tk_mutex_unlock(s_lck_fblist);
-int e = time_now_ms();
-//printf("========fbswap_thread abcde: %d, %d, %d, %d, %d\n", a, b, c, d, e);
   }
 
   log_info("display_thread end\n");
   return NULL;
 }
+#else // __FB_ASYNC_SWAP
 
+static ret_t lcd_mem_linux_wirte_buff(lcd_t* lcd) {
+  ret_t ret = RET_OK;
+  fb_info_t* fb = &s_fb;
+  struct fb_var_screeninfo vi = (fb->var);
+
+  if (lcd->draw_mode != LCD_DRAW_OFFLINE) {
+    fb_taged_t* spare_fb = get_spare_fb();
+    ret = lcd_linux_flush(lcd, spare_fb->fbid);
+
+    vi.yoffset = spare_fb->fbid * fb_height(fb);
+    ioctl(fb->fd, FBIOPAN_DISPLAY, &vi);
+
+#if __FB_WAIT_VSYNC
+    int dummy = 0;
+    ioctl(fb->fd, FBIO_WAITFORVSYNC, &dummy);
+#endif
+
+    fb_taged_t* last_busy_fb = get_busy_fb();
+    if (last_busy_fb) {
+      last_busy_fb->tags = FB_TAG_SPARE;
+    }
+    spare_fb->tags = FB_TAG_BUSY;
+
+printf("==========lcd_mem_linux_wirte_buff VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);
+  }
+
+  return ret;
+}
+#endif // __FB_ASYNC_SWAP
 
 static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   lcd_t* lcd = NULL;
@@ -388,20 +429,20 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   if (lcd != NULL) {
 
     lcd->swap = lcd_mem_linux_wirte_buff;
-    lcd->flush = NULL;
+    lcd->flush = lcd_mem_linux_wirte_buff;
     ((lcd_mem_t*)lcd)->own_offline_fb = TRUE;
     lcd_mem_set_line_length(lcd, line_length);
 
-
-printf("=========fb_number=%d\n", fb_number(fb));
     init_fblist(fb_number(fb));
-printf("---------fb_number=%d\n", fb_number(fb));
+    printf("=========fb_number=%d\n", fb_number(fb));
 
+#if __FB_ASYNC_SWAP
     s_lck_fblist = tk_mutex_create();
     s_sem_spare = tk_semaphore_create(fb_number(fb), NULL);
     s_sem_ready = tk_semaphore_create(0, NULL);
     s_t_fbswap = tk_thread_create(fbswap_thread, lcd);
     tk_thread_start(s_t_fbswap);
+#endif
   }
 
   return lcd;
