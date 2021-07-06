@@ -173,7 +173,7 @@ static ret_t lcd_linux_init_online_fb(lcd_mem_t* mem, bitmap_t* fb, uint8_t* buf
 }
 
 static ret_t lcd_linux_flush(lcd_t* base, int fbid) {
-printf("==========lcd_linux_flush fbid=%d\n", fbid);//###DEBUG###
+//printf("==========lcd_linux_flush fbid=%d\n", fbid);//###DEBUG###
 
   uint8_t* buff = NULL;
   fb_info_t* fb = &s_fb;
@@ -233,7 +233,7 @@ static ret_t lcd_mem_linux_flush(lcd_t* lcd) {
     lcd_mem_linux_flush_defalut(lcd);
   }
 
-printf("---------lcd_mem_linux_flush VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);//###DEBUG###
+//printf("---------lcd_mem_linux_flush VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);//###DEBUG###
   return RET_OK;
 }
 
@@ -366,7 +366,7 @@ static ret_t lcd_mem_linux_wirte_buff(lcd_t* lcd) {
     int sched_yield(void);
     sched_yield();
 
-printf("==========lcd_mem_linux_wirte_buff VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);//###DEBUG###
+//printf("==========lcd_mem_linux_wirte_buff VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);//###DEBUG###
   }
 
   return ret;
@@ -436,7 +436,7 @@ static ret_t lcd_mem_linux_wirte_buff(lcd_t* lcd) {
     }
     spare_fb->tags = FB_TAG_BUSY;
 
-printf("==========lcd_mem_linux_wirte_buff VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);//###DEBUG###
+//printf("==========lcd_mem_linux_wirte_buff VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);//###DEBUG###
   }
 
   return ret;
