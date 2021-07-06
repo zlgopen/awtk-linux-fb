@@ -49,13 +49,8 @@
 
 #include "lcd/lcd_mem_special.h"
 
-#include "lcd_linux.h"
-
 struct modeset_buf;
 struct modeset_dev;
-
-static void* s_fb_resize_func_ctx = NULL;
-static lcd_linux_fb_resize_func_t s_fb_resize_func = NULL;
 
 static int modeset_prepare(int fd);
 static void modeset_cleanup(int fd);
@@ -194,7 +189,6 @@ static int modeset_fb(int fd, struct modeset_dev* dev, uint32_t connector_id) {
 static int modeset_setup_dev(int fd, drmModeRes* res, drmModeConnector* conn,
                              struct modeset_dev* dev) {
   int ret;
-  int i = 0;
 
   /* check if a monitor is connected */
   if (conn->connection != DRM_MODE_CONNECTED) {
@@ -212,7 +206,7 @@ static int modeset_setup_dev(int fd, drmModeRes* res, drmModeConnector* conn,
    * buffers */
   dev->mode_list = TKMEM_ZALLOCN(drmModeModeInfo, conn->count_modes);
   dev->mode_list_size = conn->count_modes;
-  for (; i < conn->count_modes; i++) {
+  for (int i = 0; i < conn->count_modes; i++) {
     memcpy(&(dev->mode_list[i]), &conn->modes[i], sizeof(dev->mode));
   }
 
@@ -435,7 +429,6 @@ static void modeset_cleanup(int fd) {
     modeset_destroy_fb(fd, &iter->bufs[0]);
 
     /* free allocated memory */
-    
     TKMEM_FREE(iter->mode_list);
     free(iter);
   }
@@ -551,35 +544,12 @@ static void on_signal_int(int sig) {
   tk_quit();
 }
 
-ret_t lcd_linux_set_fb_resize_func(lcd_linux_fb_resize_func_t fb_resize_func, void* ctx) {
-  return_value_if_fail(fb_resize_func != NULL, RET_OK);
-  s_fb_resize_func = fb_resize_func;
-  s_fb_resize_func_ctx = ctx;
-  return RET_OK;
-}
-
-static ret_t (*lcd_drm_linux_resize_defalut)(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length);
-static ret_t lcd_drm_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length) {
-  ret_t ret = RET_OK;
-
-  /* must has fb_resize_func */
-  assert(s_fb_resize_func != NULL);
-  ret = s_fb_resize_func(1, w, h, s_fb_resize_func_ctx);
-  return_value_if_fail(ret == RET_OK, ret);
-
-  if (lcd_drm_linux_resize_defalut != NULL) {
-    lcd_drm_linux_resize_defalut(lcd, w, h, line_length);
-  }
-
-  return ret;
-}
-
-static ret_t lcd_linux_drm_resize_func(uint32_t fb_num, wh_t w, wh_t h, void* ctx) {
+static ret_t drm_do_resize(lcd_t* lcd, wh_t w, wh_t h) {
   int i = 0;
   int ret = 0;
   drmEventContext ev;
   int32_t find_number = -1;
-  lcd_mem_special_t* special = (lcd_mem_special_t*)ctx;
+  lcd_mem_special_t* special = (lcd_mem_special_t*)lcd;
   drm_info_t* info = (drm_info_t*)(special->ctx);
   struct modeset_dev* dev = info->dev;
 
@@ -610,12 +580,12 @@ static ret_t lcd_linux_drm_resize_func(uint32_t fb_num, wh_t w, wh_t h, void* ct
 
   modeset_destroy_fb(info->fd, &(dev->bufs[1]));
   modeset_destroy_fb(info->fd, &(dev->bufs[0]));
-  
+
   dev->bufs[0].width = w;
   dev->bufs[0].height = h;
   dev->bufs[1].width = w;
   dev->bufs[1].height = h;
-  modeset_fb(info->fd, dev, dev->conn);      
+  modeset_fb(info->fd, dev, dev->conn);
 
   dev->front_buf = 0;
   info->w = dev->bufs[0].width;
@@ -629,8 +599,22 @@ static ret_t lcd_linux_drm_resize_func(uint32_t fb_num, wh_t w, wh_t h, void* ct
   return RET_OK;
 }
 
+static ret_t (*lcd_drm_linux_resize_defalut)(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length);
+static ret_t lcd_drm_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length) {
+  ret_t ret = RET_OK;
+
+  /* must has fb_resize_func */
+  ret = drm_do_resize(lcd, w, h);
+  return_value_if_fail(ret == RET_OK, ret);
+
+  if (lcd_drm_linux_resize_defalut != NULL) {
+    lcd_drm_linux_resize_defalut(lcd, w, h, line_length);
+  }
+
+  return ret;
+}
+
 lcd_t* lcd_linux_drm_create(const char* card) {
-  lcd_t* lcd = NULL;
   int ret = 0, fd = 0;
   struct modeset_buf* buf = NULL;
   struct modeset_dev* iter = NULL;
@@ -670,14 +654,15 @@ lcd_t* lcd_linux_drm_create(const char* card) {
     ioctl(s_ttyfd, KDSETMODE, KD_GRAPHICS);
   }
 
+  lcd_t* lcd = lcd_mem_special_create(drm->w, drm->h, BITMAP_FMT_BGRA8888, lcd_bgra8888_flush, NULL,
+                                lcd_bgra8888_destroy, drm);
+  if (lcd) {
+    lcd_drm_linux_resize_defalut = lcd->resize;
+    lcd->resize = lcd_drm_linux_resize;
+  }
+
   atexit(on_app_exit);
   signal(SIGINT, on_signal_int);
-  lcd = lcd_mem_special_create(drm->w, drm->h, BITMAP_FMT_BGRA8888, lcd_bgra8888_flush, NULL,
-                                lcd_bgra8888_destroy, drm);
-  lcd_drm_linux_resize_defalut = lcd->resize;
-  lcd->resize = lcd_drm_linux_resize;
-
-   lcd_linux_set_fb_resize_func(lcd_linux_drm_resize_func, lcd);
   return lcd;
 error:
   TKMEM_FREE(drm);

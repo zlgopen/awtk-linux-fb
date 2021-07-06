@@ -23,7 +23,6 @@
 #define TK_LCD_LINUX_DRM_H
 
 #include "base/lcd.h"
-#include "lcd_linux.h"
 
 BEGIN_C_DECLS
 

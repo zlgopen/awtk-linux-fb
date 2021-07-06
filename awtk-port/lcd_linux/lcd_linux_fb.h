@@ -22,7 +22,7 @@
 #ifndef TK_LCD_LINUX_FB_H
 #define TK_LCD_LINUX_FB_H
 
-#include "lcd_linux.h"
+#include "base/lcd.h"
 
 BEGIN_C_DECLS
 

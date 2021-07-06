@@ -51,9 +51,9 @@ typedef struct _egl_devices_gbm_context_t {
   EGLDisplay egl_display;
   EGLSurface egl_surface;
   EGLContext egl_context;
-  int egl_config_index;
-  
+
   EGLConfig *egl_configs;
+  int egl_config_index;
 
   struct gbm_bo *previous_bo;
   uint32_t previous_fb;
@@ -104,9 +104,9 @@ static int match_config_to_visual(EGLDisplay egl_display, EGLint visual_id, EGLC
 static void swap_buffers (egl_devices_gbm_context_t* context) {
   struct gbm_bo *bo = NULL;	
   uint32_t handle = 0;
+  uint32_t pitch = 0;
   uint32_t width = 0;
   uint32_t height = 0;
-  uint32_t pitch = 0;
   uint32_t fb = 0;
 
   eglSwapBuffers (context->egl_display, context->egl_surface);
@@ -126,7 +126,6 @@ static void swap_buffers (egl_devices_gbm_context_t* context) {
 }
 
 static void init_ogl(egl_devices_gbm_context_t *ctx) {
-  uint32_t i = 0;
   drmModeRes *resources = NULL;
   drmModeConnector *connector = NULL;
   drmModeEncoder *encoder = NULL;
@@ -148,7 +147,7 @@ static void init_ogl(egl_devices_gbm_context_t *ctx) {
 
   ctx->mode_list = TKMEM_ZALLOCN(drmModeModeInfo, connector->count_modes);
   ctx->mode_list_size = connector->count_modes;
-  for (; i < connector->count_modes; i++) {
+  for (uint32_t i = 0; i < connector->count_modes; i++) {
     memcpy(&(ctx->mode_list[i]), &connector->modes[i], sizeof(drmModeModeInfo));
   }
 
@@ -173,39 +172,6 @@ static void init_ogl(egl_devices_gbm_context_t *ctx) {
 
   result = eglMakeCurrent(ctx->egl_display, ctx->egl_surface, ctx->egl_surface, ctx->egl_context);
   assert(EGL_FALSE != result);
-  
-}
-
-ret_t egl_devices_resize(void* ctx, uint32_t w, uint32_t h) {
-  int32_t i = 0;
-  int32_t find_number = -1;
-  egl_devices_gbm_context_t* context = (egl_devices_gbm_context_t*)ctx;
-  return_value_if_fail(context != NULL, RET_BAD_PARAMS);
-
-  for (; i < context->mode_list_size; i++) {
-    if (context->mode_list[i].hdisplay == w && context->mode_list[i].vdisplay == h) {
-      find_number = i;
-      break;
-    }
-  }
-  return_value_if_fail(find_number >= 0, RET_NOT_FOUND);
-
-  eglDestroySurface(context->egl_display, context->egl_surface);
-  gbm_surface_destroy(context->gbm_surface);
-
-  memcpy(&(context->mode_info), &(context->mode_list[find_number]), sizeof(drmModeModeInfo));
-  context->gbm_surface = gbm_surface_create(context->gbm_device, context->mode_info.hdisplay, context->mode_info.vdisplay, GBM_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT|GBM_BO_USE_RENDERING);
-  context->egl_surface = eglCreateWindowSurface(context->egl_display, context->egl_configs[context->egl_config_index], (EGLNativeWindowType)context->gbm_surface, NULL);
-  assert(context->egl_surface != EGL_NO_SURFACE);
-  return RET_OK;
-}
-
-static ret_t lcd_linux_egl_gbm_resize_func(uint32_t fb_num, wh_t w, wh_t h, void* ctx) {
-  return RET_OK;
-}
-
-lcd_linux_fb_resize_func_t egl_devices_get_default_resize_func() {
-  return lcd_linux_egl_gbm_resize_func;
 }
 
 void* egl_devices_create(const char* filename) {
@@ -257,7 +223,7 @@ ret_t egl_devices_dispose(void* ctx) {
   gbm_device_destroy (context->gbm_device);
 
   close (context->device);
-  
+
   TKMEM_FREE(context->egl_configs);
   TKMEM_FREE(context->mode_list);
   TKMEM_FREE(context);
@@ -301,4 +267,28 @@ ret_t egl_devices_swap_buffers(void* ctx) {
 
   swap_buffers(context);
   return eglGetError() == EGL_SUCCESS ? RET_OK : RET_FAIL;
+}
+
+ret_t egl_devices_resize(void* ctx, uint32_t w, uint32_t h) {
+  int32_t i = 0;
+  int32_t find_number = -1;
+  egl_devices_gbm_context_t* context = (egl_devices_gbm_context_t*)ctx;
+  return_value_if_fail(context != NULL, RET_BAD_PARAMS);
+
+  for (; i < context->mode_list_size; i++) {
+    if (context->mode_list[i].hdisplay == w && context->mode_list[i].vdisplay == h) {
+      find_number = i;
+      break;
+    }
+  }
+  return_value_if_fail(find_number >= 0, RET_NOT_FOUND);
+
+  eglDestroySurface(context->egl_display, context->egl_surface);
+  gbm_surface_destroy(context->gbm_surface);
+
+  memcpy(&(context->mode_info), &(context->mode_list[find_number]), sizeof(drmModeModeInfo));
+  context->gbm_surface = gbm_surface_create(context->gbm_device, context->mode_info.hdisplay, context->mode_info.vdisplay, GBM_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT|GBM_BO_USE_RENDERING);
+  context->egl_surface = eglCreateWindowSurface(context->egl_display, context->egl_configs[context->egl_config_index], (EGLNativeWindowType)context->gbm_surface, NULL);
+  assert(context->egl_surface != EGL_NO_SURFACE);
+  return RET_OK;
 }

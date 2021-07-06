@@ -208,66 +208,6 @@ ret_t egl_devices_dispose(void* ctx) {
   return RET_OK;
 }
 
-ret_t egl_devices_resize(void* ctx, uint32_t w, uint32_t h) {
-  egl_devices_x11_context_t* context = (egl_devices_x11_context_t*)ctx;
-  return_value_if_fail(context != NULL, RET_BAD_PARAMS);
-  XResizeWindow(context->x_display, context->win, w, h);
-  return RET_OK;
-}
-
-static char* lcd_linux_egl_get_screen_name(char* line_data, uint32_t line_length) {
-  int32_t i = 0;
-  int32_t n = 0;
-  char* screen_name = NULL;
-  for (; i < line_length; i++) {
-    if(line_data[i] == ' ' ){
-      n = i;
-      break;
-    }
-  }
-  screen_name = TKMEM_ZALLOCN(char, n + 1);
-  if (screen_name != NULL) {
-    memcpy(screen_name, line_data, n);
-  }
-  return screen_name;
-}
-
-static ret_t lcd_linux_egl_x11_resize_func(uint32_t fb_num, wh_t w, wh_t h, void* ctx) {
-  bool_t is_find = FALSE;
-  int32_t line_number = 0;
-  char cmd[255] = {0};
-  char* screen_name = NULL;
-  char resize_name[20] = {0};
-  char line_data[4096] = {0};
-  FILE* fp = popen("xrandr", "r");
-  return_value_if_fail(fp != NULL, RET_BAD_PARAMS);
-  tk_snprintf(resize_name, sizeof(resize_name), "%dx%d", w, h);
-  while (fgets(line_data, sizeof(line_data), fp) != NULL) {
-    if (line_number == 1) {
-      screen_name = lcd_linux_egl_get_screen_name(line_data, sizeof(line_data));
-    } else {
-      if (strstr(line_data, resize_name) != NULL) {
-        is_find = TRUE;
-        break;
-      }
-    }
-    line_number++;
-  }
-  pclose(fp);
-
-  return_value_if_fail(screen_name != NULL, RET_FAIL);
-  // "xrandr --output HDMI-1 --mode 800x600"
-  tk_snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", screen_name, resize_name);
-  TKMEM_FREE(screen_name);
-
-  return_value_if_fail(is_find, RET_FAIL);
-  return  system(cmd) == 0 ? RET_OK : RET_FAIL;
-}
-
-lcd_linux_fb_resize_func_t egl_devices_get_default_resize_func() {
-  return lcd_linux_egl_x11_resize_func;
-}
-
 float_t egl_devices_get_ratio(void* ctx) {
   (void)ctx;
   return 1.0f;
@@ -305,4 +245,63 @@ ret_t egl_devices_swap_buffers(void* ctx) {
 
   eglSwapBuffers(context->egl_display, context->egl_surface);
   return eglGetError() == EGL_SUCCESS ? RET_OK : RET_FAIL;
+}
+
+static char* egl_x11_get_screen_name(char* line_data, uint32_t line_length) {
+  int32_t i = 0;
+  int32_t n = 0;
+  char* screen_name = NULL;
+  for (; i < line_length; i++) {
+    if(line_data[i] == ' ' ){
+      n = i;
+      break;
+    }
+  }
+  screen_name = TKMEM_ZALLOCN(char, n + 1);
+  if (screen_name != NULL) {
+    memcpy(screen_name, line_data, n);
+  }
+  return screen_name;
+}
+
+static ret_t egl_x11_do_resize(wh_t w, wh_t h) {
+  bool_t is_find = FALSE;
+  int32_t line_number = 0;
+  char cmd[255] = {0};
+  char* screen_name = NULL;
+  char resize_name[20] = {0};
+  char line_data[4096] = {0};
+  FILE* fp = popen("xrandr", "r");
+  return_value_if_fail(fp != NULL, RET_BAD_PARAMS);
+  tk_snprintf(resize_name, sizeof(resize_name), "%dx%d", w, h);
+  while (fgets(line_data, sizeof(line_data), fp) != NULL) {
+    if (line_number == 1) {
+      screen_name = egl_x11_get_screen_name(line_data, sizeof(line_data));
+    } else {
+      if (strstr(line_data, resize_name) != NULL) {
+        is_find = TRUE;
+        break;
+      }
+    }
+    line_number++;
+  }
+  pclose(fp);
+
+  return_value_if_fail(screen_name != NULL, RET_FAIL);
+  // "xrandr --output HDMI-1 --mode 800x600"
+  tk_snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", screen_name, resize_name);
+  TKMEM_FREE(screen_name);
+
+  return_value_if_fail(is_find, RET_FAIL);
+  return  system(cmd) == 0 ? RET_OK : RET_FAIL;
+}
+
+ret_t egl_devices_resize(void* ctx, uint32_t w, uint32_t h) {
+  ret_t ret = egl_x11_do_resize(w, h);
+  if (ret == RET_OK) {
+    egl_devices_x11_context_t* context = (egl_devices_x11_context_t*)ctx;
+    return_value_if_fail(context != NULL, RET_BAD_PARAMS);
+    XResizeWindow(context->x_display, context->win, w, h);
+  }
+  return ret;
 }
