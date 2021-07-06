@@ -40,9 +40,9 @@
 
 #if !defined(WITH_LINUX_DRM) && !defined(WITH_LINUX_DRM)
 
+#define __FB_SUP_RESIZE    1
 #define __FB_WAIT_VSYNC    1
 #define __FB_ASYNC_SWAP    0
-#define __FB_BUFFER_NUM    AUTO_1_2_3
 
 #if __FB_ASYNC_SWAP
 static tk_thread_t* s_t_fbswap = NULL;
@@ -60,6 +60,16 @@ static bool_t lcd_linux_fb_open(fb_info_t* fb, const char* filename) {
     s_ttyfd = open("/dev/tty1", O_RDWR);
     if (s_ttyfd >= 0) {
       ioctl(s_ttyfd, KDSETMODE, KD_GRAPHICS);
+    }
+
+    // fix FBIOPAN_DISPLAY block issue when run in vmware double fb mode
+    if (check_if_run_in_vmware()) {
+      log_info("run in vmware and fix FBIOPAN_DISPLAY block issue\n");
+      // if memset/memcpy the entire fb then call FBIOPAN_DISPLAY immediately, 
+      // the ubuntu in vmware will stuck by unknown reason, sleep for avoid this bug
+      fb->var.activate = FB_ACTIVATE_INV_MODE;
+      fb->var.pixclock = 60;
+      usleep(500000);
     }
     return TRUE;
   }
@@ -104,6 +114,33 @@ static void on_app_exit(void) {
 
   log_debug("on_app_exit\n");
 }
+
+#if __FB_SUP_RESIZE
+static ret_t (*lcd_mem_linux_resize_defalut)(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length);
+static ret_t lcd_mem_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length) {
+#if __FB_ASYNC_SWAP
+  log_debug("linuxfb async swap mode not support fb resize.\n");
+  return RET_FAIL;
+#endif
+
+  ret_t ret = RET_OK;
+  fb_info_t* fb = &s_fb;
+  lcd_mem_t* mem = (lcd_mem_t*)lcd;
+  return_value_if_fail(lcd != NULL, RET_BAD_PARAMS);
+
+  ret = fb_resize_reopen(fb, w, h);
+  mem->online_fb = (uint8_t*)(fb->fbmem0);
+  mem->offline_fb = fb->fbmem_offline;
+  lcd_mem_set_line_length(lcd, fb_line_length(fb));
+
+  if (lcd_mem_linux_resize_defalut && ret == RET_OK) {
+    lcd_mem_linux_resize_defalut(lcd, w, h, line_length);
+  }
+
+  log_debug("lcd_linux_fb_resize \r\n");
+  return ret;
+}
+#endif
 
 static ret_t lcd_linux_init_drawing_fb(lcd_mem_t* mem, bitmap_t* fb) {
   return_value_if_fail(mem != NULL && fb != NULL, RET_BAD_PARAMS);
@@ -245,6 +282,11 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
     lcd_mem_linux_flush_defalut = lcd->flush;
     lcd->flush = lcd_mem_linux_flush;
     lcd_mem_set_line_length(lcd, line_length);
+
+#if __FB_SUP_RESIZE
+    lcd_mem_linux_resize_defalut = lcd->resize;
+    lcd->resize = lcd_mem_linux_resize;
+#endif
   }
 
   return lcd;
@@ -444,8 +486,10 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
     lcd->flush = lcd_mem_linux_wirte_buff;
     lcd_mem_set_line_length(lcd, line_length);
 
-    init_fblist(fb_number(fb));
-    printf("=========fb_number=%d\n", fb_number(fb));
+#if __FB_SUP_RESIZE
+    lcd_mem_linux_resize_defalut = lcd->resize;
+    lcd->resize = lcd_mem_linux_resize;
+#endif
 
 #if __FB_ASYNC_SWAP
     s_lck_fblist = tk_mutex_create();
@@ -460,6 +504,9 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
 }
 
 static lcd_t* lcd_linux_create(fb_info_t* fb) {
+  init_fblist(fb_number(fb));
+  printf("=========fb_number=%d\n", fb_number(fb));
+
   if (fb_is_1fb(fb)) {
     return lcd_linux_create_flushable(fb);
   } else {
@@ -473,16 +520,6 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
   return_value_if_fail(filename != NULL, NULL);
 
   if (lcd_linux_fb_open(fb, filename)) {
-    // fix FBIOPAN_DISPLAY block issue when run in vmware double fb mode
-    if (check_if_run_in_vmware()) {
-      log_info("run in vmware and fix FBIOPAN_DISPLAY block issue\n");
-      // if memset/memcpy the entire fb then call FBIOPAN_DISPLAY immediately, 
-      // the ubuntu in vmware will stuck by unknown reason, sleep for avoid this bug
-      fb->var.activate = FB_ACTIVATE_INV_MODE;
-      fb->var.pixclock = 60;
-      usleep(500000);
-    }
-
     lcd = lcd_linux_create(fb);
   }
 

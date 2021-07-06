@@ -42,9 +42,6 @@ typedef struct _fb_info_t {
   uint8_t* fbmem_offline;
   struct fb_fix_screeninfo fix;
   struct fb_var_screeninfo var;
-
-  /*for swappable draw snapshot*/
-  uint8_t* offline_fb;
 } fb_info_t;
 
 #define fb_width(fb) ((fb)->var.xres)
@@ -213,10 +210,6 @@ static inline void fb_close(fb_info_t* fb) {
       free(fb->fbmem_offline);
     }
 
-    if (fb->offline_fb != NULL) {
-      free(fb->offline_fb);
-    }
-
     munmap(fb->fbmem0, total_size);
     close(fb->fd);
     log_info("fb_close ok\n");
@@ -235,6 +228,38 @@ static inline void fb_sync(fb_info_t* info) {
   }
 
   return;
+}
+
+static inline ret_t fb_resize_reopen(fb_info_t* fb, wh_t w, wh_t h) {
+  struct fb_var_screeninfo var_set;
+  uint32_t fb_num = fb_number(fb);
+  uint32_t total_size = fb_memsize(fb);
+
+	ioctl(fb->fd, FBIOGET_VSCREENINFO, &var_set);
+  var_set.xres = w;
+  var_set.yres = h;
+  var_set.xres_virtual = w;
+  var_set.yres_virtual = h * fb_num;
+  if (ioctl(fb->fd, FBIOPUT_VSCREENINFO, &var_set) < 0) {
+    return RET_FAIL;
+  }
+
+  free(fb->fbmem_offline);
+  munmap(fb->fbmem0, total_size);
+
+  ioctl(fb->fd, FBIOGET_FSCREENINFO, &fb->fix);
+  ioctl(fb->fd, FBIOGET_VSCREENINFO, &fb->var);
+  uint32_t new_size = fb_size(fb);
+  uint32_t new_total_size = fb_memsize(fb);
+
+  fb->fbmem0 = (uint8_t*)mmap(0, new_total_size, PROT_READ | PROT_WRITE, MAP_SHARED, fb->fd, 0);
+  if (fb->fbmem0 == MAP_FAILED) {
+    log_error("map framebuffer failed.\n");
+    return RET_FAIL;
+  }
+  fb->fbmem_offline = (uint8_t*)malloc(new_size);
+  assert(fb->fbmem_offline);
+  return RET_OK;
 }
 
 static inline bool_t check_if_run_in_vmware() {
