@@ -34,8 +34,8 @@ TSLIB_LIB_DIR=''
 
 ```
 # lcd devices
-LCD_DEICES='fb'
-# LCD_DEICES='drm'
+LCD_DEVICES='fb'
+# LCD_DEVICES='drm'
 ```
 
 ##### 3. 编译 demo 并抽取资源文件

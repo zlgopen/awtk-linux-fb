@@ -8,11 +8,11 @@
 # awtk_config.py
 
 # lcd devices
-LCD_DEICES='fb'
-# LCD_DEICES='drm'
-# LCD_DEICES='egl_for_fsl'
-# LCD_DEICES='egl_for_x11'
-# LCD_DEICES='egl_for_rpi'
+LCD_DEVICES='fb'
+# LCD_DEVICES='drm'
+# LCD_DEVICES='egl_for_fsl'
+# LCD_DEVICES='egl_for_x11'
+# LCD_DEVICES='egl_for_rpi'
 ```
 
 ###  2.适配其他 egl 平台
@@ -50,13 +50,13 @@ LCD_DEICES='fb'
    ```python
    # SConscript
    
-   if LCD_DEICES =='egl_for_fsl' :
+   if LCD_DEVICES =='egl_for_fsl' :
      SOURCES = Glob('egl_devices/fsl/*.c') + SOURCES;
-   elif LCD_DEICES =='egl_for_x11' :
+   elif LCD_DEVICES =='egl_for_x11' :
      SOURCES = Glob('egl_devices/x11/*.c') + SOURCES;
-   elif LCD_DEICES =='egl_for_rpi' :
+   elif LCD_DEVICES =='egl_for_rpi' :
      SOURCES = Glob('egl_devices/rpi/*.c') + SOURCES;
-   elif LCD_DEICES =='egl_for_AAA' : # 这里加入适配文件代码
+   elif LCD_DEVICES =='egl_for_AAA' : # 这里加入适配文件代码
      SOURCES = Glob('egl_devices/AAA/*.c') + SOURCES;
    ```
 
@@ -67,34 +67,34 @@ LCD_DEICES='fb'
    ...
    
    # lcd devices
-   # LCD_DEICES='fb'
-   # LCD_DEICES='drm'
-   # LCD_DEICES='egl_for_fsl'
-   # LCD_DEICES='egl_for_x11'
-   # LCD_DEICES='egl_for_rpi'
-   LCD_DEICES='egl_for_AAA'	# 这里让 LCD_DEICES 等于 egl_for_AAA，因为 SConscript 中需要 LCD_DEICES 来确定编译文件。
+   # LCD_DEVICES='fb'
+   # LCD_DEVICES='drm'
+   # LCD_DEVICES='egl_for_fsl'
+   # LCD_DEVICES='egl_for_x11'
+   # LCD_DEVICES='egl_for_rpi'
+   LCD_DEVICES='egl_for_AAA'	# 这里让 LCD_DEVICES 等于 egl_for_AAA，因为 SConscript 中需要 LCD_DEVICES 来确定编译文件。
    
    ...
    
-   if LCD_DEICES =='drm' :
+   if LCD_DEVICES =='drm' :
      #for drm
      OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
      OS_LIBS=OS_LIBS + ['drm']
-   elif LCD_DEICES =='egl_for_fsl':
+   elif LCD_DEVICES =='egl_for_fsl':
      #for egl for fsl
      OS_FLAGS=OS_FLAGS + ' -DEGL_API_FB '
      OS_LIBS=OS_LIBS + [ 'GLESv2', 'EGL']
-   elif LCD_DEICES =='egl_for_x11' :
+   elif LCD_DEVICES =='egl_for_x11' :
      #for egl for fsl
      OS_FLAGS=OS_FLAGS + ' -fPIC '
      OS_LIBS=OS_LIBS + [ 'X11', 'EGL', 'GLESv2' ]
-   elif LCD_DEICES =='egl_for_rpi' :
+   elif LCD_DEVICES =='egl_for_rpi' :
      #for egl for rpi
      OS_LIBPATH += ['/opt/vc/lib']
      OS_CPPPATH += ['/opt/vc/include']
      OS_LIBS=OS_LIBS + [ 'brcmEGL', 'brcmGLESv2', 'bcm_host' ]
      COMMON_CCFLAGS += ' -DWITH_GLAD_SPECIAL_OPENGL_LIB=\\\"\"/opt/vc/lib/libbrcmGLESv2.so\\\"\" '
-   elif LCD_DEICES =='egl_for_AAA':
+   elif LCD_DEVICES =='egl_for_AAA':
      # 这里添加链接相关的宏和链接类库以及头文件路径。
      # OS_FLAGS, OS_LIBPATH, OS_LIBS, COMMON_CCFLAGS
    ```

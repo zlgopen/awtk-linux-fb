@@ -46,7 +46,7 @@ if APP_ROOT == '':
 else:
   APP_PROJ_VAR = []
 
-if awtk.lcd_deices_is_egl(os.environ['LCD_DEICES']) :
+if awtk.lcd_devices_is_egl(os.environ['LCD_DEVICES']) :
   APP_PROJ_VAR += [awtk.joinPath(TK_ROOT_VAR, '3rd/glad/SConscript')]
 
 SConscriptFiles=[

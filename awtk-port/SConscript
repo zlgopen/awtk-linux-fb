@@ -3,7 +3,7 @@ import copy
 
 BIN_DIR = os.environ['BIN_DIR'];
 LIB_DIR = os.environ['LIB_DIR'];
-LCD_DEICES = os.environ['LCD_DEICES']
+LCD_DEVICES = os.environ['LCD_DEVICES']
 
 env = DefaultEnvironment().Clone()
 SOURCES = [
@@ -19,11 +19,11 @@ SOURCES = [
 if os.environ['TSLIB_LIB_DIR']:
   SOURCES = ['input_thread/tslib_thread.c'] + SOURCES;
 
-if LCD_DEICES =='egl_for_fsl' :
+if LCD_DEVICES =='egl_for_fsl' :
   SOURCES = Glob('egl_devices/fsl/*.c') + SOURCES;
-elif LCD_DEICES =='egl_for_x11' :
+elif LCD_DEVICES =='egl_for_x11' :
   SOURCES = Glob('egl_devices/x11/*.c') + SOURCES;
-elif LCD_DEICES =='egl_for_gbm' :
+elif LCD_DEVICES =='egl_for_gbm' :
   SOURCES = Glob('egl_devices/gbm/*.c') + SOURCES;
 
 env.Library(os.path.join(LIB_DIR, 'awtk_linux_fb'), SOURCES)

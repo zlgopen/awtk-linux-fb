@@ -53,11 +53,11 @@
    sudo apt install libgles2-mesa libgles2-mesa-dev
    ```
 
-5. 修改 awtk-linux-fb/awtk_config.py 文件的 LCD_DEICES 模式
+5. 修改 awtk-linux-fb/awtk_config.py 文件的 LCD_DEVICES 模式
 
    ```
    # lcd devices
-   LCD_DEICES='egl_for_x11'
+   LCD_DEVICES='egl_for_x11'
    
    #for pc build
    TOOLS_PREFIX=''
@@ -82,11 +82,11 @@
    开启 GL full KMS 驱动
    ```
 
-2. 修改 awtk-linux-fb/awtk_config.py 文件的 LCD_DEICES 模式
+2. 修改 awtk-linux-fb/awtk_config.py 文件的 LCD_DEVICES 模式
 
    ```
    # lcd devices
-   LCD_DEICES='egl_for_gbm'
+   LCD_DEVICES='egl_for_gbm'
    
    #for pc build
    TOOLS_PREFIX=''

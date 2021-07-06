@@ -113,10 +113,10 @@ zlgopen
 
 #### 2. 使用 Direct Rendering Manager (DRM)
 
-缺省使用 framebuffer，如果使用 DRM，请修改 awtk\_config.py，指定 LCD_DEICES 和 drm 的路径。
+缺省使用 framebuffer，如果使用 DRM，请修改 awtk\_config.py，指定 LCD_DEVICES 和 drm 的路径。
 
 ```
-LCD_DEICES='drm'
+LCD_DEVICES='drm'
 
 #for drm
 OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
