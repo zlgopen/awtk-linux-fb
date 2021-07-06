@@ -100,6 +100,8 @@ struct modeset_dev {
   struct modeset_buf bufs[2];
 
   drmModeModeInfo mode;
+  uint32_t mode_list_size;
+  drmModeModeInfo* mode_list;
   uint32_t conn;
   uint32_t crtc;
   drmModeCrtc* saved_crtc;
@@ -167,6 +169,23 @@ static int modeset_prepare(int fd) {
   return 0;
 }
 
+static int modeset_fb(int fd, struct modeset_dev* dev, uint32_t connector_id) {
+  /* create framebuffer #1 for this CRTC */
+  int ret = modeset_create_fb(fd, &dev->bufs[0]);
+  if (ret) {
+    fprintf(stderr, "cannot create framebuffer for connector %u\n", connector_id);
+    return ret;
+  }
+
+  /* create framebuffer #2 for this CRTC */
+  ret = modeset_create_fb(fd, &dev->bufs[1]);
+  if (ret) {
+    fprintf(stderr, "cannot create framebuffer for connector %u\n", connector_id);
+    modeset_destroy_fb(fd, &dev->bufs[0]);
+  }
+  return ret;
+}
+
 static int modeset_setup_dev(int fd, drmModeRes* res, drmModeConnector* conn,
                              struct modeset_dev* dev) {
   int ret;
@@ -185,6 +204,12 @@ static int modeset_setup_dev(int fd, drmModeRes* res, drmModeConnector* conn,
 
   /* copy the mode information into our device structure and into both
    * buffers */
+  dev->mode_list = TKMEM_ZALLOCN(drmModeModeInfo, conn->count_modes);
+  dev->mode_list_size = conn->count_modes;
+  for (int i = 0; i < conn->count_modes; i++) {
+    memcpy(&(dev->mode_list[i]), &conn->modes[i], sizeof(dev->mode));
+  }
+
   memcpy(&dev->mode, &conn->modes[0], sizeof(dev->mode));
   dev->bufs[0].width = conn->modes[0].hdisplay;
   dev->bufs[0].height = conn->modes[0].vdisplay;
@@ -200,22 +225,7 @@ static int modeset_setup_dev(int fd, drmModeRes* res, drmModeConnector* conn,
     return ret;
   }
 
-  /* create framebuffer #1 for this CRTC */
-  ret = modeset_create_fb(fd, &dev->bufs[0]);
-  if (ret) {
-    fprintf(stderr, "cannot create framebuffer for connector %u\n", conn->connector_id);
-    return ret;
-  }
-
-  /* create framebuffer #2 for this CRTC */
-  ret = modeset_create_fb(fd, &dev->bufs[1]);
-  if (ret) {
-    fprintf(stderr, "cannot create framebuffer for connector %u\n", conn->connector_id);
-    modeset_destroy_fb(fd, &dev->bufs[0]);
-    return ret;
-  }
-
-  return 0;
+  return modeset_fb(fd, dev, conn->connector_id);
 }
 
 /*
@@ -419,6 +429,7 @@ static void modeset_cleanup(int fd) {
     modeset_destroy_fb(fd, &iter->bufs[0]);
 
     /* free allocated memory */
+    TKMEM_FREE(iter->mode_list);
     free(iter);
   }
 }
@@ -533,6 +544,76 @@ static void on_signal_int(int sig) {
   tk_quit();
 }
 
+static ret_t drm_do_resize(lcd_t* lcd, wh_t w, wh_t h) {
+  int i = 0;
+  int ret = 0;
+  drmEventContext ev;
+  int32_t find_number = -1;
+  lcd_mem_special_t* special = (lcd_mem_special_t*)lcd;
+  drm_info_t* info = (drm_info_t*)(special->ctx);
+  struct modeset_dev* dev = info->dev;
+
+  for (; i < dev->mode_list_size; i++) {
+    if (dev->mode_list[i].hdisplay == w && dev->mode_list[i].vdisplay == h) {
+      find_number = i;
+      break;
+    }
+  }
+  return_value_if_fail(find_number >= 0, RET_NOT_FOUND);
+
+  /* init variables */
+  memset(&ev, 0, sizeof(ev));
+  ev.version = DRM_EVENT_CONTEXT_VERSION;
+  ev.page_flip_handler = modeset_page_flip_event;
+
+  while (dev->pflip_pending) {
+    ret = drmHandleEvent(info->fd, &ev);
+    if (ret) break;
+  }
+
+  if (!dev->pflip_pending) {
+    drmModeSetCrtc(info->fd, dev->saved_crtc->crtc_id, dev->saved_crtc->buffer_id,
+                    dev->saved_crtc->x, dev->saved_crtc->y, &dev->conn, 1,
+                    &dev->saved_crtc->mode);
+  }
+  drmModeFreeCrtc(dev->saved_crtc);
+
+  modeset_destroy_fb(info->fd, &(dev->bufs[1]));
+  modeset_destroy_fb(info->fd, &(dev->bufs[0]));
+
+  dev->bufs[0].width = w;
+  dev->bufs[0].height = h;
+  dev->bufs[1].width = w;
+  dev->bufs[1].height = h;
+  modeset_fb(info->fd, dev, dev->conn);
+
+  dev->front_buf = 0;
+  info->w = dev->bufs[0].width;
+  info->h = dev->bufs[0].height;
+  info->stride = dev->bufs[0].stride;
+
+  dev->saved_crtc = drmModeGetCrtc(info->fd, dev->crtc);
+  memcpy(&(dev->mode), &(dev->mode_list[find_number]), sizeof(dev->mode));
+  ret = drmModeSetCrtc(info->fd, dev->crtc, dev->bufs[0].fb, 0, 0, &dev->conn, 1, &dev->mode);
+
+  return RET_OK;
+}
+
+static ret_t (*lcd_drm_linux_resize_defalut)(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length);
+static ret_t lcd_drm_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length) {
+  ret_t ret = RET_OK;
+
+  /* must has fb_resize_func */
+  ret = drm_do_resize(lcd, w, h);
+  return_value_if_fail(ret == RET_OK, ret);
+
+  if (lcd_drm_linux_resize_defalut != NULL) {
+    lcd_drm_linux_resize_defalut(lcd, w, h, line_length);
+  }
+
+  return ret;
+}
+
 lcd_t* lcd_linux_drm_create(const char* card) {
   int ret = 0, fd = 0;
   struct modeset_buf* buf = NULL;
@@ -573,11 +654,16 @@ lcd_t* lcd_linux_drm_create(const char* card) {
     ioctl(s_ttyfd, KDSETMODE, KD_GRAPHICS);
   }
 
+  lcd_t* lcd = lcd_mem_special_create(drm->w, drm->h, BITMAP_FMT_BGRA8888, lcd_bgra8888_flush, NULL,
+                                lcd_bgra8888_destroy, drm);
+  if (lcd) {
+    lcd_drm_linux_resize_defalut = lcd->resize;
+    lcd->resize = lcd_drm_linux_resize;
+  }
+
   atexit(on_app_exit);
   signal(SIGINT, on_signal_int);
-
-  return lcd_mem_special_create(drm->w, drm->h, BITMAP_FMT_BGRA8888, lcd_bgra8888_flush, NULL,
-                                lcd_bgra8888_destroy, drm);
+  return lcd;
 error:
   TKMEM_FREE(drm);
   if (fd > 0) {
