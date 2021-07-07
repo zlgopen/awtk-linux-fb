@@ -320,18 +320,32 @@ static fb_taged_t* get_spare_fb() {
   }
   return NULL;
 }
-static fb_taged_t* get_ready_fb() {
+static fb_taged_t* get_busy_fb() {
   for (int i = 0; i < FB_LIST_NUM; i++) {
-    if (s_fblist[i].tags == FB_TAG_READY) {
+    if (s_fblist[i].tags == FB_TAG_BUSY) {
       return &s_fblist[i];
     }
   }
   return NULL;
 }
-static fb_taged_t* get_busy_fb() {
-  for (int i = 0; i < FB_LIST_NUM; i++) {
-    if (s_fblist[i].tags == FB_TAG_BUSY) {
-      return &s_fblist[i];
+static fb_taged_t* get_ready_fb() {
+  fb_taged_t* last_busy_fb = get_busy_fb();
+
+  if (last_busy_fb) {
+    // get the first ready slot next to the busy one
+    for (int i = 1; i < FB_LIST_NUM; i++) {
+      int next_ready_fbid = (last_busy_fb->fbid + i) % FB_LIST_NUM;
+
+      if (s_fblist[next_ready_fbid].tags == FB_TAG_READY) {
+        return &s_fblist[next_ready_fbid];
+      }
+    }
+  } else {
+    // no last busy, get the first ready one
+    for (int i = 0; i < FB_LIST_NUM; i++) {
+      if (s_fblist[i].tags == FB_TAG_READY) {
+        return &s_fblist[i];
+      }
     }
   }
   return NULL;
