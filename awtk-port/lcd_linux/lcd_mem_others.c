@@ -32,7 +32,7 @@ static ret_t lcd_bgra5551_flush(lcd_t* lcd) {
     int src_line_length = lcd->w;
     int dst_line_length = info->fix.line_length / 2;
     uint16_t* dst = (uint16_t*)(info->fbmem0);
-    uint16_t* src = (uint16_t*)(special->lcd_mem->offline_fb);
+    uint16_t* src = (uint16_t*)(lcd_mem_get_offline_fb((lcd_mem_t*)lcd));
 
     src += dr->y * src_line_length + dr->x;
     dst += dr->y * dst_line_length + dr->x;
