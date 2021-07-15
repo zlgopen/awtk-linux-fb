@@ -501,7 +501,7 @@ static ret_t lcd_bgra8888_flush(lcd_t* lcd) {
   int fd = info->fd;
   int dst_line_length = info->stride;
   uint32_t* dst = (uint32_t*)(buf->map);
-  uint32_t* src = (uint32_t*)(special->lcd_mem->offline_fb);
+  uint32_t* src = (uint32_t*)lcd_mem_get_offline_fb((lcd_mem_t*)lcd);
 
   dev->front_buf ^= 1;
   if (inited) {
