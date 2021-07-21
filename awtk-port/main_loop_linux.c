@@ -69,11 +69,11 @@ static ret_t main_loop_linux_destroy(main_loop_t* l) {
 }
 
 ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* evt, const char* msg) {
-  main_loop_t* l = (main_loop_t*)ctx;
+  main_loop_simple_t* l = (main_loop_simple_t*)ctx;
   event_queue_req_t event = *evt;
   event_queue_req_t* e = &event;
 
-  if (l != NULL && l->queue_event != NULL) {
+  if (l != NULL && l->base.queue_event != NULL) {
     switch (e->event.type) {
       case EVT_KEY_DOWN:
       case EVT_KEY_UP:
@@ -81,10 +81,24 @@ ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* evt, const
         e->event.size = sizeof(e->key_event);
         break;
       }
-      case EVT_CONTEXT_MENU:
-      case EVT_POINTER_DOWN:
-      case EVT_POINTER_MOVE:
+      case EVT_CONTEXT_MENU: {
+        e->event.size = sizeof(e->pointer_event);
+        break;
+      }
+      case EVT_POINTER_DOWN: {
+        l->pressed = TRUE;
+        e->pointer_event.pressed = l->pressed;
+        e->event.size = sizeof(e->pointer_event);
+        break;
+      }
+      case EVT_POINTER_MOVE: {
+        e->pointer_event.pressed = l->pressed;
+        e->event.size = sizeof(e->pointer_event);
+        break;
+      }
       case EVT_POINTER_UP: {
+        e->pointer_event.pressed = l->pressed;
+        l->pressed = FALSE;
         e->event.size = sizeof(e->pointer_event);
         break;
       }
@@ -96,7 +110,7 @@ ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* evt, const
         break;
     }
 
-    main_loop_queue_event(l, e);
+    main_loop_queue_event(&(l->base), e);
     input_dispatch_print(ctx, e, msg);
   } else {
     return RET_BAD_PARAMS;
