@@ -131,9 +131,9 @@ static ret_t lcd_mem_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_leng
   ret = fb_resize_reopen(fb, w, h);
   if (!mem->own_offline_fb) {
     // mem->own_offline_fb=1 means lcd_mem_special_create will manage(alloc/free) it's own offline fb mem
-    mem->offline_fb = fb->fbmem_offline;
+    lcd_mem_set_offline_fb(mem, fb->fbmem_offline);
   }
-  mem->online_fb = (uint8_t*)(fb->fbmem0);
+  lcd_mem_set_online_fb(mem, (uint8_t*)(fb->fbmem0));
   lcd_mem_set_line_length(lcd, fb_line_length(fb));
 
   if (lcd_mem_linux_resize_defalut && ret == RET_OK) {
