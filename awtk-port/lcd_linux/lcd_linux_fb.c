@@ -19,6 +19,8 @@
  *
  */
 
+#ifdef WITH_LINUX_FB
+
 #include <signal.h>
 #include "fb_info.h"
 #include "tkc/mem.h"
@@ -37,8 +39,6 @@
 #include "lcd/lcd_mem_rgba8888.h"
 #include "lcd/lcd_mem_bgr888.h"
 #include "lcd/lcd_mem_rgb888.h"
-
-#if !defined(WITH_LINUX_DRM) && !defined(WITH_LINUX_DRM)
 
 #define __FB_SUP_RESIZE    1
 #define __FB_WAIT_VSYNC    1
@@ -542,4 +542,4 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
   return lcd;
 }
 
-#endif
+#endif /*WITH_LINUX_FB*/
