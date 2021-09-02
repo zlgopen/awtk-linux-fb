@@ -189,14 +189,17 @@ static ret_t lcd_linux_flush(lcd_t* base, int fbid) {
   return_value_if_fail(lcd != NULL && fb != NULL && fbid < fb_nr, RET_BAD_PARAMS);
 
   buff = fb->fbmem0 + size * fbid;
-  lcd_fb_dirty_rects_add_fb_info(&(lcd->fb_dirty_rects_list), buff);
-  lcd_fb_dirty_rects_update_all_fb_dirty_rects(&(lcd->fb_dirty_rects_list), base->dirty_rects);
 
   bitmap_t online_fb;
   bitmap_t offline_fb;
   lcd_linux_init_drawing_fb(lcd, &offline_fb);
   lcd_linux_init_online_fb(lcd, &online_fb, buff, fb_width(fb), fb_height(fb), fb_line_length(fb));
+  
+  // add current online buff to the dirty manager, and notify all managed buff update/merge with the base dirty rect
+  lcd_fb_dirty_rects_add_fb_info(&(lcd->fb_dirty_rects_list), buff);
+  lcd_fb_dirty_rects_update_all_fb_dirty_rects(&(lcd->fb_dirty_rects_list), base->dirty_rects);
 
+  // get the merged dirty rects of current online buff, and then copy each small rects from offline fb
   dirty_rects = lcd_fb_dirty_rects_get_dirty_rects_by_fb(&(lcd->fb_dirty_rects_list), buff);
   if (dirty_rects != NULL && dirty_rects->nr > 0) {
     for (int i = 0; i < dirty_rects->nr; i++) {
@@ -208,6 +211,8 @@ static ret_t lcd_linux_flush(lcd_t* base, int fbid) {
       }
     }
   }
+  
+  // reset current online buff dirty rect to empty, because all new contnet has copyed from offline fb
   lcd_fb_dirty_rects_reset_dirty_rects_by_fb(&(lcd->fb_dirty_rects_list), buff);
   return RET_OK;
 }
