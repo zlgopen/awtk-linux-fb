@@ -36,12 +36,14 @@ LCD_DEVICES='fb'
 # LCD_DEVICES='egl_for_x11'
 # LCD_DEVICES='egl_for_gbm'
 
+NANOVG_BACKEND=''
+VGCANVAS='NANOVG'
 if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' :
   LCD='LINUX_FB'
   NANOVG_BACKEND='AGGE'
 elif lcd_devices_is_egl(LCD_DEVICES) :
   LCD='FB_GL'
-  NANOVG_BACKEND=''
+  NANOVG_BACKEND='GLES2'
 
 #INPUT_ENGINE='null'
 #INPUT_ENGINE='spinyin'
@@ -59,7 +61,7 @@ if LCD_DEVICES =='fb' :
 elif LCD_DEVICES =='drm' :
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_LINUX_DRM '
 elif lcd_devices_is_egl(LCD_DEVICES) :
-  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_GLES2 -DWITH_NANOVG_GL -DWITH_NANOVG_GPU -DWITH_LINUX_EGL '
+  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_GPU_GL -DWITH_GPU_GLES2 -DWITH_GPU -DWITH_LINUX_EGL '
 
 
 
@@ -179,12 +181,14 @@ if TSLIB_LIB_DIR != '':
 else:
   SHARED_LIBS=['awtk'] + OS_LIBS;
 
-if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' :
-  STATIC_LIBS = STATIC_LIBS + ['nanovg-agge', 'agge', 'nanovg']  + OS_LIBS
-  AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg'] + OS_LIBS
-elif lcd_devices_is_egl(LCD_DEVICES) :
-  STATIC_LIBS = STATIC_LIBS + ['glad', 'nanovg']  + OS_LIBS
-  AWTK_DLL_DEPS_LIBS = ['glad', 'nanovg'] + OS_LIBS
+if VGCANVAS == 'NANOVG':
+  if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' :
+    STATIC_LIBS = STATIC_LIBS + ['nanovg-agge', 'agge', 'nanovg']  + OS_LIBS
+    AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg'] + OS_LIBS
+  elif lcd_devices_is_egl(LCD_DEVICES) :
+    CCFLAGS += ' -DWITH_NANOVG_GLES2 -DWITH_NANOVG_GL -DWITH_NANOVG_GPU '
+    STATIC_LIBS = STATIC_LIBS + ['glad', 'nanovg']  + OS_LIBS
+    AWTK_DLL_DEPS_LIBS = ['glad', 'nanovg'] + OS_LIBS
 
 OS_WHOLE_ARCHIVE =' -Wl,--whole-archive -lfribidi -lawtk_global -lextwidgets -lwidgets -lawtk_linux_fb -lbase -lgpinyin -ltkc_static -lstreams -lconf_io -lhal -lcsv -lubjson -lcompressors -lmbedtls -lminiz -llinebreak -Wl,--no-whole-archive'
 
@@ -225,7 +229,7 @@ os.environ['BIN_DIR'] = BIN_DIR;
 os.environ['LIB_DIR'] = LIB_DIR;
 os.environ['TK_ROOT'] = TK_ROOT;
 os.environ['CCFLAGS'] = CCFLAGS;
-os.environ['VGCANVAS'] = 'NANOVG'
+os.environ['VGCANVAS'] = VGCANVAS
 os.environ['INPUT_ENGINE'] = INPUT_ENGINE;
 os.environ['TSLIB_LIB_DIR'] = TSLIB_LIB_DIR;
 os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
