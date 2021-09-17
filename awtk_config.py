@@ -91,8 +91,8 @@ OS_CPPPATH=[]
 OS_LINKFLAGS=''
 OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
-OS_FLAGS='-Wall -Os '
-#OS_FLAGS='-g -Wall -Os -mfloat-abi=hard '
+OS_FLAGS='-Wall -Os -fno-strict-aliasing '
+#OS_FLAGS='-g -Wall -Os -mfloat-abi=hard -fno-strict-aliasing '
 
 #for build tslib
 #TSLIB_INC_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src')
