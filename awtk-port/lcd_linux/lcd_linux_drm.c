@@ -46,7 +46,9 @@
 #include "tkc/time_now.h"
 #include "awtk_global.h"
 #include "lcd_mem_others.h"
-
+#include "base/bitmap.h"
+#include "blend/image_g2d.h"
+#include "base/system_info.h"
 #include "lcd/lcd_mem_special.h"
 
 struct modeset_buf;
@@ -490,10 +492,12 @@ static ret_t drm_vsync(int fd) {
 static ret_t lcd_bgra8888_flush(lcd_t* lcd) {
   static int inited = 0;
   int ret = 0;
-  uint32_t x = 0;
-  uint32_t y = 0;
+  bitmap_t src_img;
+  bitmap_t dst_img;
+  rect_t dr = {0, 0, lcd->w, lcd->h};
   lcd_mem_special_t* special = (lcd_mem_special_t*)lcd;
   drm_info_t* info = (drm_info_t*)(special->ctx);
+  lcd_orientation_t o = system_info()->lcd_orientation;
 
   struct modeset_dev* dev = info->dev;
   struct modeset_buf* buf = &dev->bufs[dev->front_buf ^ 1];
@@ -511,15 +515,28 @@ static ret_t lcd_bgra8888_flush(lcd_t* lcd) {
     inited = 1;
   }
 
-  for (y = 0; y < lcd->h; y++) {
-    for (x = 0; x < lcd->w; x++) {
-      dst[x] = src[x];
-    }
-    src += lcd->w;
-    dst = (uint32_t*)((char*)dst + dst_line_length);
+  if (o == LCD_ORIENTATION_0 || o == LCD_ORIENTATION_180) {
+    bitmap_init(&dst_img, lcd->w, lcd->h, special->format, (uint8_t*)dst);
+  } else {
+    bitmap_init(&dst_img, lcd->h, lcd->w, special->format, (uint8_t*)dst);
+  }
+
+  bitmap_set_line_length(&dst_img, dst_line_length);
+  bitmap_init(&src_img, lcd->w, lcd->h, special->format, (uint8_t*)src);
+
+  if (o == LCD_ORIENTATION_0) {
+    image_copy(&dst_img, &src_img, &dr, dr.x, dr.y);
+  } else {
+    image_rotate(&dst_img, &src_img, &dr, o);
   }
 
   ret = drmModePageFlip(fd, dev->crtc, buf->fb, DRM_MODE_PAGE_FLIP_EVENT, dev);
+  if (src_img.buffer != NULL) {
+    graphic_buffer_destroy(src_img.buffer);
+  }
+  if (dst_img.buffer != NULL) {
+    graphic_buffer_destroy(dst_img.buffer);
+  }
   if (ret) {
     log_error("cannot flip CRTC for connector %u (%d): %m\n", dev->conn, errno);
     return RET_FAIL;
