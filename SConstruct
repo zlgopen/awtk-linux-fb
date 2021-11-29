@@ -23,6 +23,7 @@ if len (APP_ROOT) > 0:
     exit(0)
 
 env = DefaultEnvironment(CCFLAGS = awtk.CCFLAGS + APP_CCFLAGS, 
+  ENV = os.environ,
   CFLAGS = awtk.CFLAGS,
   CC=awtk.CC,
   CXX=awtk.CXX,
