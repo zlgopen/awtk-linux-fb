@@ -179,6 +179,7 @@ LIBPATH=[LIB_DIR, BIN_DIR] + OS_LIBPATH
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
 
 STATIC_LIBS =['awtk_global', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'linebreak', 'fribidi']
+STATIC_LIBS += TKC_STATIC_LIBS
 if TSLIB_LIB_DIR != '':
   SHARED_LIBS=['awtk', 'ts'] + OS_LIBS;
 else:
@@ -194,7 +195,7 @@ if VGCANVAS == 'NANOVG':
     AWTK_DLL_DEPS_LIBS = ['glad', 'nanovg'] + OS_LIBS
 
 
-LIBS=STATIC_LIBS + TKC_STATIC_LIBS
+LIBS=STATIC_LIBS
 AWTK_STATIC_LIBS = LIBS
 OS_WHOLE_ARCHIVE =toWholeArchive(LIBS)
 
