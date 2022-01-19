@@ -253,6 +253,7 @@ elif lcd_devices_is_egl(LCD_DEVICES) :
 os.environ['OS_WHOLE_ARCHIVE'] = OS_WHOLE_ARCHIVE;
 os.environ['AWTK_DLL_DEPS_LIBS'] = ';'.join(AWTK_DLL_DEPS_LIBS)
 os.environ['STATIC_LIBS'] = ';'.join(STATIC_LIBS)
+os.environ['CROSS_COMPILE'] = str(not TOOLS_PREFIX == '')
 
 def has_custom_cc():
     return True
