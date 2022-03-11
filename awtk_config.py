@@ -41,6 +41,7 @@ LCD_DEVICES='fb'
 
 NANOVG_BACKEND=''
 VGCANVAS='NANOVG'
+#VGCANVAS='NANOVG_PLUS'
 if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' :
   LCD='LINUX_FB'
   NANOVG_BACKEND='AGGE'
@@ -173,6 +174,7 @@ COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DWITH_WIDGET_TYPE_CHECK=1 '
 if TSLIB_LIB_DIR != '':
   COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DHAS_TSLIB '
 
+OS_PROJECTS=[]
 CFLAGS=COMMON_CFLAGS
 LINKFLAGS=OS_LINKFLAGS;
 LIBPATH=[LIB_DIR, BIN_DIR] + OS_LIBPATH
@@ -186,6 +188,9 @@ else:
   SHARED_LIBS=['awtk'] + OS_LIBS;
 
 if VGCANVAS == 'NANOVG':
+  TK_ROOT_VAR = joinPath(VAR_DIR, 'awtk')
+  OS_PROJECTS = [ joinPath(TK_ROOT_VAR, '3rd/nanovg/SConscript') ]
+  OS_CPPPATH += [joinPath(TK_3RD_ROOT, 'nanovg'),  joinPath(TK_3RD_ROOT, 'nanovg/gl'),  joinPath(TK_3RD_ROOT, 'nanovg/base') ]
   if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' :
     STATIC_LIBS = STATIC_LIBS + ['nanovg-agge', 'agge', 'nanovg']  + OS_LIBS
     AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg'] + OS_LIBS
@@ -193,6 +198,14 @@ if VGCANVAS == 'NANOVG':
     CCFLAGS += ' -DWITH_NANOVG_GLES2 -DWITH_NANOVG_GL -DWITH_NANOVG_GPU '
     STATIC_LIBS = STATIC_LIBS + ['glad', 'nanovg']  + OS_LIBS
     AWTK_DLL_DEPS_LIBS = ['glad', 'nanovg'] + OS_LIBS
+elif VGCANVAS == 'NANOVG_PLUS':
+  TK_ROOT_VAR = joinPath(VAR_DIR, 'awtk')
+  OS_PROJECTS = [ joinPath(TK_ROOT_VAR, '3rd/nanovg_plus/SConscript') ]
+  OS_CPPPATH += [joinPath(TK_3RD_ROOT, 'nanovg_plus/gl'), joinPath(TK_3RD_ROOT, 'nanovg_plus/base') ]
+  if lcd_devices_is_egl(LCD_DEVICES) :
+    CCFLAGS += ' -DWITH_NANOVG_PLUS_GPU -DWITH_NANOVG_GPU -DWITH_GPU_GL -DWITH_GPU_GLES2 -DNVGP_GLES2 '
+    STATIC_LIBS = STATIC_LIBS + ['glad', 'nanovg_plus']  + OS_LIBS
+    AWTK_DLL_DEPS_LIBS = ['glad', 'nanovg_plus'] + OS_LIBS
 
 
 LIBS=STATIC_LIBS
@@ -209,13 +222,9 @@ CPPPATH=[TK_ROOT,
   joinPath(TK_ROOT, 'tools'), 
   joinPath(TK_3RD_ROOT, 'agge'), 
   joinPath(TK_3RD_ROOT, 'agg/include'), 
-  joinPath(TK_3RD_ROOT, 'nanovg'), 
-  joinPath(TK_3RD_ROOT, 'nanovg/gl'), 
-  joinPath(TK_3RD_ROOT, 'nanovg/base'), 
   joinPath(TK_3RD_ROOT, 'mbedtls/include'), 
   joinPath(TK_3RD_ROOT, 'mbedtls/3rdparty/everest/include'), 
   joinPath(TK_3RD_ROOT, 'fribidi'), 
-  joinPath(TK_3RD_ROOT, 'nanovg/base'), 
   joinPath(TK_3RD_ROOT, 'libunibreak'), 
   joinPath(TK_3RD_ROOT, 'gpinyin/include'), 
   joinPath(TK_3RD_ROOT, 'gtest/googletest'), 
