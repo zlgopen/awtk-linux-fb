@@ -39,6 +39,7 @@
 #include "lcd/lcd_mem_rgba8888.h"
 #include "lcd/lcd_mem_bgr888.h"
 #include "lcd/lcd_mem_rgb888.h"
+#include "base/lcd_orientation_helper.h"
 
 #define __FB_SUP_RESIZE    1
 #define __FB_WAIT_VSYNC    1
@@ -150,8 +151,8 @@ static ret_t lcd_linux_init_drawing_fb(lcd_mem_t* mem, bitmap_t* fb) {
 
   memset(fb, 0x00, sizeof(bitmap_t));
 
-  fb->w = mem->base.w;
-  fb->h = mem->base.h;
+  fb->w = lcd_get_physical_width((lcd_t*)mem);
+  fb->h = lcd_get_physical_height((lcd_t*)mem);
   fb->format = mem->format;
   fb->buffer = mem->offline_gb;
   graphic_buffer_attach(mem->offline_gb, mem->offline_fb, fb->w, fb->h);
@@ -204,11 +205,16 @@ static ret_t lcd_linux_flush(lcd_t* base, int fbid) {
   if (dirty_rects != NULL && dirty_rects->nr > 0) {
     for (int i = 0; i < dirty_rects->nr; i++) {
       const rect_t* dr = (const rect_t*)dirty_rects->rects + i;
+#ifdef WITH_FAST_LCD_PORTRAIT
+      rect_t rr = lcd_orientation_rect_rotate_by_anticlockwise(dr, o, lcd_get_width(base), lcd_get_height(base));
+      image_copy(&online_fb, &offline_fb, &rr, rr.x, rr.y);
+#else
       if (o == LCD_ORIENTATION_0) {
         image_copy(&online_fb, &offline_fb, dr, dr->x, dr->y);
       } else {
         image_rotate(&online_fb, &offline_fb, dr, o);
       }
+#endif
     }
   }
   
