@@ -333,7 +333,7 @@ static fb_taged_t* get_busy_fb() {
   }
   return NULL;
 }
-static fb_taged_t* get_ready_fb() {
+inline static fb_taged_t* get_ready_fb() {
   fb_taged_t* last_busy_fb = get_busy_fb();
 
   if (last_busy_fb) {
