@@ -206,15 +206,18 @@ static ret_t lcd_linux_flush(lcd_t* base, int fbid) {
     for (int i = 0; i < dirty_rects->nr; i++) {
       const rect_t* dr = (const rect_t*)dirty_rects->rects + i;
 #ifdef WITH_FAST_LCD_PORTRAIT
-      rect_t rr = lcd_orientation_rect_rotate_by_anticlockwise(dr, o, lcd_get_width(base), lcd_get_height(base));
-      image_copy(&online_fb, &offline_fb, &rr, rr.x, rr.y);
-#else
-      if (o == LCD_ORIENTATION_0) {
-        image_copy(&online_fb, &offline_fb, dr, dr->x, dr->y);
-      } else {
-        image_rotate(&online_fb, &offline_fb, dr, o);
-      }
+      if (system_info()->flags & SYSTEM_INFO_FLAG_FAST_LCD_PORTRAIT) {
+        rect_t rr = lcd_orientation_rect_rotate_by_anticlockwise(dr, o, lcd_get_width(base), lcd_get_height(base));
+        image_copy(&online_fb, &offline_fb, &rr, rr.x, rr.y);
+      } else 
 #endif
+      {
+        if (o == LCD_ORIENTATION_0) {
+          image_copy(&online_fb, &offline_fb, dr, dr->x, dr->y);
+        } else {
+          image_rotate(&online_fb, &offline_fb, dr, o);
+        }
+      }
     }
   }
   
