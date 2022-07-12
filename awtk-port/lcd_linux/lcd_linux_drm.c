@@ -632,7 +632,7 @@ static ret_t lcd_drm_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_leng
 }
 
 lcd_t* lcd_linux_drm_create(const char* card) {
-  int ret = 0, fd = 0;
+  int ret = 0, fd = 0, connector_id = -1;
   struct modeset_buf* buf = NULL;
   struct modeset_dev* iter = NULL;
   drm_info_t* drm = TKMEM_ZALLOC(drm_info_t);
@@ -648,6 +648,10 @@ lcd_t* lcd_linux_drm_create(const char* card) {
   log_info("modeset_prepare return %d\n", ret);
   goto_error_if_fail(ret == 0);
 
+#ifdef DRM_DEVICE_CONNECTOR_ID
+  connector_id = DRM_DEVICE_CONNECTOR_ID;
+#endif
+
   for (iter = modeset_list; iter; iter = iter->next) {
     iter->saved_crtc = drmModeGetCrtc(fd, iter->crtc);
     buf = &iter->bufs[iter->front_buf];
@@ -661,8 +665,10 @@ lcd_t* lcd_linux_drm_create(const char* card) {
       drm->w = buf->width;
       drm->h = buf->height;
       drm->stride = buf->stride;
-      log_info("use dev %p w=%d h=%d\n", iter, drm->w, drm->h);
-      break;
+      if (connector_id == -1 || connector_id == iter->conn) {
+        log_info("use dev %p w=%d h=%d\n", iter, drm->w, drm->h);
+        break;
+      }
     }
   }
 
