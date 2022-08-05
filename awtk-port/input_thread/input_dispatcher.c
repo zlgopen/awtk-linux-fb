@@ -35,6 +35,10 @@ ret_t input_dispatch_print(void* ctx, const event_queue_req_t* e, const char* ms
       printf("%s pointer move:%d %d\n", msg, e->pointer_event.x, e->pointer_event.y);
       break;
     }
+    case EVT_CONTEXT_MENU: {
+      printf("%s context menu:%d %d\n", msg, e->pointer_event.x, e->pointer_event.y);
+      break;
+    }
     case EVT_KEY_DOWN: {
       printf("%s keydown:%d\n", msg, e->key_event.key);
       break;

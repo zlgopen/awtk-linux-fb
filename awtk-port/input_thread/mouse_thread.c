@@ -194,24 +194,25 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
       case EV_REL: {
         switch (info->data.e.code) {
           case REL_X: {
-            req->pointer_event.x += info->data.e.value;
-
-            if (req->pointer_event.x < 0) {
-              req->pointer_event.x = 0;
+            info->x += info->data.e.value;
+            if (info->x < 0) {
+              info->x = 0;
             }
-            if (req->pointer_event.x > info->max_x) {
-              req->pointer_event.x = info->max_x;
+            if (info.x > info->max_x) {
+              info.x = info->max_x;
             }
+            req->pointer_event.x = info->x;
             break;
           }
           case REL_Y: {
-            req->pointer_event.y += info->data.e.value;
-            if (req->pointer_event.y < 0) {
-              req->pointer_event.y = 0;
+            info->y += info->data.e.value;
+            if (info->y < 0) {
+              info->y = 0;
             }
-            if (req->pointer_event.y > info->max_y) {
-              req->pointer_event.y = info->max_y;
+            if (info->y > info->max_y) {
+              info->y = info->max_y;
             }
+            req->pointer_event.y = info->y;
             break;
           }
           default:
