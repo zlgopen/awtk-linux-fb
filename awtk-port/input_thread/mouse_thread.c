@@ -198,8 +198,8 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
             if (info->x < 0) {
               info->x = 0;
             }
-            if (info.x > info->max_x) {
-              info.x = info->max_x;
+            if (info->x > info->max_x) {
+              info->x = info->max_x;
             }
             req->pointer_event.x = info->x;
             break;
