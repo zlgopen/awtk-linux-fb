@@ -41,6 +41,7 @@ LCD_DEVICES='fb'
 
 NANOVG_BACKEND=''
 VGCANVAS='NANOVG'
+#VGCANVAS='CAIRO'
 #VGCANVAS='NANOVG_PLUS'
 if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' :
   LCD='LINUX_FB'
@@ -199,6 +200,14 @@ if VGCANVAS == 'NANOVG':
     CCFLAGS += ' -DWITH_NANOVG_GLES2 -DWITH_NANOVG_GL -DWITH_NANOVG_GPU '
     STATIC_LIBS = STATIC_LIBS + ['glad', 'nanovg']  + OS_LIBS
     AWTK_DLL_DEPS_LIBS = ['glad', 'nanovg'] + OS_LIBS
+elif VGCANVAS == 'CAIRO':
+  TK_ROOT_VAR = joinPath(VAR_DIR, 'awtk')
+  OS_PROJECTS = [joinPath(TK_ROOT_VAR, '3rd/cairo/SConscript'), joinPath(TK_ROOT_VAR, '3rd/pixman/SConscript')]
+  OS_CPPPATH += [joinPath(TK_3RD_ROOT, 'cairo'),  joinPath(TK_3RD_ROOT, 'pixman') ]
+  STATIC_LIBS = STATIC_LIBS + ['cairo', 'pixman']  + OS_LIBS
+  AWTK_DLL_DEPS_LIBS= ['cairo', 'pixman'] + OS_LIBS
+  CCFLAGS += ' -DWITH_VGCANVAS_CAIRO -DHAVE_CONFIG_H -DCAIRO_WIN32_STATIC_BUILD '
+
 elif VGCANVAS == 'NANOVG_PLUS':
   TK_ROOT_VAR = joinPath(VAR_DIR, 'awtk')
   OS_PROJECTS = [ joinPath(TK_ROOT_VAR, '3rd/nanovg_plus/SConscript') ]
