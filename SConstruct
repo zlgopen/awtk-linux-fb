@@ -15,6 +15,10 @@ if len(LCD) > 0:
     print('LCD param input format error, e.g. LCD=800_480')
     exit(0)
 
+AWTK_LIB_PATH = awtk.joinPath(awtk.BIN_DIR, "libawtk.so");
+if os.path.exists(AWTK_LIB_PATH) :
+  os.remove(AWTK_LIB_PATH)
+
 APP_ROOT = ARGUMENTS.get('APP', '')
 if len (APP_ROOT) > 0:
   app_sconstruct = awtk.joinPath(APP_ROOT, 'SConstruct')
@@ -79,6 +83,8 @@ SConscript(SConscriptFiles)
 
 
 def build_app():
+  if not os.path.exists(AWTK_LIB_PATH) :
+    return
   if APP_ROOT == '':
     return
 
