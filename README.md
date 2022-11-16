@@ -122,7 +122,7 @@ LCD_DEVICES='drm'
 OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
 OS_LIBS = OS_LIBS + ['drm']
 ```
-> DRM 目前只在虚拟机中测试过，如果有问题请参考 wtk-port/lcd\_linux\_drm.c 进行调试。
+> DRM 目前只在虚拟机中测试过，如果有问题请参考 awtk-port/lcd\_linux\_drm.c 进行调试。
 
 #### 3. 使用 EGL 硬件加速
 

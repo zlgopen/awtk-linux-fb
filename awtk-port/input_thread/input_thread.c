@@ -29,6 +29,8 @@
 #include "input_thread.h"
 #include "tkc/utils.h"
 
+#include "base/custom_keys.inc"
+
 #ifndef EV_SYN
 #define EV_SYN 0x00
 #endif /*EV_SYN*/
@@ -134,7 +136,18 @@ static const int32_t s_key_map[0x100] = {[KEY_1] = TK_KEY_1,
                                          [KEY_ESC] = TK_KEY_ESCAPE};
 
 static int32_t map_key(uint8_t code) {
-  return s_key_map[code];
+  int32_t ret = s_key_map[code];
+
+  if (custom_keys() != NULL && custom_keys_nr() > 0) {
+    const key_type_value_t* key_value =
+        find_item_by_value(custom_keys(), custom_keys_nr(), (uint32_t)code);
+    if (key_value != NULL) {
+      log_debug("Custom key name : %s\r\n", key_value->name);
+      ret = (uint32_t)code;
+    }
+  }
+
+  return ret;
 }
 
 static ret_t input_dispatch(run_info_t* info) {
@@ -354,4 +367,14 @@ tk_thread_t* input_thread_run(const char* filename, input_dispatch_t dispatch, v
   }
 
   return thread;
+}
+
+ret_t input_thread_global_init(void) {
+  custom_keys_init(FALSE);
+  return RET_OK;
+}
+
+ret_t input_thread_global_deinit(void) {
+  custom_keys_deinit(FALSE);
+  return RET_OK;
 }

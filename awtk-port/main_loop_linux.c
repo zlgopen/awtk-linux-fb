@@ -132,6 +132,8 @@ static void on_app_exit(void) {
   if (s_ts_thread != NULL) {
     tk_thread_destroy(s_ts_thread);
   }
+
+  input_thread_global_deinit();
 }
 
 main_loop_t* main_loop_init(int w, int h) {
@@ -153,6 +155,8 @@ main_loop_t* main_loop_init(int w, int h) {
 
   loop = main_loop_simple_init(lcd->w, lcd->h, NULL, NULL);
   loop->base.destroy = main_loop_linux_destroy;
+
+  input_thread_global_init();
 
 #ifdef HAS_TSLIB
   s_ts_thread =
