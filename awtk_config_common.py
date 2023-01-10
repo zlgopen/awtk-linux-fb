@@ -2,7 +2,14 @@ import os
 import os.path
 import platform
 import shutil
+
 from shutil import copyfile
+
+import subprocess
+
+def is_raspberrypi():
+  result = str(subprocess.check_output(["uname", "-a"]))
+  return result.find('Linux raspberrypi') >= 0
 
 #######################################################
 # XXX: This file can be edited only in tkc project
@@ -18,7 +25,7 @@ if is32bit:
     if MACH == 'i686' or MACH == 'i386' or MACH == 'x86':
         TARGET_ARCH = 'x86'
     else:
-        TARGET_ARCH = 'arm'
+        TARGET_ARCH = ''
 else:
     TARGET_ARCH = ''
 
@@ -110,6 +117,10 @@ elif OS_NAME == 'Linux':
         OS_FLAGS = OS_FLAGS + ' -DWITH_64BIT_CPU '
 
     OS_LINKFLAGS = ' -Wl,-rpath=./bin -Wl,-rpath=./ '
+    if is_raspberrypi():
+      OS_FLAGS = OS_FLAGS + ' -DRASPBERRYPI '
+      os.environ['RASPBERRYPI'] = 'true'
+
 
 elif OS_NAME == 'Windows':
     if not os.path.exists(os.path.abspath(TK_BIN_DIR)):
@@ -154,7 +165,32 @@ def has_custom_cc():
     return False
 
 
+def cleanSharedLib(dst, name):
+    if OS_NAME == 'Darwin':
+        dst = os.path.join(dst, 'lib'+name+'.dylib')
+    elif OS_NAME == 'Linux':
+        dst = os.path.join(dst, 'lib'+name+'.so')
+    elif OS_NAME == 'Windows':
+        dst = os.path.join(dst, name+'.dll')
+    else:
+        print('not support ' + OS_NAME)
+        return
+
+    dst = os.path.normpath(dst)
+
+    if os.path.exists(dst):
+        os.remove(dst)
+        print('Removed ' + dst)
+
+    if OS_NAME == 'Windows':
+        dst=dst.replace('.dll', '.lib')
+        if os.path.exists(dst):
+            os.remove(dst)
+            print('Removed ' + dst)
+
+
 def copySharedLib(src, dst, name):
+    mingw_src = src
     if OS_NAME == 'Darwin':
         src = os.path.join(src, 'bin/lib'+name+'.dylib')
     elif OS_NAME == 'Linux':
@@ -172,12 +208,20 @@ def copySharedLib(src, dst, name):
         return
 
     if not os.path.exists(src):
-        print('Can\'t find ' + src + '. Please build '+name+'before!')
+        print('Can\'t find ' + src + '. Please build '+name+' before!')
     else:
         if not os.path.exists(dst):
             os.makedirs(dst)
         shutil.copy(src, dst)
         print(src + '==>' + dst)
+    if OS_NAME == 'Windows':
+        if TOOLS_NAME == 'mingw':
+            src = os.path.join(mingw_src, 'bin/lib'+name+'.a')
+        else:
+            src = src.replace('dll', 'lib')
+        if os.path.exists(src):
+            shutil.copy(src, dst)
+            print(src + '==>' + dst)
 
 
 def isBuildShared():
