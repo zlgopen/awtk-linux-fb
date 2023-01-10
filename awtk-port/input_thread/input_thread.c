@@ -52,6 +52,9 @@ typedef struct _run_info_t {
   input_dispatch_t dispatch;
 
   bool_t pressed;
+  bool_t is_mod_inited;
+  bool_t capslock;
+  bool_t numlock;
   event_queue_req_t req;
 } run_info_t;
 
@@ -91,6 +94,23 @@ static const int32_t s_key_map[0x100] = {[KEY_1] = TK_KEY_1,
                                          [KEY_X] = TK_KEY_x,
                                          [KEY_Y] = TK_KEY_y,
                                          [KEY_Z] = TK_KEY_z,
+                                         [KEY_NUMLOCK] = TK_KEY_NUMLOCKCLEAR,
+                                         [KEY_KPSLASH] = TK_KEY_KP_DIVIDE,
+                                         [KEY_KPASTERISK] = TK_KEY_KP_MULTIPLY,
+                                         [KEY_KPMINUS] = TK_KEY_KP_MINUS,
+                                         [KEY_KPPLUS] = TK_KEY_KP_PLUS,
+                                         //[KEY_KPENTER] = TK_KEY_KP_ENTER,
+                                         [KEY_KP1] = TK_KEY_KP_1,
+                                         [KEY_KP2] = TK_KEY_KP_2,
+                                         [KEY_KP3] = TK_KEY_KP_3,
+                                         [KEY_KP4] = TK_KEY_KP_4,
+                                         [KEY_KP5] = TK_KEY_KP_5,
+                                         [KEY_KP6] = TK_KEY_KP_6,
+                                         [KEY_KP7] = TK_KEY_KP_7,
+                                         [KEY_KP8] = TK_KEY_KP_8,
+                                         [KEY_KP9] = TK_KEY_KP_9,
+                                         [KEY_KP0] = TK_KEY_KP_0,
+                                         [KEY_KPDOT] = TK_KEY_KP_PERIOD,
                                          [KEY_RIGHTCTRL] = TK_KEY_RCTRL,
                                          [KEY_RIGHTALT] = TK_KEY_RALT,
                                          [KEY_HOME] = TK_KEY_HOME,
@@ -150,6 +170,26 @@ static int32_t map_key(uint8_t code) {
   return ret;
 }
 
+#define test_bit(bmap, idx) (((bmap)[(idx) / 8] & (1 << ((idx) % 8))) != 0)
+
+/*
+ * 因为有些Linux内核中KEY_CAPSLOCK(58)映射的是CtrlL_Lock而不是Caps_Lock，导致LED_CAPSL不生效，
+ * 所以capslock在KEY_CAPSLOCK松开时修改，而不直接使用LED_CAPSL状态。
+ */
+static ret_t input_init_mod(run_info_t* info) {
+  if (!info->is_mod_inited) {
+    uint8_t led_mask[LED_MAX / 8 + 1];
+    memset(&led_mask, 0, sizeof(led_mask));
+    ioctl(info->fd, EVIOCGLED(sizeof(led_mask)), led_mask);
+
+    info->capslock = FALSE;
+    info->numlock = test_bit(led_mask, LED_NUML);
+    info->is_mod_inited = TRUE;
+  }
+
+  return RET_OK;
+}
+
 static ret_t input_dispatch(run_info_t* info) {
   ret_t ret = info->dispatch(info->dispatch_ctx, &(info->req), "input");
   info->req.event.type = EVT_NONE;
@@ -192,14 +232,42 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
 
   return_value_if_fail(ret == sizeof(e), RET_OK);
 
+  input_init_mod(info);
+
   switch (e.type) {
+    case EV_LED: {
+      switch (e.code) {
+        case LED_CAPSL: {
+          // capslock不直接使用LED_CAPSL状态
+          break;
+        }
+        case LED_NUML: {
+          info->numlock = e.value != 0;
+          break;
+        }
+        default: {
+          log_info("unkown code: e.type=%d code=%d value=%d\n", e.type, e.code, e.value);
+          break;
+        }
+      }
+
+      break;
+    }
     case EV_KEY: {
       if (e.code == BTN_LEFT || e.code == BTN_RIGHT || e.code == BTN_MIDDLE ||
           e.code == BTN_TOUCH) {
         req->event.type = e.value ? EVT_POINTER_DOWN : EVT_POINTER_UP;
       } else {
+        // capslock在KEY_CAPSLOCK松开时修改
+        if (e.code == KEY_CAPSLOCK && !e.value) {
+          info->capslock = !info->capslock;
+          log_warn("capslock is changed by key event and now is %d\n", info->capslock);
+        }
+
         req->event.type = e.value ? EVT_KEY_DOWN : EVT_KEY_UP;
         req->key_event.key = map_key(e.code);
+        req->key_event.capslock = info->capslock;
+        req->key_event.numlock = info->numlock;
 
         return input_dispatch(info);
       }
