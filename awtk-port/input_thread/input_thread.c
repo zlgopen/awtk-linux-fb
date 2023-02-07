@@ -155,19 +155,23 @@ static const int32_t s_key_map[0x100] = {[KEY_1] = TK_KEY_1,
                                          [KEY_TAB] = TK_KEY_TAB,
                                          [KEY_ESC] = TK_KEY_ESCAPE};
 
-static int32_t map_key(uint8_t code) {
-  int32_t ret = s_key_map[code];
-
+static int32_t map_key(uint16_t code) {
   if (custom_keys() != NULL && custom_keys_nr() > 0) {
     const key_type_value_t* key_value =
         find_item_by_value(custom_keys(), custom_keys_nr(), (uint32_t)code);
     if (key_value != NULL) {
       log_debug("Custom key name : %s\r\n", key_value->name);
-      ret = (uint32_t)code;
+      return (uint32_t)code;
     }
   }
 
-  return ret;
+  if (code < ARRAY_SIZE(s_key_map)) {
+    return s_key_map[code];
+  } else {
+    log_debug("%s:The key for the code was not found!\r\n", __FUNCTION__);
+  }
+
+  return 0;
 }
 
 #define test_bit(bmap, idx) (((bmap)[(idx) / 8] & (1 << ((idx) % 8))) != 0)
