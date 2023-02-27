@@ -33,6 +33,13 @@
 #include "lcd_linux_drm.h"
 #include "lcd_linux_egl.h"
 #include "main_loop_linux.h"
+#include "devices.h"
+
+#ifdef WITH_LINUX_EGL
+#define LCD_T lcd_egl_context_t
+#else
+#define LCD_T lcd_t
+#endif
 
 #ifndef FB_DEVICE_FILENAME
 #define FB_DEVICE_FILENAME "/dev/fb0"
@@ -54,6 +61,12 @@
 #define MICE_DEVICE_FILENAME "/dev/input/mouse0"
 #endif /*MICE_DEVICE_FILENAME*/
 
+static device_info_t s_devices_default[] = {{"fb", FB_DEVICE_FILENAME},
+                                            {"drm", DRM_DEVICE_FILENAME},
+                                            {"ts", TS_DEVICE_FILENAME},
+                                            {"input", KB_DEVICE_FILENAME},
+                                            {"mouse", MICE_DEVICE_FILENAME}};
+static slist_t s_device_threads_list;
 
 static ret_t main_loop_linux_destroy(main_loop_t* l) {
   main_loop_simple_t* loop = (main_loop_simple_t*)l;
@@ -118,34 +131,67 @@ ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* evt, const
   return RET_OK;
 }
 
-static tk_thread_t* s_kb_thread = NULL;
-static tk_thread_t* s_mice_thread = NULL;
-static tk_thread_t* s_ts_thread = NULL;
-
 static void on_app_exit(void) {
-  if (s_kb_thread != NULL) {
-    tk_thread_destroy(s_kb_thread);
+  slist_deinit(&s_device_threads_list);
+  input_thread_global_deinit();
+  devices_unload();
+}
+
+static ret_t lcd_create_on_devices_visit(void* ctx, const device_info_t* info) {
+  LCD_T** p_lcd = (LCD_T**)ctx;
+
+#ifdef WITH_LINUX_EGL
+  if (tk_str_eq(info->type, "fb")) {
+    *p_lcd = lcd_linux_egl_create(info->path);
   }
-  if (s_mice_thread != NULL) {
-    tk_thread_destroy(s_mice_thread);
+#elif WITH_LINUX_DRM
+  if (tk_str_eq(info->type, "drm")) {
+    *p_lcd = lcd_linux_drm_create(info->path);
   }
-  if (s_ts_thread != NULL) {
-    tk_thread_destroy(s_ts_thread);
+#else
+  if (tk_str_eq(info->type, "fb")) {
+    *p_lcd = lcd_linux_fb_create(info->path);
+  }
+#endif
+
+  if (*p_lcd != NULL) {
+    return RET_STOP;
   }
 
-  input_thread_global_deinit();
+  return RET_OK;
+}
+
+static ret_t device_thread_run_on_devices_visit(void* ctx, const device_info_t* info) {
+  main_loop_simple_t* loop = (main_loop_simple_t*)ctx;
+  tk_thread_t* thread = NULL;
+  ret_t ret = RET_OK;
+
+  if (tk_str_eq(info->type, "input")) {
+    thread = input_thread_run(info->path, input_dispatch_to_main_loop, loop, loop->w, loop->h);
+  } else if (tk_str_eq(info->type, "mouse")) {
+    thread = mouse_thread_run(info->path, input_dispatch_to_main_loop, loop, loop->w, loop->h);
+  } else if (tk_str_eq(info->type, "ts")) {
+#ifdef HAS_TSLIB
+    thread = tslib_thread_run(info->path, input_dispatch_to_main_loop, loop, loop->w, loop->h);
+#endif /*HAS_TSLIB*/
+  }
+
+  if (thread != NULL) {
+    ret = slist_append(&s_device_threads_list, thread);
+  }
+
+  return ret;
 }
 
 main_loop_t* main_loop_init(int w, int h) {
   main_loop_simple_t* loop = NULL;
-#ifdef WITH_LINUX_EGL
-  lcd_egl_context_t* lcd = lcd_linux_egl_create(FB_DEVICE_FILENAME);
-#elif WITH_LINUX_DRM
-  lcd_t* lcd = lcd_linux_drm_create(DRM_DEVICE_FILENAME);
-#else
-  lcd_t* lcd = lcd_linux_fb_create(FB_DEVICE_FILENAME);
-#endif
+  LCD_T* lcd = NULL;
 
+  if (RET_OK != devices_load()) {
+    log_warn("Devices load fail! Used default.\r\n");
+    devices_set(s_devices_default, ARRAY_SIZE(s_devices_default));
+  }
+  devices_foreach(lcd_create_on_devices_visit, &lcd);
   return_value_if_fail(lcd != NULL, NULL);
 
 #ifdef WITH_LINUX_EGL
@@ -158,16 +204,8 @@ main_loop_t* main_loop_init(int w, int h) {
 
   input_thread_global_init();
 
-#ifdef HAS_TSLIB
-  s_ts_thread =
-      tslib_thread_run(TS_DEVICE_FILENAME, input_dispatch_to_main_loop, loop, lcd->w, lcd->h);
-#endif /*HAS_TSLIB*/
-
-  s_kb_thread =
-      input_thread_run(KB_DEVICE_FILENAME, input_dispatch_to_main_loop, loop, lcd->w, lcd->h);
-  s_mice_thread =
-      mouse_thread_run(MICE_DEVICE_FILENAME, input_dispatch_to_main_loop, loop, lcd->w, lcd->h);
-
+  slist_init(&s_device_threads_list, (tk_destroy_t)tk_thread_destroy, NULL);
+  devices_foreach(device_thread_run_on_devices_visit, loop);
 
   atexit(on_app_exit);
 

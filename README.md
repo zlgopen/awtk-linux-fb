@@ -34,16 +34,29 @@ TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi
 #TSLIB_LIB_DIR=''
 ```
 
-* 3. 编辑 awtk-port/main\_loop\_linux.c 修改输入设备的文件名
+* 3. 编辑 config/devices.json 修改输入设备的文件名
 
-```
-#define FB_DEVICE_FILENAME "/dev/fb0"
-#define TS_DEVICE_FILENAME "/dev/input/event0"
-#define KB_DEVICE_FILENAME "/dev/input/event1"
-#define MICE_DEVICE_FILENAME "/dev/input/mouse0"
+```json
+{
+    "/dev/fb0" : {
+        "type" : "fb"
+    },
+	"/dev/dri/card0" : {
+        "type" : "drm"
+    },
+	"/dev/input/event0" : {
+        "type" : "ts"
+    },
+	"/dev/input/event1" : {
+        "type" : "input"
+    },
+	"/dev/input/mouse0" : {
+        "type" : "mouse"
+    }
+}
 ```
 
-> 注意：在有些平台下，如果设置 #define MICE_DEVICE_FILENAME "/dev/input/mice”，会出现触摸不灵的问题。通过 hexdump /dev/input/mice 命令发现，按下触摸屏或操作鼠标都会打印信息，即/dev/input/mice 会同时接收触摸和鼠标事件。可通过"hexdump  /dev/input/xx" 命令选择正确的鼠标设备文件名。
+> 注意：在有些平台下，如果设置"/dev/input/mice”，会出现触摸不灵的问题。通过 hexdump /dev/input/mice 命令发现，按下触摸屏或操作鼠标都会打印信息，即/dev/input/mice 会同时接收触摸和鼠标事件。可通过"hexdump  /dev/input/xx" 命令选择正确的鼠标设备文件名。
 
 * 4. 编译（请先安装 scons)
 

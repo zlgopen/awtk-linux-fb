@@ -14,6 +14,7 @@ SOURCES = [
   'lcd_linux/lcd_linux_drm.c', 
   'lcd_linux/lcd_linux_egl.c', 
   'lcd_linux/lcd_mem_others.c' ,
+  'devices.c',
   'main_loop_linux.c' ]
 
 if os.environ['TSLIB_LIB_DIR']:

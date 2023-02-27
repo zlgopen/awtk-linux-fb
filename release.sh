@@ -22,4 +22,5 @@ echo "APP_ROOT = ${APP_ROOT}"
 
 rm -rf release release.tar.gz
 python3 ../awtk/scripts/release.py ${EXE_NAME} ${APP_ROOT}
+cp -r config release/config
 tar -czf release.tar.gz release/
