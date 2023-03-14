@@ -10,11 +10,10 @@
 
 * 1. 获取源码
 
-> 以下三者并列放在同一个目录。
+> 以下两者并列放在同一个目录，如果用户有自己的项目，也建议与以下两者并列放在同一目录。
 
 ```
 git clone https://github.com/zlgopen/awtk.git
-git clone https://github.com/zlgopen/awtk-examples.git
 git clone https://github.com/zlgopen/awtk-linux-fb.git
 cd awtk-linux-fb
 ```
@@ -60,29 +59,29 @@ TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi
 
 * 4. 编译（请先安装 scons)
 
-生成内置 demoui 例子，生成结果在 build/bin 文件夹下的 demoui 文件
+生成内置 demoui 例子，生成结果在bin 文件夹下的 demoui 文件
 
 ```
 scons
 ```
 
-也可以指定生成其他 Demo，生成结果在 build/bin 文件夹下的 demo 文件
+也可以指定生成其他 Demo，此处以 Chart.v2-Demo 为例（该例程可以在 AWStudio 中下载），生成结果在 bin 文件夹下的 demo 文件
 
 ```
-scons APP=../awtk-examples/HelloWorld.Xml-Demo
+scons APP=../Chart.v2-Demo
 ```
 
-有些 Demo 包含了两套不同 LCD 大小的资源，如：Chart-Demo
+有些 Demo 包含了两套不同 LCD 大小的资源，如：Chart.v2-Demo
 
-* 编译 Chart-Demo，并使用 LCD 为 800 * 480 的资源：
+* 编译 Chart.v2-Demo，并使用 LCD 为 800 * 480 的资源：
 
 ```
-scons APP=../awtk-examples/Chart-Demo
+scons APP=../Chart.v2-Demo
 ```
 * 编译 Chart-Demo，并使用 LCD 为 480 * 272 的资源：
 
 ```
-scons APP=../awtk-examples/Chart-Demo LCD=480_272
+scons APP=../Chart.v2-Demo LCD=480_272
 ```
 * 5. 生成发布包
 
@@ -92,10 +91,10 @@ scons APP=../awtk-examples/Chart-Demo LCD=480_272
 sh ./release.sh
 ```
 
-对于其他 Demo，需要加入资源文件夹参数，指向应用程序 assets 的父目录
+对于其他 Demo，需要加入资源文件夹参数和可执行程序名称，资源文件夹参数指向应用程序 assets 的父目录
 
 ```
-sh ./release.sh ../awtk-examples/HelloWorld.Xml-Demo/res demo
+sh ./release.sh ../Chart.v2-Demo/res demo
 ```
 
 * 6. 运行
