@@ -117,7 +117,7 @@ static void on_app_exit(void) {
 }
 
 #if __FB_SUP_RESIZE
-static ret_t (*lcd_mem_linux_resize_defalut)(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length);
+static ret_t (*lcd_mem_linux_resize_default)(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length);
 static ret_t lcd_mem_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length) {
 #if __FB_ASYNC_SWAP
   log_debug("linuxfb async swap mode not support fb resize.\n");
@@ -137,8 +137,8 @@ static ret_t lcd_mem_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_leng
   lcd_mem_set_online_fb(mem, (uint8_t*)(fb->fbmem0));
   lcd_mem_set_line_length(lcd, fb_line_length(fb));
 
-  if (lcd_mem_linux_resize_defalut && ret == RET_OK) {
-    lcd_mem_linux_resize_defalut(lcd, w, h, line_length);
+  if (lcd_mem_linux_resize_default && ret == RET_OK) {
+    lcd_mem_linux_resize_default(lcd, w, h, line_length);
   }
 
   log_debug("lcd_linux_fb_resize \r\n");
@@ -230,15 +230,15 @@ static void on_signal_int(int sig) {
   tk_quit();
 }
 
-static ret_t (*lcd_mem_linux_flush_defalut)(lcd_t* lcd);
+static ret_t (*lcd_mem_linux_flush_default)(lcd_t* lcd);
 static ret_t lcd_mem_linux_flush(lcd_t* lcd) {
 #if __FB_WAIT_VSYNC
   fb_info_t* fb = &s_fb;
   fb_sync(fb);
 #endif
 
-  if (lcd_mem_linux_flush_defalut) {
-    lcd_mem_linux_flush_defalut(lcd);
+  if (lcd_mem_linux_flush_default) {
+    lcd_mem_linux_flush_default(lcd);
   }
 
 //printf("---------lcd_mem_linux_flush VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);//###DEBUG###
@@ -287,12 +287,12 @@ static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
   }
 
   if (lcd != NULL) {
-    lcd_mem_linux_flush_defalut = lcd->flush;
+    lcd_mem_linux_flush_default = lcd->flush;
     lcd->flush = lcd_mem_linux_flush;
     lcd_mem_set_line_length(lcd, line_length);
 
 #if __FB_SUP_RESIZE
-    lcd_mem_linux_resize_defalut = lcd->resize;
+    lcd_mem_linux_resize_default = lcd->resize;
     lcd->resize = lcd_mem_linux_resize;
 #endif
   }
@@ -361,7 +361,7 @@ inline static fb_taged_t* get_ready_fb() {
 
 #if __FB_ASYNC_SWAP
 
-static ret_t lcd_mem_linux_wirte_buff(lcd_t* lcd) {
+static ret_t lcd_mem_linux_write_buff(lcd_t* lcd) {
   ret_t ret = RET_OK;
   if (s_app_quited) {
     return ret;
@@ -388,7 +388,7 @@ static ret_t lcd_mem_linux_wirte_buff(lcd_t* lcd) {
     int sched_yield(void);
     sched_yield();
 
-//printf("==========lcd_mem_linux_wirte_buff VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);//###DEBUG###
+//printf("==========lcd_mem_linux_write_buff VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);//###DEBUG###
   }
 
   return ret;
@@ -435,7 +435,7 @@ static void* fbswap_thread(void* ctx) {
 }
 #else // __FB_ASYNC_SWAP
 
-static ret_t lcd_mem_linux_wirte_buff(lcd_t* lcd) {
+static ret_t lcd_mem_linux_write_buff(lcd_t* lcd) {
   ret_t ret = RET_OK;
   fb_info_t* fb = &s_fb;
   struct fb_var_screeninfo vi = (fb->var);
@@ -458,7 +458,7 @@ static ret_t lcd_mem_linux_wirte_buff(lcd_t* lcd) {
     }
     spare_fb->tags = FB_TAG_BUSY;
 
-//printf("==========lcd_mem_linux_wirte_buff VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);//###DEBUG###
+//printf("==========lcd_mem_linux_write_buff VSYNC=%d, ASWAP=%d\n", __FB_WAIT_VSYNC, __FB_ASYNC_SWAP);//###DEBUG###
   }
 
   return ret;
@@ -504,12 +504,12 @@ static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   }
 
   if (lcd != NULL) {
-    lcd->swap = lcd_mem_linux_wirte_buff;
-    lcd->flush = lcd_mem_linux_wirte_buff;
+    lcd->swap = lcd_mem_linux_write_buff;
+    lcd->flush = lcd_mem_linux_write_buff;
     lcd_mem_set_line_length(lcd, line_length);
 
 #if __FB_SUP_RESIZE
-    lcd_mem_linux_resize_defalut = lcd->resize;
+    lcd_mem_linux_resize_default = lcd->resize;
     lcd->resize = lcd_mem_linux_resize;
 #endif
 

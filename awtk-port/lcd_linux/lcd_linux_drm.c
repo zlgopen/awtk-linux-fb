@@ -616,7 +616,7 @@ static ret_t drm_do_resize(lcd_t* lcd, wh_t w, wh_t h) {
   return RET_OK;
 }
 
-static ret_t (*lcd_drm_linux_resize_defalut)(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length);
+static ret_t (*lcd_drm_linux_resize_default)(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length);
 static ret_t lcd_drm_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length) {
   ret_t ret = RET_OK;
 
@@ -624,8 +624,8 @@ static ret_t lcd_drm_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_leng
   ret = drm_do_resize(lcd, w, h);
   return_value_if_fail(ret == RET_OK, ret);
 
-  if (lcd_drm_linux_resize_defalut != NULL) {
-    lcd_drm_linux_resize_defalut(lcd, w, h, line_length);
+  if (lcd_drm_linux_resize_default != NULL) {
+    lcd_drm_linux_resize_default(lcd, w, h, line_length);
   }
 
   return ret;
@@ -680,7 +680,7 @@ lcd_t* lcd_linux_drm_create(const char* card) {
   lcd_t* lcd = lcd_mem_special_create(drm->w, drm->h, BITMAP_FMT_BGRA8888, lcd_bgra8888_flush, NULL,
                                 lcd_bgra8888_destroy, drm);
   if (lcd) {
-    lcd_drm_linux_resize_defalut = lcd->resize;
+    lcd_drm_linux_resize_default = lcd->resize;
     lcd->resize = lcd_drm_linux_resize;
   }
 

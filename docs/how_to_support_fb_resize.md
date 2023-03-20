@@ -26,7 +26,7 @@ ret_t window_manager_resize(widget_t* widget, wh_t w, wh_t h);
 static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
     /*.....省略无关代码......*/
     lcd = lcd_mem_bgr565_create_double_fb(w, h, online_fb, offline_fb);
-    lcd_mem_linux_resize_defalut = lcd->resize;
+    lcd_mem_linux_resize_default = lcd->resize;
     lcd->resize = lcd_mem_linux_resize;
     /*.....省略无关代码......*/
 }
@@ -46,8 +46,8 @@ static ret_t lcd_mem_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_leng
   mem->offline_fb = fb->fbmem_offline;
   lcd_mem_set_line_length(lcd, fb_line_length(fb));
 
-  if (lcd_mem_linux_resize_defalut && ret == RET_OK) {
-    lcd_mem_linux_resize_defalut(lcd, w, h, line_length);
+  if (lcd_mem_linux_resize_default && ret == RET_OK) {
+    lcd_mem_linux_resize_default(lcd, w, h, line_length);
   }
 
   log_debug("lcd_linux_fb_resize \r\n");

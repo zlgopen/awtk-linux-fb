@@ -82,7 +82,7 @@ static ret_t lcd_linux_gles_destroy(native_window_t* win) {
   return ret;
 }
 
-static ret_t (*lcd_egl_linux_resize_defalut)(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length);
+static ret_t (*lcd_egl_linux_resize_default)(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length);
 static ret_t lcd_egl_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_length) {
   ret_t ret = RET_OK;
 
@@ -92,8 +92,8 @@ static ret_t lcd_egl_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_leng
   s_egl_context_lcd->w = w;
   s_egl_context_lcd->h = h;
 
-  if (lcd_egl_linux_resize_defalut != NULL) {
-    lcd_egl_linux_resize_defalut(lcd, w, h, line_length);
+  if (lcd_egl_linux_resize_default != NULL) {
+    lcd_egl_linux_resize_default(lcd, w, h, line_length);
   }
 
   return ret;
@@ -117,7 +117,7 @@ lcd_egl_context_t* lcd_linux_egl_create(const char* filename) {
   lcd_t* lcd_nanovg = native_window_get_lcd(win);
   goto_error_if_fail(lcd_nanovg != NULL);
 
-  lcd_egl_linux_resize_defalut = lcd_nanovg->resize;
+  lcd_egl_linux_resize_default = lcd_nanovg->resize;
   lcd_nanovg->resize = lcd_egl_linux_resize;
 
   s_egl_context_lcd = lcd;
