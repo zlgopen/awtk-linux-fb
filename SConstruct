@@ -6,23 +6,10 @@ import awtk_config as awtk
 
 APP_CCFLAGS = ' '
 
-list_count = 0
-legal_arguments = ['LCD', 'APP']
 arguments_list = list(ARGUMENTS.keys())
-
-while list_count < len(arguments_list) :
-  if arguments_list[list_count] in legal_arguments :
-    del arguments_list[list_count]
-    continue
-  list_count += 1
-
-if len(arguments_list) > 0 :
-  error_tip = 'arguments '
-  for error_argument in arguments_list :
-    error_tip = error_tip + error_argument + ' '
-  error_tip += 'is error!'
-  print(error_tip)
-  exit(0)
+for argument in arguments_list:
+  if argument.isupper() == False:
+    print('!!!!!Argument ' + argument + ' is error! Do you mean', argument.upper() + '?')
 
 LCD = ARGUMENTS.get('LCD', '')
 if len(LCD) > 0:
