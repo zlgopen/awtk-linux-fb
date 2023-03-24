@@ -59,42 +59,57 @@ TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi
 
 * 4. 编译（请先安装 scons)
 
-生成内置 demoui 例子，生成结果在bin 文件夹下的 demoui 文件
+awtk 与用户的程序目录结构如下所示
 
 ```
+/home/user/
+	|-- awtk/
+	|-- awtk-linux-fb/
+	|-- user_apps/
+```
+
+生成内置 demoui 例子，生成结果在bin 文件夹下的 demoui 文件
+
+```bash
+cd /home/user/awtk-linux-fb
 scons
 ```
 
-也可以指定生成其他 Demo，此处以 Chart.v2-Demo 为例（该例程可以在 AWStudio 中下载），生成结果在 bin 文件夹下的 demo 文件
+也可以指定生成其他 Demo，此处以 HelloDesigner-Demo 为例（该例程可以在 AWStudio 中下载，复制到user_apps目录下），生成结果在 bin 文件夹下的 demo 文件
+
+```bash
+cd /home/user/awtk-linux-fb
+scons APP=../user_apps/HelloDesigner-Demo
+```
+
+如果想要改变 LCD 的尺寸，可以在编译时加上 LCD 参数
+
+* 编译 HelloDesigner-Demo，并将 LCD 设置为 800 * 480：
 
 ```
-scons APP=../Chart.v2-Demo
+cd /home/user/awtk-linux-fb
+scons APP=../user_apps/HelloDesigner-Demo
 ```
-
-有些 Demo 包含了两套不同 LCD 大小的资源，如：Chart.v2-Demo
-
-* 编译 Chart.v2-Demo，并使用 LCD 为 800 * 480 的资源：
+* 编译 HelloDesigner-Demo，并将 LCD 设置为为 480 * 272：
 
 ```
-scons APP=../Chart.v2-Demo
-```
-* 编译 Chart-Demo，并使用 LCD 为 480 * 272 的资源：
-
-```
-scons APP=../Chart.v2-Demo LCD=480_272
+cd /home/user/awtk-linux-fb
+scons APP=../user_apps/HelloDesigner-Demo LCD=480_272
 ```
 * 5. 生成发布包
 
 对于内置的 demoui 例子
 
 ```
+cd /home/user/awtk-linux-fb
 sh ./release.sh
 ```
 
 对于其他 Demo，需要加入资源文件夹参数和可执行程序名称，资源文件夹参数指向应用程序 assets 的父目录
 
 ```
-sh ./release.sh ../Chart.v2-Demo/res demo
+cd /home/user/awtk-linux-fb
+./release.sh ../user_apps/HelloDesigner-Demo/res demo
 ```
 
 * 6. 运行
