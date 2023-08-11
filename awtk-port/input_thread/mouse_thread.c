@@ -24,10 +24,12 @@
 #include <unistd.h>
 #include <linux/input.h>
 #include "tkc/mem.h"
-#include "base/keys.h"
-#include "tkc/thread.h"
-#include "mouse_thread.h"
 #include "tkc/utils.h"
+#include "tkc/thread.h"
+#include "base/keys.h"
+
+#include "mouse_thread.h"
+#include "common_coord.h"
 
 #ifndef EV_SYN
 #define EV_SYN 0x00
@@ -47,28 +49,33 @@ typedef struct _run_info_t {
     struct input_event e; /* for EasyARM-iMX280A_283A_287A */
   } data;
   bool_t left_pressed;
-  bool_t rigth_pressed;
+  bool_t right_pressed;
   bool_t middle_pressed;
   event_queue_req_t req;
 } run_info_t;
 
 static ret_t input_dispatch(run_info_t* info) {
-  ret_t ret = info->dispatch(info->dispatch_ctx, &(info->req), "mouse");
+  ret_t ret = RET_FAIL;
+  char message[MAX_PATH + 1] = {0};
+  tk_snprintf(message, sizeof(message) - 1, "mouse[%s]", info->filename);
+
+  ret = info->dispatch(info->dispatch_ctx, &(info->req), message);
   info->req.event.type = EVT_NONE;
 
   return ret;
 }
 
-static ret_t input_dispatch_set_mouse_event(run_info_t* info, event_queue_req_t* req, bool_t left, bool_t right, bool_t middle, bool_t normal) {
+static ret_t input_dispatch_set_mouse_event(run_info_t* info, event_queue_req_t* req, bool_t left,
+                                            bool_t right, bool_t middle, bool_t normal) {
   if (normal) {
-    if (info->left_pressed || info->rigth_pressed || info->middle_pressed) {
+    if (info->left_pressed || info->right_pressed || info->middle_pressed) {
       if (info->left_pressed) {
         info->left_pressed = FALSE;
         req->event.type = EVT_POINTER_UP;
         req->pointer_event.pressed = FALSE;
       }
-      if (info->rigth_pressed) {
-        info->rigth_pressed = FALSE;
+      if (info->right_pressed) {
+        info->right_pressed = FALSE;
         req->event.type = EVT_CONTEXT_MENU;
       }
       if (info->middle_pressed) {
@@ -92,8 +99,8 @@ static ret_t input_dispatch_set_mouse_event(run_info_t* info, event_queue_req_t*
       info->middle_pressed = TRUE;
       req->event.type = EVT_KEY_DOWN;
       req->key_event.key = TK_KEY_WHEEL;
-    } else if (right) {      
-      info->rigth_pressed = TRUE;
+    } else if (right) {
+      info->right_pressed = TRUE;
       req->event.type = EVT_POINTER_MOVE;
     } else {
       req->event.type = EVT_POINTER_MOVE;
@@ -140,6 +147,12 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
     int x = info->data.d[1];
     int y = info->data.d[2];
 
+    point_t common_coord = {info->x, info->y};
+    if (RET_OK == common_coord_get(&common_coord)) {
+      info->x = common_coord.x;
+      info->y = common_coord.y;
+    }
+
     info->x += x;
     info->y -= y;
 
@@ -164,7 +177,8 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
   } else if (ret == sizeof(info->data.e)) {
     switch (info->data.e.type) {
       case EV_KEY: {
-        bool_t left = info->data.e.value && (info->data.e.code == BTN_LEFT || info->data.e.code == BTN_TOUCH);
+        bool_t left =
+            info->data.e.value && (info->data.e.code == BTN_LEFT || info->data.e.code == BTN_TOUCH);
         bool_t right = info->data.e.value && info->data.e.code == BTN_RIGHT;
         bool_t middle = info->data.e.value && info->data.e.code == BTN_MIDDLE;
         bool_t normal = !(left || right || middle);
@@ -192,6 +206,12 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
         break;
       }
       case EV_REL: {
+        point_t common_coord = {info->x, info->y};
+        if (RET_OK == common_coord_get(&common_coord)) {
+          info->x = common_coord.x;
+          info->y = common_coord.y;
+        }
+
         switch (info->data.e.code) {
           case REL_X: {
             info->x += info->data.e.value;
@@ -259,8 +279,8 @@ void* input_run(void* ctx) {
   }
 
   TKMEM_FREE(ctx);
-  while (input_dispatch_one_event(&info) == RET_OK)
-    ;
+  while (input_dispatch_one_event(&info) == RET_OK) {
+  };
   close(info.fd);
   TKMEM_FREE(info.filename);
 

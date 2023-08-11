@@ -24,10 +24,11 @@
 #include <unistd.h>
 #include "tslib.h"
 #include "tkc/mem.h"
-#include "base/keys.h"
-#include "tkc/thread.h"
-#include "tslib_thread.h"
 #include "tkc/utils.h"
+#include "tkc/thread.h"
+#include "base/keys.h"
+
+#include "tslib_thread.h"
 
 typedef struct _run_info_t {
   int32_t max_x;
@@ -41,7 +42,11 @@ typedef struct _run_info_t {
 } run_info_t;
 
 static ret_t tslib_dispatch(run_info_t* info) {
-  ret_t ret = info->dispatch(info->dispatch_ctx, &(info->req), "tslib");
+  ret_t ret = RET_FAIL;
+  char message[MAX_PATH + 1] = {0};
+  tk_snprintf(message, sizeof(message) - 1, "ts[%s]", info->filename);
+
+  ret = info->dispatch(info->dispatch_ctx, &(info->req), message);
   info->req.event.type = EVT_NONE;
 
   return ret;
@@ -117,8 +122,8 @@ void* tslib_run(void* ctx) {
   }
 
   TKMEM_FREE(ctx);
-  while (tslib_dispatch_one_event(&info) == RET_OK)
-    ;
+  while (tslib_dispatch_one_event(&info) == RET_OK) {
+  };
   ts_close(info.ts);
   TKMEM_FREE(info.filename);
 

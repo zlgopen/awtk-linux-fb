@@ -34,6 +34,7 @@
 #include "lcd_linux_egl.h"
 #include "main_loop_linux.h"
 #include "devices.h"
+#include "common_coord.h"
 
 #ifdef WITH_LINUX_EGL
 #define LCD_T lcd_egl_context_t
@@ -105,6 +106,8 @@ ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* evt, const
         break;
       }
       case EVT_POINTER_MOVE: {
+        point_t common_coord = {e->pointer_event.x, e->pointer_event.y};
+        common_coord_set(common_coord);
         e->pointer_event.pressed = l->pressed;
         e->event.size = sizeof(e->pointer_event);
         break;
@@ -134,6 +137,7 @@ ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* evt, const
 static void on_app_exit(void) {
   slist_deinit(&s_device_threads_list);
   input_thread_global_deinit();
+  common_coord_deinit();
   devices_unload();
 }
 
@@ -202,8 +206,8 @@ main_loop_t* main_loop_init(int w, int h) {
   loop = main_loop_simple_init(lcd->w, lcd->h, NULL, NULL);
   loop->base.destroy = main_loop_linux_destroy;
 
+  common_coord_init();
   input_thread_global_init();
-
   slist_init(&s_device_threads_list, (tk_destroy_t)tk_thread_destroy, NULL);
   devices_foreach(device_thread_run_on_devices_visit, loop);
 

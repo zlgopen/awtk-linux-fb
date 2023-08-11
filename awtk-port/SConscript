@@ -7,15 +7,17 @@ LCD_DEVICES = os.environ['LCD_DEVICES']
 
 env = DefaultEnvironment().Clone()
 SOURCES = [
-  'input_thread/mouse_thread.c', 
-  'input_thread/input_thread.c', 
-  'input_thread/input_dispatcher.c', 
-  'lcd_linux/lcd_linux_fb.c', 
-  'lcd_linux/lcd_linux_drm.c', 
-  'lcd_linux/lcd_linux_egl.c', 
-  'lcd_linux/lcd_mem_others.c' ,
+  'input_thread/mouse_thread.c',
+  'input_thread/input_thread.c',
+  'input_thread/common_coord.c',
+  'input_thread/input_dispatcher.c',
+  'lcd_linux/lcd_linux_fb.c',
+  'lcd_linux/lcd_linux_drm.c',
+  'lcd_linux/lcd_linux_egl.c',
+  'lcd_linux/lcd_mem_others.c',
   'devices.c',
-  'main_loop_linux.c' ]
+  'main_loop_linux.c',
+]
 
 if os.environ['TSLIB_LIB_DIR']:
   SOURCES = ['input_thread/tslib_thread.c'] + SOURCES;

@@ -24,10 +24,12 @@
 #include <unistd.h>
 #include <linux/input.h>
 #include "tkc/mem.h"
-#include "base/keys.h"
-#include "tkc/thread.h"
-#include "input_thread.h"
 #include "tkc/utils.h"
+#include "tkc/thread.h"
+#include "base/keys.h"
+
+#include "input_thread.h"
+#include "common_coord.h"
 
 #include "base/custom_keys.inc"
 
@@ -195,7 +197,11 @@ static ret_t input_init_mod(run_info_t* info) {
 }
 
 static ret_t input_dispatch(run_info_t* info) {
-  ret_t ret = info->dispatch(info->dispatch_ctx, &(info->req), "input");
+  ret_t ret = RET_FAIL;
+  char message[MAX_PATH + 1] = {0};
+  tk_snprintf(message, sizeof(message) - 1, "input[%s]", info->filename);
+
+  ret = info->dispatch(info->dispatch_ctx, &(info->req), message);
   info->req.event.type = EVT_NONE;
 
   return ret;
@@ -320,6 +326,11 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
       break;
     }
     case EV_REL: {
+      point_t common_coord = {req->pointer_event.x, req->pointer_event.y};
+      if (RET_OK == common_coord_get(&common_coord)) {
+        req->pointer_event.x = common_coord.x;
+        req->pointer_event.y = common_coord.y;
+      }
       switch (e.code) {
         case REL_X: {
           req->pointer_event.x += e.value;
@@ -399,8 +410,8 @@ static void* input_run(void* ctx) {
   }
 
   TKMEM_FREE(ctx);
-  while (input_dispatch_one_event(&info) == RET_OK)
-    ;
+  while (input_dispatch_one_event(&info) == RET_OK) {
+  };
   close(info.fd);
   TKMEM_FREE(info.filename);
 
