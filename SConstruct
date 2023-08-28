@@ -1,30 +1,21 @@
 import os
-import platform
 import shutil
 import atexit
+import scons_argv
+scons_argv.init(ARGUMENTS)
+
+import compile_config
 import awtk_config as awtk
 
+complie_helper = compile_config.get_curr_config()
+
 APP_CCFLAGS = ' '
-
-arguments_list = list(ARGUMENTS.keys())
-for argument in arguments_list:
-  if argument.isupper() == False:
-    print('!!!!!Argument ' + argument + ' is error! Do you mean', argument.upper() + '?')
-
-LCD = ARGUMENTS.get('LCD', '')
-if len(LCD) > 0:
-  wh = LCD.split('_')
-  if len(wh) >= 2:
-    APP_CCFLAGS = ' -DLCD_WIDTH=' + wh[0] + ' -DLCD_HEIGHT=' + wh[1] + ' '
-  else:
-    print('LCD param input format error, e.g. LCD=800_480')
-    exit(0)
 
 AWTK_LIB_PATH = awtk.joinPath(awtk.BIN_DIR, "libawtk.so");
 if os.path.exists(AWTK_LIB_PATH) :
   os.remove(AWTK_LIB_PATH)
 
-APP_ROOT = ARGUMENTS.get('APP', '')
+APP_ROOT = complie_helper.get_value('APP', '')
 if len (APP_ROOT) > 0:
   app_sconstruct = awtk.joinPath(APP_ROOT, 'SConstruct')
   if not os.path.exists(APP_ROOT) or not os.path.exists(app_sconstruct):
@@ -33,7 +24,7 @@ if len (APP_ROOT) > 0:
 
 env = DefaultEnvironment(CCFLAGS = awtk.CCFLAGS + APP_CCFLAGS, 
   ENV = os.environ,
-  CFLAGS = awtk.CFLAGS,
+  CFLAGS = awtk.CFLAGS + ' ' + complie_helper.get_value('OS_FLAGS', ''),
   CC=awtk.CC,
   CXX=awtk.CXX,
   LD=awtk.LD,
@@ -51,7 +42,7 @@ env = DefaultEnvironment(CCFLAGS = awtk.CCFLAGS + APP_CCFLAGS,
 TK_ROOT_VAR = awtk.joinPath(awtk.VAR_DIR, 'awtk')
 VariantDir(TK_ROOT_VAR, awtk.TK_ROOT)
 
-if APP_ROOT == '':
+if APP_ROOT == '' and complie_helper.get_value('BUILD_DEMOS', True):
   APP_PROJ_VAR = [awtk.joinPath(TK_ROOT_VAR, 'demos/SConscript')]
 else:
   APP_PROJ_VAR = []
@@ -79,10 +70,16 @@ SConscriptFiles=[
   awtk.joinPath(TK_ROOT_VAR, 'src/debugger/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, 'src/ubjson/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, 'src/compressors/SConscript'),
-  awtk.joinPath(TK_ROOT_VAR, 'tools/common/SConscript'), 
-  awtk.joinPath(TK_ROOT_VAR, 'tools/ui_gen/xml_to_ui/SConscript'),
+  awtk.joinPath(TK_ROOT_VAR, 'src/romfs/SConscript'),
   'awtk-port/SConscript',
   ] + APP_PROJ_VAR + awtk.OS_PROJECTS;
+
+os.environ['BUILD_TOOLS'] = str(complie_helper.get_value('BUILD_TOOLS', True))
+if complie_helper.get_value('BUILD_TOOLS', True) :
+  SConscriptFiles + [
+    awtk.joinPath(TK_ROOT_VAR, 'tools/common/SConscript'), 
+    awtk.joinPath(TK_ROOT_VAR, 'tools/ui_gen/xml_to_ui/SConscript'),
+  ]
 
 SConscript(SConscriptFiles)
 
@@ -104,8 +101,6 @@ def build_app():
     os.system(cmd)
   else:
     cmd = 'cd ' + APP_ROOT + ' && scons LINUX_FB=true'
-    if len(LCD) > 0:
-      cmd += ' LCD=' + LCD
     print(cmd)
     os.system(cmd)
 

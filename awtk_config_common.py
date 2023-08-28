@@ -2,8 +2,14 @@ import os
 import os.path
 import platform
 import shutil
+import compile_config
+complie_helper = compile_config.get_curr_config_for_awtk()
 
-from shutil import copyfile
+import sys
+if sys.version_info.major == 2:
+  import cPickle as pickle
+else:
+  import pickle
 
 import subprocess
 
@@ -65,13 +71,14 @@ TK_3RD_ROOT = joinPath(TK_ROOT, '3rd')
 TK_TOOLS_ROOT = joinPath(TK_ROOT, 'tools')
 TK_DEMO_ROOT = joinPath(TK_ROOT, 'demos')
 GTEST_ROOT = joinPath(TK_ROOT, '3rd/gtest/googletest')
-TKC_STATIC_LIBS = ['debugger', 'fscript_ext', 'streams', 'conf_io', 'hal', 'xml', 'charset',
+TKC_STATIC_LIBS = ['debugger', 'fscript_ext', 'streams', 'romfs', 'conf_io', 'hal', 'xml', 'charset',
                    'csv', 'ubjson', 'compressors', 'miniz', 'tkc_core', 'mbedtls']
 
 TOOLS_NAME = ''
 NANOVG_BACKEND = ''
 NATIVE_WINDOW = ''
 #TOOLS_NAME = 'mingw'
+TOOLS_NAME = complie_helper.get_value('TOOLS_NAME', TOOLS_NAME)
 
 if OS_NAME == 'Windows':
     TK_ROOT = TK_ROOT.replace('\\', '\\\\')
@@ -86,20 +93,21 @@ OS_SUBSYSTEM_WINDOWS = ''
 OS_PROJECTS = []
 # only for c compiler flags
 COMMON_CFLAGS = ''
+OS_DEBUG = complie_helper.get_value('DEBUG')
 
 if OS_NAME == 'Darwin':
     TOOLS_NAME = ''
-    OS_FLAGS = '-g -Wall -Wno-unused-function -fPIC -DWITHOUT_GLAD=1 '
+    OS_FLAGS = '-Wall -Wno-unused-function -fPIC -DWITHOUT_GLAD=1 '
     OS_LIBS = ['stdc++', 'iconv', 'pthread', 'm', 'dl']
     OS_LINKFLAGS = '-framework IOKit -framework Cocoa -framework QuartzCore -framework OpenGL -weak_framework Metal -weak_framework MetalKit'
     OS_FLAGS = OS_FLAGS + ' -DHAS_SEM_OPEN '
-    OS_FLAGS = OS_FLAGS + ' -D__APPLE__ -DHAS_PTHREAD -DMACOS '
+    OS_FLAGS = OS_FLAGS + ' -D__APPLE__ -DHAS_PTHREAD -DMACOS -Dmacintosh '
     OS_FLAGS = OS_FLAGS + ' -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS  -DBGFX_CONFIG_RENDERER_METAL=1 '
-    OS_LIBPATH = ['/usr/local/lib/']
+    OS_LIBPATH = ['/usr/local/lib/', '/opt/homebrew/Cellar/sdl2/2.28.0/lib']
 
 elif OS_NAME == 'Linux':
     TOOLS_NAME = ''
-    OS_FLAGS = '-g -Wall -Wno-unused-function -fPIC '
+    OS_FLAGS = ' -Wall -Wno-unused-function -fPIC '
     OS_LIBS = ['GL', 'gtk-3', 'gdk-3', 'glib-2.0', 'gobject-2.0', 'Xext', 'X11',
                'sndio', 'stdc++', 'asound', 'pthread', 'm', 'dl']
     COMMON_CFLAGS = COMMON_CFLAGS+' -std=gnu99 '
@@ -130,15 +138,15 @@ elif OS_NAME == 'Windows':
     if TOOLS_NAME == '':
         OS_LIBS = ['gdi32', 'user32', 'winmm.lib', 'imm32.lib', 'version.lib', 'shell32.lib',
                    'ole32.lib', 'Oleaut32.lib', 'Advapi32.lib', 'DelayImp.lib', 'psapi.lib', "ws2_32"]
-        OS_FLAGS = '-DWIN32 -D_WIN32 -DWINDOWS /EHsc -D_CONSOLE  /DEBUG /Od  /FS /Z7 /utf-8 /MD '
+        OS_FLAGS = '-DWIN32 -D_WIN32 -DWINDOWS /EHsc -D_CONSOLE   /FS /Z7 /utf-8 '
         if TARGET_ARCH == 'x86':
-            OS_LINKFLAGS = '/MACHINE:X86 /DEBUG '
+            OS_LINKFLAGS = '/MACHINE:X86 '
             OS_SUBSYSTEM_CONSOLE = '/SUBSYSTEM:CONSOLE,5.01  '
             OS_SUBSYSTEM_WINDOWS = '/SUBSYSTEM:WINDOWS,5.01  '
             OS_FLAGS = OS_FLAGS + ' -D_WIN32 '
         else:
             OS_FLAGS = OS_FLAGS + ' -DWITH_64BIT_CPU '
-            OS_LINKFLAGS = '/MACHINE:X64 /DEBUG '
+            OS_LINKFLAGS = '/MACHINE:X64 '
             OS_SUBSYSTEM_CONSOLE = '/SUBSYSTEM:CONSOLE  '
             OS_SUBSYSTEM_WINDOWS = '/SUBSYSTEM:WINDOWS  '
             OS_FLAGS = OS_FLAGS + ' -D_WIN64 '
@@ -147,8 +155,8 @@ elif OS_NAME == 'Windows':
     elif TOOLS_NAME == 'mingw':
         OS_LIBS = ['kernel32', 'gdi32', 'user32', 'winmm', 'imm32', 'version', 'shell32',
                    'ole32', 'Oleaut32', 'Advapi32', 'oleaut32', 'uuid', 'stdc++', "ws2_32"]
-        OS_FLAGS = '-DMINGW -DWINDOWS -D_CONSOLE -g -Wall'
-        OS_LINKFLAGS = ' -Wl,-rpath=./bin -Wl,-rpath=./ '
+        OS_FLAGS = '-DMINGW -DWINDOWS -D_CONSOLE  -Wall'
+        OS_LINKFLAGS = ' -Wl,-rpath=./bin -Wl,-rpath=./ -mwindows '
         COMMON_CFLAGS = COMMON_CFLAGS+' -std=gnu99 '
         OS_FLAGS = OS_FLAGS+' -U__FLT_EVAL_METHOD__ -D__FLT_EVAL_METHOD__=0 -DDECLSPEC=  '
 
@@ -291,3 +299,31 @@ def genDllLinkFlags(libs, defFile):
         linkFlags += wholeArch
 
     return linkFlags
+
+
+def get_scons_db_files(root):
+  scons_db_files = []
+  scons_db_filename = ".sconsign.dblite"
+
+  for f in os.listdir(root):
+    full_path = joinPath(root, f)
+    if os.path.isfile(full_path) and f == scons_db_filename:
+      scons_db_files.append(full_path)
+    elif os.path.isdir(full_path) and f != "." and f != "..":
+      get_scons_db_files(full_path)
+
+  return scons_db_files
+
+
+def scons_db_check_and_remove():
+  scons_db_files = []
+  scons_db_files = get_scons_db_files(TK_ROOT)
+
+  for f in scons_db_files:
+    try:
+      with open(f, "rb") as fs:
+        pickle.load(fs)
+        fs.close()
+    except:
+        fs.close()
+        os.remove(f)

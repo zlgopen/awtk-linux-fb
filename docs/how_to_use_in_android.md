@@ -20,22 +20,10 @@ awtk-linux-fb 是为嵌入式 linux 准备的，但为了调试方便，可以�
 
 1. 解压交叉编译工具链 android-ndk-r21e-linux-x86_64.zip 到 /opt
 
-2. 修改 awtk-linux-fb/awtk_config.py 使用 #for android 编译选项，并设置正确的编译器路径
+2. scons 参数的可以配置交叉编译工具链，并设置正确的编译器路径
 
    ```
-   #for android
-   TSLIB_LIB_DIR=''
-   TSLIB_INC_DIR=''
-   TOOLS_PREFIX='/opt/android-ndk-r21e/toolchains/llvm/prebuilt/linux-x86_64/bin/'
-   CC=TOOLS_PREFIX+'armv7a-linux-androideabi16-clang'
-   CXX=TOOLS_PREFIX+'armv7a-linux-androideabi16-clang++'
-   LD=TOOLS_PREFIX+'arm-linux-androideabi-ld'
-   AR=TOOLS_PREFIX+'arm-linux-androideabi-ar'
-   STRIP=TOOLS_PREFIX+'arm-linux-androideabi-strip'
-   RANLIB=TOOLS_PREFIX+"arm-linux-androideabi-ranlib"
-   OS_LINKFLAGS=' -Wl,--allow-multiple-definition '
-   OS_LIBS = ['stdc++', 'm']
-   OS_FLAGS='-Wall -Os -DFB_DEVICE_FILENAME=\\\"\"/dev/graphics/fb0\\\"\" '
+   scons TOOLS_PREFIX="/opt/android-ndk-r21e/toolchains/llvm/prebuilt/linux-x86_64/bin/" TOOLS_CC="armv7a-linux-androideabi16-clang" TOOLS_CXX="armv7a-linux-androideabi16-clang++" TOOLS_LD="arm-linux-androideabi-ld" TOOLS_AR="arm-linux-androideabi-ar" TOOLS_STRIP="arm-linux-androideabi-strip" TOOLS_RANLIB="arm-linux-androideabi-ranlib"
    ```
 
 3. 编译 awtk 源码并部署到 release 文件夹

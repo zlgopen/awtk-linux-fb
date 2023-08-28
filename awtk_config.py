@@ -1,6 +1,8 @@
 import os
 import platform
 import shutil
+import scons_argv
+complie_helper = scons_argv.set_compile_config()
 
 from awtk_config_common import TKC_STATIC_LIBS
 from awtk_config_common import joinPath, toWholeArchive, genIdlAndDefEx, setEnvSpawn,genDllLinkFlags,copySharedLib
@@ -38,11 +40,14 @@ LCD_DEVICES='fb'
 # LCD_DEVICES='egl_for_fsl'
 # LCD_DEVICES='egl_for_x11'
 # LCD_DEVICES='egl_for_gbm'
+LCD_DEVICES = complie_helper.get_value('LCD_DEVICES', LCD_DEVICES)
 
 NANOVG_BACKEND=''
 VGCANVAS='NANOVG'
 #VGCANVAS='CAIRO'
 #VGCANVAS='NANOVG_PLUS'
+VGCANVAS = complie_helper.get_value('VGCANVAS', VGCANVAS)
+
 if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' :
   LCD='LINUX_FB'
   NANOVG_BACKEND='AGGE'
@@ -55,19 +60,20 @@ elif lcd_devices_is_egl(LCD_DEVICES) :
 #INPUT_ENGINE='t9'
 #INPUT_ENGINE='t9ext'
 INPUT_ENGINE='pinyin'
+INPUT_ENGINE = complie_helper.get_value('INPUT_ENGINE', INPUT_ENGINE)
 
 COMMON_CCFLAGS=' -DHAS_STD_MALLOC -DHAS_STDIO -DHAS_FAST_MEMCPY -DWITH_VGCANVAS -DWITH_UNICODE_BREAK -DLINUX'
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DLOAD_ASSET_WITH_MMAP=1 -DWITH_SOCKET=1 '
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_ASSET_LOADER -DWITH_FS_RES -DHAS_GET_TIME_US64=1 ' 
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_STB_FONT -DWITH_TEXT_BIDI=1 '
-COMMON_CCFLAGS=COMMON_CCFLAGS+' -DAPP_TYPE=APP_MOBILE -DWITH_FAST_LCD_PORTRAIT -DLINUX_FB '
+COMMON_CCFLAGS=COMMON_CCFLAGS+' -DAPP_TYPE=APP_MOBILE -DLINUX_FB '
 #COMMON_CCFLAGS=COMMON_CCFLAGS+' -DENABLE_CUSTOM_KEYS=1 '
 #COMMON_CCFLAGS=COMMON_CCFLAGS+' -DCUSTOM_KEYS_FILEPATH=\"asset://custom_keys.json\" '
 
 if LCD_DEVICES =='fb' :
-  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_LINUX_FB '
+  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_LINUX_FB -DWITH_FAST_LCD_PORTRAIT '
 elif LCD_DEVICES =='drm' :
-  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_LINUX_DRM '
+  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_LINUX_DRM -DWITH_FAST_LCD_PORTRAIT '
 elif lcd_devices_is_egl(LCD_DEVICES) :
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_GPU_GL -DWITH_GPU_GLES2 -DWITH_GPU -DWITH_LINUX_EGL '
 
@@ -99,8 +105,8 @@ OS_CPPPATH=[]
 OS_LINKFLAGS=''
 OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
-OS_FLAGS='-Wall -Os -fno-strict-aliasing '
-#OS_FLAGS='-g -Wall -Os -mfloat-abi=hard -fno-strict-aliasing '
+OS_FLAGS='-Wall -fno-strict-aliasing '
+#OS_FLAGS=' -Wall -mfloat-abi=hard -fno-strict-aliasing '
 
 #for build tslib
 #TSLIB_INC_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src')
@@ -126,54 +132,75 @@ TSLIB_LIB_DIR=''
 #for pc build
 #TOOLS_PREFIX=''
 #TSLIB_LIB_DIR=''
+
+# for android
+# TOOLS_PREFIX='/opt/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/'
+# TOOLS_PREFIX='/Users/jim/android/android-ndk-r21d/toolchains/llvm/prebuilt/darwin-x86_64/bin/'
+
+TOOLS_PREFIX = complie_helper.get_unique_value('TOOLS_PREFIX', TOOLS_PREFIX)
+TSLIB_LIB_DIR = complie_helper.get_unique_value('TSLIB_LIB_DIR', TSLIB_LIB_DIR)
+TSLIB_INC_DIR = complie_helper.get_unique_value('TSLIB_INC_DIR', TSLIB_INC_DIR)
+
 TARGET_ARCH = platform.architecture();
 
-CC=TOOLS_PREFIX+'gcc',
-CXX=TOOLS_PREFIX+'g++',
-LD=TOOLS_PREFIX+'g++',
-AR=TOOLS_PREFIX+'ar',
-RANLIB=TOOLS_PREFIX+'ranlib',
-STRIP=TOOLS_PREFIX+'strip',
-OS_LIBS = ['stdc++', 'pthread', 'rt', 'm', 'dl']
+if complie_helper.get_value('PLATFORM', 'linux') == 'android' :
+  # for android
+  TSLIB_LIB_DIR=''
+  TSLIB_INC_DIR=''
+  CC = TOOLS_PREFIX + complie_helper.get_value('TOOLS_CC', 'armv7a-linux-androideabi16-clang')
+  CXX = TOOLS_PREFIX + complie_helper.get_value('TOOLS_CXX', 'armv7a-linux-androideabi16-clang++')
+  LD = TOOLS_PREFIX + complie_helper.get_value('TOOLS_LD', 'arm-linux-androideabi-ld')
+  AR = TOOLS_PREFIX + complie_helper.get_value('TOOLS_AR', 'arm-linux-androideabi-ar')
+  STRIP = TOOLS_PREFIX + complie_helper.get_value('TOOLS_STRIP', 'arm-linux-androideabi-strip')
+  RANLIB = TOOLS_PREFIX + complie_helper.get_value('TOOLS_RANLIB', 'arm-linux-androideabi-ranlib') 
+  OS_LINKFLAGS=' -Wl,--allow-multiple-definition '
+  OS_LIBS = complie_helper.get_value('OS_LIBS', []) + ['stdc++', 'm']
+  OS_FLAGS='-Wall -Os -DFB_DEVICE_FILENAME=\\\"\"/dev/graphics/fb0\\\"\" '
+else :
+  CC = TOOLS_PREFIX + complie_helper.get_value('TOOLS_CC', 'gcc') 
+  CXX = TOOLS_PREFIX + complie_helper.get_value('TOOLS_CXX', 'g++')
+  LD = TOOLS_PREFIX + complie_helper.get_value('TOOLS_LD', 'g++')
+  AR = TOOLS_PREFIX + complie_helper.get_value('TOOLS_AR', 'ar')
+  RANLIB = TOOLS_PREFIX + complie_helper.get_value('TOOLS_STRIP', 'ranlib')
+  STRIP = TOOLS_PREFIX + complie_helper.get_value('TOOLS_RANLIB', 'strip')
+  OS_LIBS = complie_helper.get_value('OS_LIBS', []) + ['stdc++', 'pthread', 'rt', 'm', 'dl']
 
-#for android
-#TSLIB_LIB_DIR=''
-#TSLIB_INC_DIR=''
-#TOOLS_PREFIX='/opt/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/'
-#TOOLS_PREFIX='/Users/jim/android/android-ndk-r21d/toolchains/llvm/prebuilt/darwin-x86_64/bin/'
-#CC=TOOLS_PREFIX+'armv7a-linux-androideabi16-clang'
-#CXX=TOOLS_PREFIX+'armv7a-linux-androideabi16-clang++'
-#LD=TOOLS_PREFIX+'arm-linux-androideabi-ld'
-#AR=TOOLS_PREFIX+'arm-linux-androideabi-ar'
-#STRIP=TOOLS_PREFIX+'arm-linux-androideabi-strip'
-#RANLIB=TOOLS_PREFIX+"arm-linux-androideabi-ranlib"
-#OS_LINKFLAGS=' -Wl,--allow-multiple-definition '
-#OS_LIBS = ['stdc++', 'm']
-#OS_FLAGS='-Wall -Os -DFB_DEVICE_FILENAME=\\\"\"/dev/graphics/fb0\\\"\" '
+OS_FLAGS += complie_helper.get_value('OS_FLAGS', '')
+OS_DEBUG = complie_helper.get_value('DEBUG', False)
+if OS_DEBUG :
+  OS_FLAGS += ' -g -O0 '
+else :
+  OS_FLAGS += ' -Os '
 
 OS_LINKFLAGS= OS_LINKFLAGS + ' -Wl,-rpath=./bin -Wl,-rpath=./ ' 
 
 if LCD_DEVICES =='drm' :
   #for drm
   OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
-  OS_LIBS=OS_LIBS + ['drm']
+  OS_LIBS = ['drm'] + OS_LIBS
 elif LCD_DEVICES =='egl_for_fsl':
   #for egl for fsl
   OS_FLAGS=OS_FLAGS + ' -DEGL_API_FB '
-  OS_LIBS=OS_LIBS + [ 'GLESv2', 'EGL']
+  OS_LIBS = [ 'GLESv2', 'EGL'] + OS_LIBS
 elif LCD_DEVICES =='egl_for_x11' :
   #for egl for fsl
   OS_FLAGS=OS_FLAGS + ' -fPIC '
-  OS_LIBS=OS_LIBS + [ 'X11', 'EGL', 'GLESv2' ]
+  OS_LIBS = [ 'X11', 'EGL', 'GLESv2' ] + OS_LIBS
 elif LCD_DEVICES =='egl_for_gbm' :
   #for egl for gbm
   OS_CPPPATH += ['/usr/include/libdrm', '/usr/include/GLES2']
-  OS_LIBS=OS_LIBS + [ 'drm', 'gbm', 'EGL', 'GLESv2' ]
+  OS_LIBS = [ 'drm', 'gbm', 'EGL', 'GLESv2' ] + OS_LIBS
 
-COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -DENABLE_CURSOR -fPIC '
-COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_DATA_READER_WRITER=1 '
-COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_EVENT_RECORDER_PLAYER=1 '
+COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -fPIC '
+COMMON_CCFLAGS = COMMON_CCFLAGS+' -DWITH_DATA_READER_WRITER=1 '
+COMMON_CCFLAGS = COMMON_CCFLAGS+' -DWITH_EVENT_RECORDER_PLAYER=1 '
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DWITH_WIDGET_TYPE_CHECK=1 '
+
+if complie_helper.get_value('ENABLE_CURSOR', True) :
+  COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DENABLE_CURSOR '
+
+if complie_helper.get_value('WITH_G2D', True) :
+  COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DWITH_G2D '
 
 if TSLIB_LIB_DIR != '':
   COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DHAS_TSLIB '
@@ -183,6 +210,9 @@ CFLAGS=COMMON_CFLAGS
 LINKFLAGS=OS_LINKFLAGS;
 LIBPATH=[LIB_DIR, BIN_DIR] + OS_LIBPATH
 CCFLAGS=OS_FLAGS + COMMON_CCFLAGS 
+
+if complie_helper.get_value('EXTERN_CODE', None) != None :
+  LINKFLAGS=OS_LINKFLAGS + toWholeArchive(['__extern_code'])
 
 STATIC_LIBS =['awtk_global', 'fscript_ext_widgets', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'linebreak', 'fribidi']
 STATIC_LIBS += TKC_STATIC_LIBS
@@ -247,6 +277,9 @@ if TSLIB_LIB_DIR != '':
   LIBS = ['ts'] + LIBS
   LIBPATH = [TSLIB_LIB_DIR] + LIBPATH;
   CPPPATH = [TSLIB_INC_DIR] + CPPPATH;
+
+LIBPATH += complie_helper.get_value('OS_LIBPATH', [])
+CPPPATH += complie_helper.get_value('OS_CPPPATH', [])
 
 os.environ['LCD'] = LCD
 os.environ['LCD_DEVICES'] = LCD_DEVICES
