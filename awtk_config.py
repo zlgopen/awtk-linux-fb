@@ -161,8 +161,8 @@ else :
   CXX = TOOLS_PREFIX + complie_helper.get_value('TOOLS_CXX', 'g++')
   LD = TOOLS_PREFIX + complie_helper.get_value('TOOLS_LD', 'g++')
   AR = TOOLS_PREFIX + complie_helper.get_value('TOOLS_AR', 'ar')
-  RANLIB = TOOLS_PREFIX + complie_helper.get_value('TOOLS_STRIP', 'ranlib')
-  STRIP = TOOLS_PREFIX + complie_helper.get_value('TOOLS_RANLIB', 'strip')
+  RANLIB = TOOLS_PREFIX + complie_helper.get_value('TOOLS_RANLIB', 'ranlib')
+  STRIP = TOOLS_PREFIX + complie_helper.get_value('TOOLS_STRIP', 'strip')
   OS_LIBS = complie_helper.get_value('OS_LIBS', []) + ['stdc++', 'pthread', 'rt', 'm', 'dl']
 
 OS_FLAGS += complie_helper.get_value('OS_FLAGS', '')
