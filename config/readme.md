@@ -1,7 +1,10 @@
-﻿# 驱动配置文件说明
+﻿# 设备配置文件说明
 
-1. 把 devices.json.in 文件名修改为 devices.json 。（如果不修改名字则使用默认驱动配置或者宏配置）
-2. 编辑 devices.json 修改输入设备的文件名，该配置文件会随后续打包命令一起部署
+1. 复制模板文件 devices.json.in 并改名为 devices.json，该配置文件会随后续打包命令一起部署。
+
+   （如果运行时没有 devices.json 文件则使用 main_loop_linux.c 默认设备宏配置）
+
+2. 编辑 devices.json 指定输入设备的文件路径及对应的设备类型。
 
 ```json
 {

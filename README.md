@@ -39,15 +39,21 @@ TSLIB_INC_DIR = ""
 
 > 详情可以看 scons help，或者可以通过 scons EXPORT_DEFINE_FILE=./awtk_config_define.py 导出一个完整的 awtk_config_define.py 文件。
 
-* 3. 修改输入设备名字的方法有两个：
-     1. 配置 awtk-linux-fb\config\devices.json 文件，详情请看 awtk-linux-fb\config\readme.md 文档。
-     2. 编辑 awtk-port/main\_loop\_linux.c 修改输入设备的文件名（这个方法将来会弃用，如果同时有 devices.json 文件，则优先使用 devices.json 文件的配置）
-  ```
-  #define FB_DEVICE_FILENAME "/dev/fb0"
-  #define TS_DEVICE_FILENAME "/dev/input/event0"
-  #define KB_DEVICE_FILENAME "/dev/input/event1"
-  #define MICE_DEVICE_FILENAME "/dev/input/mouse0"
-  ```
+* 3. 配置设备文件路径，方法二选一：
+     1. 配置 config/devices.json 文件，详情请看 config/readme.md 文档。
+     
+     2. 修改 awtk-port/main\_loop\_linux.c 文件设置输入输出设备的文件名。
+     
+```c
+// main_loop_linux.c
+//   这个方法将来会弃用，如果运行时有 devices.json 文件则会优先使用 devices.json 的配置
+//
+#define FB_DEVICE_FILENAME "/dev/fb0"
+#define TS_DEVICE_FILENAME "/dev/input/event0"
+#define KB_DEVICE_FILENAME "/dev/input/event1"
+#define MICE_DEVICE_FILENAME "/dev/input/mouse0"
+```
+
   **备注：**
   可通过 "hexdump  /dev/input/xx" 命令识别正确的触摸或鼠标设备文件名。触摸设备也可以通过tslib自带的命令测试，如 "ts_test"、"ts_print"。
 
