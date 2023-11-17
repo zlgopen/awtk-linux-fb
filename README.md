@@ -39,31 +39,19 @@ TSLIB_INC_DIR = ""
 
 > 详情可以看 scons help，或者可以通过 scons EXPORT_DEFINE_FILE=./awtk_config_define.py 导出一个完整的 awtk_config_define.py 文件。
 
-* 3. 编辑 awtk-linux-fb 目录 config/devices.json 修改输入设备的文件名，该配置文件会随后续打包命令一起部署
+* 3. 修改输入设备名字的方法有两个：
+     1. 配置 awtk-linux-fb\config\devices.json 文件，详情请看 awtk-linux-fb\config\readme.md 文档。
+     2. 编辑 awtk-port/main\_loop\_linux.c 修改输入设备的文件名（这个方法将来会弃用，如果同时有 devices.json 文件，则优先使用 devices.json 文件的配置）
+  ```
+  #define FB_DEVICE_FILENAME "/dev/fb0"
+  #define TS_DEVICE_FILENAME "/dev/input/event0"
+  #define KB_DEVICE_FILENAME "/dev/input/event1"
+  #define MICE_DEVICE_FILENAME "/dev/input/mouse0"
+  ```
+  **备注：**
+  可通过 "hexdump  /dev/input/xx" 命令识别正确的触摸或鼠标设备文件名。触摸设备也可以通过tslib自带的命令测试，如 "ts_test"、"ts_print"。
 
-```json
-{
-    "/dev/fb0" : {
-        "type" : "fb"
-    },
-	"/dev/dri/card0" : {
-        "type" : "drm"
-    },
-	"/dev/input/event0" : {
-        "type" : "ts"
-    },
-	"/dev/input/event1" : {
-        "type" : "input"
-    },
-	"/dev/input/mouse0" : {
-        "type" : "mouse"
-    }
-}
-```
-
-可通过 "hexdump  /dev/input/xx" 命令识别正确的触摸或鼠标设备文件名。触摸设备也可以通过tslib自带的命令测试，如 "ts_test"、"ts_print"。
-
-> 注意：在有些平台下，如果设置 "/dev/input/mice"，会出现触摸不灵的问题。通过 hexdump /dev/input/mice 命令发现，该设备文件会同时接收触摸和鼠标事件，这种情况请不要使用该设备。
+  > 注意：在有些平台下，如果设置 "/dev/input/mice"，会出现触摸不灵的问题。通过 hexdump /dev/input/mice 命令发现，该设备文件会同时接收触摸和鼠标事件，这种情况请不要使用该设备。
 
 #### 生成并部署AWTK内置DemoUI
 
