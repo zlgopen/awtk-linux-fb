@@ -9,6 +9,8 @@ COMPILE_CONFIG = {
   'OS_LIBS' : { 'value' : [], 'desc' : ['compile libs'], 'help_info' : 'set compile\'s libs, so care of system and compile tools, use \',\' split muliple libraries '},
   'OS_LIBPATH' : { 'value' : [], 'desc' : ['compile lib paths'], 'help_info' : 'set compile\'s lib paths, so care of system and compile tools, use \',\' split muliple librarie\'s paths '},
   'OS_CPPPATH' : { 'value' : [], 'desc' : ['compile include paths'], 'help_info' : 'set compile\'s include paths, so care of system and compile tools, use \',\' split muliple include path '},
+  'DRM_CPPPATH' : { 'value' : [], 'desc' : ['drm compile include paths'], 'help_info' : 'set compile\'s drm include paths, so care of system and compile tools, use \',\' split muliple include path '},
+  'EGL_GBM_CPPPATH' : { 'value' : [], 'desc' : ['egl gbm compile include paths'], 'help_info' : 'set compile\'s egl gbm include paths, so care of system and compile tools, use \',\' split muliple include path '},
   'TOOLS_CC' : { 'value' : None, 'desc' : ['compile tools prefix CC\'s name'], 'help_info' : 'set compile tools prefix CC\'s name, TOOLS_CC=XXXXX, CC=TOOLS_PREFIX+TOOLS_CC '},
   'TOOLS_CXX' : { 'value' : None, 'desc' : ['compile tools prefix CXX\'s name'], 'help_info' : 'set compile tools prefix CXX\'s name, TOOLS_CXX=XXXXX, CXX=TOOLS_PREFIX+TOOLS_CXX '},
   'TOOLS_LD' : { 'value' : None, 'desc' : ['compile tools prefix LD\'s name'], 'help_info' : 'set compile tools prefix LD\'s name, TOOLS_LD=XXXXX, LD=TOOLS_PREFIX+TOOLS_LD '},

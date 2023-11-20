@@ -176,7 +176,8 @@ OS_LINKFLAGS= OS_LINKFLAGS + ' -Wl,-rpath=./bin -Wl,-rpath=./ '
 
 if LCD_DEVICES =='drm' :
   #for drm
-  OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 -I/usr/include/libdrm '
+  OS_CPPPATH += complie_helper.get_value('DRM_CPPPATH', ['/usr/include/libdrm'])
+  OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 '
   OS_LIBS = ['drm'] + OS_LIBS
 elif LCD_DEVICES =='egl_for_fsl':
   #for egl for fsl
@@ -188,7 +189,7 @@ elif LCD_DEVICES =='egl_for_x11' :
   OS_LIBS = [ 'X11', 'EGL', 'GLESv2' ] + OS_LIBS
 elif LCD_DEVICES =='egl_for_gbm' :
   #for egl for gbm
-  OS_CPPPATH += ['/usr/include/libdrm', '/usr/include/GLES2']
+  OS_CPPPATH += complie_helper.get_value('EGL_GBM_CPPPATH', ['/usr/include/libdrm', '/usr/include/GLES2'])
   OS_LIBS = [ 'drm', 'gbm', 'EGL', 'GLESv2' ] + OS_LIBS
 
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -fPIC '
