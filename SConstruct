@@ -24,7 +24,7 @@ if len (APP_ROOT) > 0:
 
 env = DefaultEnvironment(CCFLAGS = awtk.CCFLAGS + APP_CCFLAGS, 
   ENV = os.environ,
-  CFLAGS = awtk.CFLAGS + ' ' + complie_helper.get_value('OS_FLAGS', ''),
+  CFLAGS = awtk.CFLAGS,
   CC=awtk.CC,
   CXX=awtk.CXX,
   LD=awtk.LD,

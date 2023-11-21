@@ -102,10 +102,10 @@ COMMON_CFLAGS=COMMON_CFLAGS+' -std=gnu99 '
 OS_LIBS=[]
 OS_LIBPATH=[]
 OS_CPPPATH=[]
-OS_LINKFLAGS=''
+OS_LINKFLAGS = complie_helper.get_value('OS_LINKFLAGS', '')
 OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
-OS_FLAGS='-Wall -fno-strict-aliasing '
+OS_FLAGS = complie_helper.get_value('OS_FLAGS', ' -Wall -fno-strict-aliasing ')
 #OS_FLAGS=' -Wall -mfloat-abi=hard -fno-strict-aliasing '
 
 #for build tslib
@@ -165,7 +165,6 @@ else :
   STRIP = TOOLS_PREFIX + complie_helper.get_value('TOOLS_STRIP', 'strip')
   OS_LIBS = complie_helper.get_value('OS_LIBS', []) + ['stdc++', 'pthread', 'rt', 'm', 'dl']
 
-OS_FLAGS += complie_helper.get_value('OS_FLAGS', '')
 OS_DEBUG = complie_helper.get_value('DEBUG', False)
 if OS_DEBUG :
   OS_FLAGS += ' -g -O0 '

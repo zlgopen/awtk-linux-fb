@@ -6,6 +6,7 @@ INIT = False
 
 COMPILE_CONFIG = {
   'OS_FLAGS' : { 'value' : '', 'desc' : ['compile flags'], 'help_info' : 'set compile\'s flags, so care of system and compile tools'},
+  'OS_LINKFLAGS' : { 'value' : '', 'desc' : ['link flags'], 'help_info' : 'set compile\'s link flags, so care of system and compile tools'},
   'OS_LIBS' : { 'value' : [], 'desc' : ['compile libs'], 'help_info' : 'set compile\'s libs, so care of system and compile tools, use \',\' split muliple libraries '},
   'OS_LIBPATH' : { 'value' : [], 'desc' : ['compile lib paths'], 'help_info' : 'set compile\'s lib paths, so care of system and compile tools, use \',\' split muliple librarie\'s paths '},
   'OS_CPPPATH' : { 'value' : [], 'desc' : ['compile include paths'], 'help_info' : 'set compile\'s include paths, so care of system and compile tools, use \',\' split muliple include path '},
