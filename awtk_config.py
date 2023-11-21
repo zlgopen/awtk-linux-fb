@@ -176,7 +176,6 @@ OS_LINKFLAGS= OS_LINKFLAGS + ' -Wl,-rpath=./bin -Wl,-rpath=./ '
 if LCD_DEVICES =='drm' :
   #for drm
   OS_CPPPATH += complie_helper.get_value('DRM_CPPPATH', ['/usr/include/libdrm'])
-  OS_FLAGS=OS_FLAGS + ' -DWITH_LINUX_DRM=1 '
   OS_LIBS = ['drm'] + OS_LIBS
 elif LCD_DEVICES =='egl_for_fsl':
   #for egl for fsl
