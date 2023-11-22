@@ -102,44 +102,45 @@ COMMON_CFLAGS=COMMON_CFLAGS+' -std=gnu99 '
 OS_LIBS=[]
 OS_LIBPATH=[]
 OS_CPPPATH=[]
-OS_LINKFLAGS = complie_helper.get_value('OS_LINKFLAGS', '')
+OS_LINKFLAGS = ''
 OS_SUBSYSTEM_CONSOLE=''
 OS_SUBSYSTEM_WINDOWS=''
-OS_FLAGS = complie_helper.get_value('OS_FLAGS', ' -Wall -fno-strict-aliasing ')
-#OS_FLAGS=' -Wall -mfloat-abi=hard -fno-strict-aliasing '
+OS_FLAGS = ' -Wall -fno-strict-aliasing '
+
+TSLIB_LIB_DIR=''
+TSLIB_INC_DIR=''
 
 #for build tslib
 #TSLIB_INC_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src')
 #TSLIB_LIB_DIR=joinPath(TK_LINUX_FB_ROOT, '3rd/tslib/src/.libs')
 
 #for prebuild tslib
-TSLIB_LIB_DIR='/opt/28x/tslib/lib'
-TSLIB_INC_DIR='/opt/28x/tslib/include'
-TOOLS_PREFIX='/opt/28x/gcc-4.4.4-glibc-2.11.1-multilib-1.0/arm-fsl-linux-gnueabi/bin/arm-linux-'
-
-#TOOLS_PREFIX='/opt/poky/1.7/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-'
+#TSLIB_LIB_DIR='/opt/tslib/lib'
+#TSLIB_INC_DIR='/opt/tslib/include'
 
 #for qemu
 TOOLS_PREFIX='/opt/qemu/buildroot-2021.02.2/output/host/bin/arm-linux-'
-TSLIB_LIB_DIR=''
 
+#for poky cortex-a9
+#TOOLS_PREFIX='/opt/poky/1.7/sysroots/x86_64-pokysdk-linux/usr/bin/arm-poky-linux-gnueabi/arm-poky-linux-gnueabi-'
+#OS_FLAGS=' -Wall -mfloat-abi=hard -fno-strict-aliasing '
 
-#TSLIB_LIB_DIR=''
-#TSLIB_INC_DIR=''
+#for v3s mango
 #TOOLS_PREFIX='/opt/v3s/mango/tools/external-toolchain/bin/arm-linux-gnueabi-'
 #OS_FLAGS='-std=gnu99 -mthumb -mabi=aapcs-linux -mlittle-endian -fdata-sections -ffunction-sections -mcpu=cortex-a7 -mtune=cortex-a7 -mfpu=fpv4-sp-d16 -mfloat-abi=softfp '
 
 #for pc build
 #TOOLS_PREFIX=''
-#TSLIB_LIB_DIR=''
 
-# for android
-# TOOLS_PREFIX='/opt/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/'
-# TOOLS_PREFIX='/Users/jim/android/android-ndk-r21d/toolchains/llvm/prebuilt/darwin-x86_64/bin/'
+#for android
+#TOOLS_PREFIX='/opt/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/'
+#TOOLS_PREFIX='/Users/jim/android/android-ndk-r21d/toolchains/llvm/prebuilt/darwin-x86_64/bin/'
 
 TOOLS_PREFIX = complie_helper.get_unique_value('TOOLS_PREFIX', TOOLS_PREFIX)
 TSLIB_LIB_DIR = complie_helper.get_unique_value('TSLIB_LIB_DIR', TSLIB_LIB_DIR)
 TSLIB_INC_DIR = complie_helper.get_unique_value('TSLIB_INC_DIR', TSLIB_INC_DIR)
+OS_FLAGS = complie_helper.get_value('OS_FLAGS', OS_FLAGS)
+OS_LINKFLAGS = complie_helper.get_value('OS_LINKFLAGS', OS_LINKFLAGS)
 
 TARGET_ARCH = platform.architecture();
 
@@ -175,7 +176,7 @@ OS_LINKFLAGS= OS_LINKFLAGS + ' -Wl,-rpath=./bin -Wl,-rpath=./ '
 
 if LCD_DEVICES =='drm' :
   #for drm
-  OS_CPPPATH += complie_helper.get_value('DRM_CPPPATH', ['/usr/include/libdrm'])
+  #OS_CPPPATH += ['/usr/include/libdrm']
   OS_LIBS = ['drm'] + OS_LIBS
 elif LCD_DEVICES =='egl_for_fsl':
   #for egl for fsl
@@ -183,11 +184,10 @@ elif LCD_DEVICES =='egl_for_fsl':
   OS_LIBS = [ 'GLESv2', 'EGL'] + OS_LIBS
 elif LCD_DEVICES =='egl_for_x11' :
   #for egl for fsl
-  OS_FLAGS=OS_FLAGS + ' -fPIC '
   OS_LIBS = [ 'X11', 'EGL', 'GLESv2' ] + OS_LIBS
 elif LCD_DEVICES =='egl_for_gbm' :
   #for egl for gbm
-  OS_CPPPATH += complie_helper.get_value('EGL_GBM_CPPPATH', ['/usr/include/libdrm', '/usr/include/GLES2'])
+  #OS_CPPPATH += ['/usr/include/libdrm', '/usr/include/GLES2']
   OS_LIBS = [ 'drm', 'gbm', 'EGL', 'GLESv2' ] + OS_LIBS
 
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -fPIC '
