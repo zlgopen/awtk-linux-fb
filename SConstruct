@@ -109,4 +109,9 @@ def build_app():
       print('copy ' + awtk.joinPath(app_bin, file) + ' to ' + linux_fb_bin)
       shutil.copy(awtk.joinPath(app_bin, file), linux_fb_bin)
 
-atexit.register(build_app)
+def compile_end() :
+  complie_helper.save_last_complie_argv()
+  complie_helper.output_compile_data(awtk.TK_ROOT)
+  build_app()
+
+atexit.register(compile_end)

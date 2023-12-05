@@ -5,6 +5,7 @@ global INIT
 INIT = False
 
 COMPILE_CONFIG = {
+  'OUTPUT_DIR' : { 'value' : None, 'desc' : ['compiled export directory '], 'help_info' : 'set awtk-linux-fb compiled export directory, default value is None, None is system\'s value'},
   'OS_FLAGS' : { 'value' : None, 'desc' : ['compile flags', '..example: OS_FLAGS = " -flag1 -flag2 "'], 'help_info' : 'set compile\'s flags, so care of system and compile tools'},
   'OS_LINKFLAGS' : { 'value' : None, 'desc' : ['link flags', '..example: OS_LINKFLAGS = " -flag1 -flag2 "'], 'help_info' : 'set compile\'s link flags, so care of system and compile tools'},
   'OS_LIBS' : { 'value' : [], 'desc' : ['compile libs', '..example: OS_LIBS = ["lib1", "lib2"]'], 'help_info' : 'set compile\'s libs, so care of system and compile tools, use \',\' split muliple libraries '},
@@ -46,12 +47,8 @@ def set_compile_config() :
   if INIT :
     return compile_config.get_curr_config()
   else :
-    os.chdir(CWD)
     INIT = True
-    complie_helper = compile_config.complie_helper()
-    complie_helper.set_compile_config(COMPILE_CONFIG)
-    complie_helper.try_load_default_config()
-    compile_config.set_curr_config(complie_helper)
+    complie_helper = compile_config.get_curr_config_for_awtk()
     return complie_helper
 
 
