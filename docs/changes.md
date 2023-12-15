@@ -1,5 +1,8 @@
 # 最新动态
 
+2023/12/15
+  * 添加project_scripts脚本，提供给应用的发布脚本scripts/release.py去使用，把awtk-linux-fb中独有的资源比如devices.json也发布到应用的release文件夹中(感智明提供补丁)
+
 2023/11/17
   * 为兼容老的使用习惯，删除config/devices.json文件改为模板文件devices.json.in，并增加使用说明(感智明提供补丁)
 
