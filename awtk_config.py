@@ -91,7 +91,9 @@ elif INPUT_ENGINE == 'null' :
     COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DWITH_IME_NULL '
 
 GRAPHIC_BUFFER='default'
-#GRAPHIC_BUFFER='jzgpu'
+if complie_helper.get_value('WITH_CUSTOM_GRAPHIC_BUFFER', False) :
+  GRAPHIC_BUFFER='custom'
+  #GRAPHIC_BUFFER='jzgpu'
 #if GRAPHIC_BUFFER == 'jzgpu':
 #  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_JZGPU'
 

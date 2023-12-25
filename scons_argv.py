@@ -29,8 +29,9 @@ COMPILE_CONFIG = {
   'BUILD_TOOLS' : { 'value' : True, 'desc' : ['build awtk\'s linux-fb\'s tools'], 'help_info' : 'build awtk\'s linux-fb\'s tools, value is true or false' },
   'BUILD_DEMOS' : { 'value' : True, 'desc' : ['build awtk\'s linux-fb\'s demos'], 'help_info' : 'build awtk\'s linux-fb\'s demos, value is true or false' },
   'PLATFORM' : { 'value' : False, 'desc' : ['build awtk\'s linux-fb\'s operation platform'], 'help_info' : 'build awtk\'s linux-fb\'s operation platform value is linux/android, value default is linux' },
-  'EXTERN_CODE' : { 'value' : None, 'desc' : ['add extern code'], 'help_info' : 'when build awtk\'s linux-fb\, user add extern code, example is EXTERN_CODE=XXXXX/*.c' },
+  'EXTERN_CODE' : { 'value' : None, 'desc' : ['add extern code list'], 'help_info' : 'when build awtk\'s linux-fb\, user add extern code list, example is EXTERN_CODE=XXXXX/*.c,XXXXX/*.c  , use \',\' split muliple libraries' },
   'WITH_G2D' : { 'value' : False, 'desc' : ['enable g2d model '], 'help_info' : 'enable awtk\'s g2d model, value is true or false' },
+  "WITH_CUSTOM_GRAPHIC_BUFFER" : { 'value' : False, 'desc' : ['use custom graphic_buffer '], 'help_info' : 'disable awtk default graphic_buffer and use custom graphic_buffer, value is true or false' },
 }
 
 CWD = os.path.normpath(os.path.abspath(os.path.dirname(__file__)));

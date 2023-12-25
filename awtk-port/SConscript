@@ -33,9 +33,12 @@ elif LCD_DEVICES =='egl_for_gbm' :
 
 awtk_linux_fb = env.Library(os.path.join(LIB_DIR, 'awtk_linux_fb'), SOURCES)
 
-extern_code = complie_helper.get_value('EXTERN_CODE', None)
-if extern_code != None :
-  __extern_code = env.Library(os.path.join(LIB_DIR, '__extern_code'), Glob(extern_code))
+extern_codes = complie_helper.get_value('EXTERN_CODE', None)
+if extern_codes != None :
+  all_extern_codes = []
+  for extern_code in extern_codes :
+    all_extern_codes += Glob(extern_code);
+  __extern_code = env.Library(os.path.join(LIB_DIR, '__extern_code'), all_extern_codes)
   Depends(awtk_linux_fb, __extern_code)
 
 env['LIBS'] = ['awtk_linux_fb'] + env['LIBS']
