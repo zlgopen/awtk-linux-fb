@@ -96,11 +96,11 @@ def build_app():
   linux_fb_bin = os.environ['BIN_DIR'];
 
   if env.GetOption('clean'):
-    cmd = 'cd ' + APP_ROOT + ' && scons -c'
+    cmd = 'cd ' + APP_ROOT + ' && scons -c AWTK_ROOT=' + awtk.TK_ROOT
     print(cmd)
     os.system(cmd)
   else:
-    cmd = 'cd ' + APP_ROOT + ' && scons LINUX_FB=true'
+    cmd = 'cd ' + APP_ROOT + ' && scons LINUX_FB=true AWTK_ROOT=' + awtk.TK_ROOT
     print(cmd)
     os.system(cmd)
 
