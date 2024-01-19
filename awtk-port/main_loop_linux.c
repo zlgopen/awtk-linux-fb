@@ -59,7 +59,7 @@
 #endif /*KB_DEVICE_FILENAME*/
 
 #ifndef MICE_DEVICE_FILENAME
-#define MICE_DEVICE_FILENAME "/dev/input/mouse0"
+#define MICE_DEVICE_FILENAME "/dev/input/event2"
 #endif /*MICE_DEVICE_FILENAME*/
 
 static device_info_t s_devices_default[] = {{"fb", FB_DEVICE_FILENAME},

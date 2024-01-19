@@ -2,16 +2,16 @@
     "/dev/fb0" : {
         "type" : "fb"
     },
-	"/dev/dri/card0" : {
+    "/dev/dri/card0" : {
         "type" : "drm"
     },
-	"/dev/input/event0" : {
+    "/dev/input/event0" : {
         "type" : "ts"
     },
-	"/dev/input/event1" : {
+    "/dev/input/event1" : {
         "type" : "input"
     },
-	"/dev/input/mouse0" : {
+    "/dev/input/event2" : {
         "type" : "mouse"
     }
 }

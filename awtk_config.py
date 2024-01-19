@@ -218,7 +218,7 @@ if complie_helper.get_value('EXTERN_CODE', None) != None :
 STATIC_LIBS =['awtk_global', 'fscript_ext_widgets', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'linebreak', 'fribidi']
 STATIC_LIBS += TKC_STATIC_LIBS
 if TSLIB_LIB_DIR != '':
-  SHARED_LIBS=['awtk', 'ts'] + OS_LIBS;
+  SHARED_LIBS=['awtk'] + OS_LIBS + ['ts'];
 else:
   SHARED_LIBS=['awtk'] + OS_LIBS;
 
@@ -275,7 +275,7 @@ CPPPATH=[TK_ROOT,
   ] + OS_CPPPATH
 
 if TSLIB_LIB_DIR != '':
-  LIBS = ['ts'] + LIBS
+  LIBS = LIBS + ['ts']
   LIBPATH = [TSLIB_LIB_DIR] + LIBPATH;
   CPPPATH = [TSLIB_INC_DIR] + CPPPATH;
 
