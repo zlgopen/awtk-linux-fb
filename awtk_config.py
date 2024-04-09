@@ -45,6 +45,12 @@ LCD_DEVICES = complie_helper.get_value('LCD_DEVICES', LCD_DEVICES)
 NANOVG_BACKEND=''
 VGCANVAS='NANOVG'
 #VGCANVAS='CAIRO'
+# if enable cairo, you can enable the following option according to your condition.
+#os.environ['USE_ARM_NEON'] = 'true'
+#os.environ['USE_ARM_SIMD'] = 'true'
+#os.environ['USE_X86_MMX'] = 'true'
+#os.environ['USE_SSE2'] = 'true'
+#os.environ['USE_SSSE3'] = 'true'
 #VGCANVAS='NANOVG_PLUS'
 VGCANVAS = complie_helper.get_value('VGCANVAS', VGCANVAS)
 
