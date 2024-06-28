@@ -76,7 +76,7 @@ SConscriptFiles=[
 
 os.environ['BUILD_TOOLS'] = str(complie_helper.get_value('BUILD_TOOLS', True))
 if complie_helper.get_value('BUILD_TOOLS', True) :
-  SConscriptFiles + [
+  SConscriptFiles += [
     awtk.joinPath(TK_ROOT_VAR, 'tools/common/SConscript'), 
     awtk.joinPath(TK_ROOT_VAR, 'tools/ui_gen/xml_to_ui/SConscript'),
   ]
