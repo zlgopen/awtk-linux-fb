@@ -7,6 +7,7 @@ scons_argv.init(ARGUMENTS)
 import compile_config
 import awtk_config as awtk
 
+awtk.scons_db_check_and_remove()
 complie_helper = compile_config.get_curr_config()
 
 APP_CCFLAGS = ' '

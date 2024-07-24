@@ -1,5 +1,9 @@
 # 最新动态
 
+
+2024/07/23
+  * 编译脚本新增 scons 使用版本不一致判断函数。(感谢高源提供补丁)
+
 2023/12/15
   * 添加project_scripts脚本，提供给应用的发布脚本scripts/release.py去使用，把awtk-linux-fb中独有的资源比如devices.json也发布到应用的release文件夹中(感智明提供补丁)
 
