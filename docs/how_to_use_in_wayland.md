@@ -27,6 +27,7 @@ TOOLS_PREFIX = "/opt/m3568-sdk-v1.0.0-ga/host/usr/bin/aarch64-linux-" # 按自�
 # 设置LCD_DEVICES二选一
 LCD_DEVICES = "wayland"           # 使用软件渲染
 LCD_DEVICES = "egl_for_wayland"   # 使用OpenGL渲染
+OS_LINKFLAGS = " -Wl,--copy-dt-needed-entries "  # 解决部分工具链的DSO missing错误
 ```
 
 编译 awtk-linux-fb
