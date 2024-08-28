@@ -25,7 +25,7 @@ COMPILE_CONFIG = {
   'VGCANVAS' : { 'value' : None, 'type' : str.__name__, 'desc' : ['NANOVG/NANOVG_PLUS/CAIRO', '..example: VGCANVAS = "NANOVG"'], 'help_info' : 'set awtk use render vgcanvas type' },
   'DEBUG' : { 'value' : False, 'type' : bool.__name__, 'desc' : ['awtk\'s compile is debug'], 'help_info' : 'awtk\'s compile is debug, value is true or false' },
   'APP' : { 'value' : None, 'type' : str.__name__, 'save_file' : False, 'desc' : ['build this app'], 'help_info' : 'set app is build, value is app\'s root' },
-  'LCD_DEVICES' : { 'value' : None, 'type' : str.__name__, 'desc' : ['linux\'s lcd devices type, value is fb/drm/egl_for_fsl/egl_for_x11/egl_for_gbm', '..example: LCD_DEVICES = "fb"'], 'help_info' : 'when building, use linux\'s lcd devices type, value is fb/drm/egl_for_fsl/egl_for_x11/egl_for_gbm' },
+  'LCD_DEVICES' : { 'value' : None, 'type' : str.__name__, 'desc' : ['linux\'s lcd devices type, value is fb/drm/wayland/egl_for_fsl/egl_for_x11/egl_for_gbm/egl_for_wayland', '..example: LCD_DEVICES = "fb"'], 'help_info' : 'when building, use linux\'s lcd devices type, value is fb/drm/wayland/egl_for_fsl/egl_for_x11/egl_for_gbm/egl_for_wayland' },
   'BUILD_TOOLS' : { 'value' : True, 'type' : bool.__name__, 'desc' : ['build awtk\'s linux-fb\'s tools'], 'help_info' : 'build awtk\'s linux-fb\'s tools, value is true or false' },
   'BUILD_DEMOS' : { 'value' : True, 'type' : bool.__name__, 'desc' : ['build awtk\'s linux-fb\'s demos'], 'help_info' : 'build awtk\'s linux-fb\'s demos, value is true or false' },
   'PLATFORM' : { 'value' : None, 'type' : str.__name__, 'desc' : ['build awtk\'s linux-fb\'s operation platform'], 'help_info' : 'build awtk\'s linux-fb\'s operation platform value is linux/android, value default is linux' },

@@ -72,8 +72,12 @@ SConscriptFiles=[
   awtk.joinPath(TK_ROOT_VAR, 'src/ubjson/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, 'src/compressors/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, 'src/romfs/SConscript'),
-  'awtk-port/SConscript',
   ] + APP_PROJ_VAR + awtk.OS_PROJECTS;
+
+if os.environ['LCD_DEVICES'] == 'wayland' or os.environ['LCD_DEVICES'] == 'egl_for_wayland':
+  SConscriptFiles += [ 'awtk-wayland/SConscript' ]
+else :
+  SConscriptFiles += [ 'awtk-port/SConscript' ]
 
 os.environ['BUILD_TOOLS'] = str(complie_helper.get_value('BUILD_TOOLS', True))
 if complie_helper.get_value('BUILD_TOOLS', True) :

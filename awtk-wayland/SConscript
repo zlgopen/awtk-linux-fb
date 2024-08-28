@@ -1,0 +1,29 @@
+import os
+import copy
+import scons_argv
+complie_helper = scons_argv.set_compile_config()
+
+BIN_DIR = os.environ['BIN_DIR'];
+LIB_DIR = os.environ['LIB_DIR'];
+LCD_DEVICES = os.environ['LCD_DEVICES']
+
+env = DefaultEnvironment().Clone()
+
+SOURCES = ['protocol/xdg-shell-protocol.c']
+
+if LCD_DEVICES == 'wayland' :
+  SOURCES += Glob('wayland/*.c');
+elif LCD_DEVICES == 'egl_for_wayland' :
+  SOURCES += Glob('egl_for_wayland/*.c');
+
+awtk_linux_fb = env.Library(os.path.join(LIB_DIR, 'awtk_linux_fb'), SOURCES)
+
+extern_codes = complie_helper.get_value('EXTERN_CODE', None)
+if extern_codes != None :
+  all_extern_codes = []
+  for extern_code in extern_codes :
+    all_extern_codes += Glob(extern_code);
+  __extern_code = env.Library(os.path.join(LIB_DIR, '__extern_code'), all_extern_codes)
+  Depends(awtk_linux_fb, __extern_code)
+
+env['LIBS'] = ['awtk_linux_fb'] + env['LIBS']

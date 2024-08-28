@@ -13,7 +13,7 @@ def joinPath(root, subdir):
   return os.path.normpath(os.path.join(root, subdir))
 
 def lcd_devices_is_egl(lcd_devices):
-  if lcd_devices =='egl_for_fsl' or lcd_devices =='egl_for_x11' or lcd_devices =='egl_for_gbm' :
+  if lcd_devices =='egl_for_fsl' or lcd_devices =='egl_for_x11' or lcd_devices =='egl_for_gbm' or lcd_devices =='egl_for_wayland':
     return True
   return False
 
@@ -31,15 +31,20 @@ LIB_DIR          = joinPath(TK_LINUX_FB_ROOT, 'lib')
 VAR_DIR          = joinPath(BUILD_DIR, 'var')
 TK_DEMO_ROOT     = joinPath(TK_ROOT, 'demos')
 
-LCD_DIR        = joinPath(TK_LINUX_FB_ROOT, 'awtk-port/lcd_linux')
-INPUT_DIR      = joinPath(TK_LINUX_FB_ROOT, 'awtk-port/input_thread')
+LCD_DIR          = joinPath(TK_LINUX_FB_ROOT, 'awtk-port/lcd_linux')
+INPUT_DIR        = joinPath(TK_LINUX_FB_ROOT, 'awtk-port/input_thread')
+
+WAYLAND_DIR      = joinPath(TK_LINUX_FB_ROOT, 'awtk-wayland/wayland')
+EGL_WAYLAND_DIR  = joinPath(TK_LINUX_FB_ROOT, 'awtk-wayland/egl_for_wayland')
 
 # lcd devices
 LCD_DEVICES='fb'
 # LCD_DEVICES='drm'
+# LCD_DEVICES='wayland'
 # LCD_DEVICES='egl_for_fsl'
 # LCD_DEVICES='egl_for_x11'
 # LCD_DEVICES='egl_for_gbm'
+# LCD_DEVICES='egl_for_wayland'
 LCD_DEVICES = complie_helper.get_value('LCD_DEVICES', LCD_DEVICES)
 
 NANOVG_BACKEND=''
@@ -54,7 +59,7 @@ VGCANVAS='NANOVG'
 #VGCANVAS='NANOVG_PLUS'
 VGCANVAS = complie_helper.get_value('VGCANVAS', VGCANVAS)
 
-if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' :
+if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' or LCD_DEVICES =='wayland':
   LCD='LINUX_FB'
   NANOVG_BACKEND='AGGE'
 elif lcd_devices_is_egl(LCD_DEVICES) :
@@ -76,14 +81,15 @@ COMMON_CCFLAGS=COMMON_CCFLAGS+' -DAPP_TYPE=APP_MOBILE -DLINUX_FB '
 #COMMON_CCFLAGS=COMMON_CCFLAGS+' -DENABLE_CUSTOM_KEYS=1 '
 #COMMON_CCFLAGS=COMMON_CCFLAGS+' -DCUSTOM_KEYS_FILEPATH=\"asset://custom_keys.json\" '
 
-if LCD_DEVICES =='fb' :
+if LCD_DEVICES =='fb' or LCD_DEVICES =='wayland':
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_LINUX_FB -DWITH_FAST_LCD_PORTRAIT '
 elif LCD_DEVICES =='drm' :
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_LINUX_DRM -DWITH_FAST_LCD_PORTRAIT '
 elif lcd_devices_is_egl(LCD_DEVICES) :
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_GPU_GL -DWITH_GPU_GLES2 -DWITH_GPU -DWITH_LINUX_EGL '
 
-
+if LCD_DEVICES =='egl_for_wayland' :
+  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWL_EGL_PLATFORM '
 
 if INPUT_ENGINE == 't9':
     COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DWITH_IME_T9 '
@@ -186,6 +192,8 @@ if LCD_DEVICES =='drm' :
   #for drm
   #OS_CPPPATH += ['/usr/include/libdrm']
   OS_LIBS = ['drm'] + OS_LIBS
+elif LCD_DEVICES =='wayland' :
+  OS_LIBS = ['xkbcommon','wayland-client','wayland-cursor'] + OS_LIBS
 elif LCD_DEVICES =='egl_for_fsl':
   #for egl for fsl
   OS_FLAGS=OS_FLAGS + ' -DEGL_API_FB '
@@ -197,6 +205,8 @@ elif LCD_DEVICES =='egl_for_gbm' :
   #for egl for gbm
   #OS_CPPPATH += ['/usr/include/libdrm', '/usr/include/GLES2']
   OS_LIBS = [ 'drm', 'gbm', 'EGL', 'GLESv2' ] + OS_LIBS
+elif LCD_DEVICES =='egl_for_wayland' :
+  OS_LIBS = ['xkbcommon', 'wayland-client', 'wayland-cursor', 'GLESv2', 'EGL', 'wayland-egl'] + OS_LIBS
 
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -fPIC '
 COMMON_CCFLAGS = COMMON_CCFLAGS+' -DWITH_DATA_READER_WRITER=1 '
@@ -232,7 +242,7 @@ if VGCANVAS == 'NANOVG':
   TK_ROOT_VAR = joinPath(VAR_DIR, 'awtk')
   OS_PROJECTS = [ joinPath(TK_ROOT_VAR, '3rd/nanovg/SConscript') ]
   OS_CPPPATH += [joinPath(TK_3RD_ROOT, 'nanovg'),  joinPath(TK_3RD_ROOT, 'nanovg/gl'),  joinPath(TK_3RD_ROOT, 'nanovg/base') ]
-  if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' :
+  if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' or LCD_DEVICES =='wayland':
     STATIC_LIBS = STATIC_LIBS + ['nanovg-agge', 'agge', 'nanovg']  + OS_LIBS
     AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg'] + OS_LIBS
   elif lcd_devices_is_egl(LCD_DEVICES) :
@@ -266,6 +276,8 @@ CPPPATH=[TK_ROOT,
   TK_3RD_ROOT, 
   LCD_DIR, 
   INPUT_DIR, 
+  WAYLAND_DIR, 
+  EGL_WAYLAND_DIR,
   joinPath(TK_SRC, 'ext_widgets'), 
   joinPath(TK_SRC, 'custom_widgets'), 
   joinPath(TK_ROOT, 'tools'), 
@@ -305,7 +317,7 @@ os.environ['TOOLS_NAME'] = '';
 os.environ['GRAPHIC_BUFFER'] = GRAPHIC_BUFFER;
 os.environ['WITH_AWTK_SO'] = 'true'
 
-if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' :
+if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' or LCD_DEVICES =='wayland':
   os.environ['NATIVE_WINDOW'] = 'raw';
 elif lcd_devices_is_egl(LCD_DEVICES) :
   os.environ['NATIVE_WINDOW'] = 'fb_gl';
