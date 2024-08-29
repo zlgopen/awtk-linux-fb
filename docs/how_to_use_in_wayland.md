@@ -8,19 +8,19 @@
 wayland-scanner -v
 ```
 
-生成协议文件的命令如下（文件名请勿更改）：
+比如在 M3568 的工具链中就自带了 wayland-scanner 工具，生成协议文件的命令如下（文件名请勿更改）：
 
 ```shell
 cd awtk-linux-fb/awtk-wayland/protocol/
-wayland-scanner client-header xdg-shell.xml xdg-shell-protocol.h
-wayland-scanner private-code xdg-shell.xml xdg-shell-protocol.c
+/opt/m3568-sdk-v1.0.0-ga/host/bin/wayland-scanner client-header xdg-shell.xml xdg-shell-protocol.h
+/opt/m3568-sdk-v1.0.0-ga/host/bin/wayland-scanner private-code xdg-shell.xml xdg-shell-protocol.c
 ```
 
 ## 2.如何编译 awtk-wayland
 
-在 awtk-linux-fb 下使用以下进行命令编译，请先配置好 TOOLS_PREFIX 和 LCD_DEVICES 参数，具体操作见 README.md。
+在 awtk-linux-fb 下先参照 README.md 生成 awtk_config_define.py，配置好 TOOLS_PREFIX 和 LCD_DEVICES 等参数。
 
-配置 awtk_config_define.py
+配置 awtk_config_define.py：
 
 ```python
 TOOLS_PREFIX = "/opt/m3568-sdk-v1.0.0-ga/host/usr/bin/aarch64-linux-" # 按自己的板子配置交叉编译工具路径
@@ -30,14 +30,14 @@ LCD_DEVICES = "egl_for_wayland"   # 使用OpenGL渲染
 OS_LINKFLAGS = " -Wl,--copy-dt-needed-entries "  # 解决部分工具链的DSO missing错误
 ```
 
-编译 awtk-linux-fb
+使用以下命令编译 awtk-linux-fb：
 
 ```shell
 cd awtk-linux-fb
 scons
 ```
 
-如果不想使用 awtk_config_define.py，也可以在 scons 编译时直接指定参数
+如果不想使用 awtk_config_define.py，也可以在 scons 编译时直接指定参数：
 
 ```shell
 cd awtk-linux-fb
