@@ -1,7 +1,7 @@
 import os
 import copy
 import scons_argv
-complie_helper = scons_argv.set_compile_config()
+complie_helper = scons_argv.get_compile_config()
 
 BIN_DIR = os.environ['BIN_DIR'];
 LIB_DIR = os.environ['LIB_DIR'];

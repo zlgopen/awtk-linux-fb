@@ -43,7 +43,7 @@ if not os.path.exists(os.path.normpath(os.path.join(SCRIPT_ROOT, 'compile_config
 
 import compile_config
 
-def set_compile_config() :
+def get_compile_config() :
   global INIT
   if INIT :
     return compile_config.get_curr_config()

@@ -2,7 +2,7 @@ import os
 import platform
 import shutil
 import scons_argv
-complie_helper = scons_argv.set_compile_config()
+complie_helper = scons_argv.get_compile_config()
 
 from awtk_config_common import TKC_STATIC_LIBS
 from awtk_config_common import joinPath, toWholeArchive, genIdlAndDefEx, setEnvSpawn, genDllLinkFlags, copySharedLib, cleanSharedLib, scons_db_check_and_remove
