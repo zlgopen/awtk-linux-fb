@@ -32,20 +32,21 @@ static device_info_t* s_devices = NULL;
 static bool_t s_ext_set = FALSE;
 
 ret_t devices_load(void) {
-  char abs_path[MAX_PATH + 1] = {0}, abs_path_with_schema[MAX_PATH + 1] = {0};
+  char abs_path[MAX_PATH + 1] = {0}, abs_path_with_schema[MAX_PATH + 8] = {0};
   tk_object_t* conf = NULL;
   uint32_t i = 0;
   return_value_if_fail(RET_OK == devices_unload(), RET_FAIL);
 
   path_prepend_app_root(abs_path, DEVICES_CONFIG_FILEPATH);
-  tk_snprintf(abs_path_with_schema, MAX_PATH, "%s%s", STR_SCHEMA_FILE, abs_path);
+  tk_snprintf(abs_path_with_schema, ARRAY_SIZE(abs_path_with_schema) - 1, STR_SCHEMA_FILE "%s",
+              abs_path);
 
   log_debug("%s : path = %s\r\n", __FUNCTION__, abs_path_with_schema);
 
   conf = conf_json_load(abs_path_with_schema, FALSE);
   return_value_if_fail(conf != NULL, RET_OOM);
 
-  s_devices_nr = tk_object_get_prop_uint32(conf, "#size", 0);
+  s_devices_nr = tk_object_get_prop_uint32(conf, CONF_SPECIAL_ATTR_SIZE, 0);
   goto_error_if_fail(s_devices_nr > 0);
 
   s_devices = TKMEM_ZALLOCN(device_info_t, s_devices_nr);
@@ -54,7 +55,7 @@ ret_t devices_load(void) {
   for (i = 0; i < s_devices_nr; i++) {
     char key[TK_NAME_LEN + 1] = {0};
 
-    tk_snprintf(key, sizeof(key), "[%d].#name", i);
+    tk_snprintf(key, sizeof(key), "[%d]." CONF_SPECIAL_ATTR_NAME, i);
     tk_strncpy(s_devices[i].path, tk_object_get_prop_str(conf, key), sizeof(s_devices[i].path) - 1);
 
     tk_snprintf(key, sizeof(key), "[%d].type", i);
