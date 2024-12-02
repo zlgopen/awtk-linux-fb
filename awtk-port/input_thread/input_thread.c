@@ -49,6 +49,9 @@ typedef struct _run_info_t {
   int fd;
   int32_t max_x;
   int32_t max_y;
+  int32_t last_x;
+  int32_t last_y;
+  int32_t last_event_type;
   void* dispatch_ctx;
   char* filename;
   input_dispatch_t dispatch;
@@ -58,6 +61,7 @@ typedef struct _run_info_t {
   bool_t capslock;
   bool_t numlock;
   event_queue_req_t req;
+  bool_t is_single_touch;
 } run_info_t;
 
 static const int32_t s_key_map[0x100] = {[KEY_1] = TK_KEY_1,
@@ -199,9 +203,26 @@ static ret_t input_init_mod(run_info_t* info) {
 static ret_t input_dispatch(run_info_t* info) {
   ret_t ret = RET_FAIL;
   char message[MAX_PATH + 1] = {0};
+  
+  if (!info->req.event.type) {
+    return RET_OK;
+  }
+
   tk_snprintf(message, sizeof(message) - 1, "input[%s]", info->filename);
+  if (info->req.event.type == EVT_POINTER_MOVE) {
+    if (info->last_event_type == EVT_POINTER_MOVE) {
+      if (info->req.pointer_event.x == info->last_x && info->req.pointer_event.y == info->last_y) {
+        log_debug("skip repeat event\n");
+        return RET_OK;
+      }
+    }
+    
+    info->last_x = info->req.pointer_event.x;
+    info->last_y = info->req.pointer_event.y;
+  }
 
   ret = info->dispatch(info->dispatch_ctx, &(info->req), message);
+  info->last_event_type = info->req.event.type;
   info->req.event.type = EVT_NONE;
 
   return ret;
@@ -244,6 +265,8 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
 
   input_init_mod(info);
 
+  //log_debug("input_event e.type=0x%x code=0x%x value=0x%x\n", e.type, e.code, e.value);
+
   switch (e.type) {
     case EV_LED: {
       switch (e.code) {
@@ -267,6 +290,7 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
       if (e.code == BTN_LEFT || e.code == BTN_RIGHT || e.code == BTN_MIDDLE ||
           e.code == BTN_TOUCH) {
         req->event.type = e.value ? EVT_POINTER_DOWN : EVT_POINTER_UP;
+        info->is_single_touch = TRUE;
       } else {
         // capslock在KEY_CAPSLOCK松开时修改
         if (e.code == KEY_CAPSLOCK && !e.value) {
@@ -297,10 +321,13 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
           break;
         }
         case ABS_MT_TRACKING_ID: {
-          if (e.value > 0) {
-            req->event.type = EVT_POINTER_DOWN;
-          } else {
-            req->event.type = EVT_POINTER_UP;
+          req->pointer_event.finger_id = e.value;
+          if (!info->is_single_touch) {
+            if (e.value == -1) {
+              req->event.type = EVT_POINTER_UP;
+            } else {
+              req->event.type = EVT_POINTER_DOWN;
+            }        
           }
           break;
         }
@@ -382,7 +409,6 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
           break;
         }
         default: {
-          log_info("unkown code: e.type=%d code=%d value=%d\n", e.type, e.code, e.value);
           break;
         }
       }
