@@ -64,6 +64,43 @@ typedef struct _run_info_t {
   bool_t is_single_touch;
 } run_info_t;
 
+static run_info_t* run_info_create(const char* filename, input_dispatch_t dispatch, void* dispatch_ctx, int32_t max_x, int32_t max_y) {
+  int fd = 0;
+  run_info_t* info = NULL;
+  return_value_if_fail(filename != NULL && dispatch != NULL, NULL);
+  fd = open(filename, O_RDONLY);
+  if (fd > 0) {
+    log_debug("open %s successed\n", filename);
+  } else {
+    log_warn("open %s failed\n", filename);
+  }
+  return_value_if_fail(fd > 0, NULL);
+  info = TKMEM_ZALLOC(run_info_t);
+  if (info == NULL) {
+    close(fd);
+  }
+  return_value_if_fail(info != NULL, NULL);
+  info->fd = fd;
+  info->max_x = max_x;
+  info->max_y = max_y;
+  info->dispatch = dispatch;
+  info->dispatch_ctx = dispatch_ctx;
+  info->filename = tk_strdup(filename);
+
+  return info;
+}
+
+static ret_t run_info_destroy(run_info_t* info) {
+  return_value_if_fail(info != NULL, RET_BAD_PARAMS);
+  if (info->fd > 0) {
+    close(info->fd);
+  }
+  TKMEM_FREE(info->filename);
+  TKMEM_FREE(info);
+
+  return RET_OK;
+}
+
 static const int32_t s_key_map[0x100] = {[KEY_1] = TK_KEY_1,
                                          [KEY_2] = TK_KEY_2,
                                          [KEY_3] = TK_KEY_3,
@@ -425,54 +462,27 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
 }
 
 static void* input_run(void* ctx) {
-  run_info_t info = *(run_info_t*)ctx;
+  run_info_t* info = (run_info_t*)ctx;
 
-  if (info.fd < 0) {
-    log_debug("%s:%d: open keyboard failed, fd=%d, filename=%s\n", __func__, __LINE__, info.fd,
-              info.filename);
-  } else {
-    log_debug("%s:%d: open keyboard successful, fd=%d, filename=%s\n", __func__, __LINE__, info.fd,
-              info.filename);
-  }
-
-  TKMEM_FREE(ctx);
-  while (input_dispatch_one_event(&info) == RET_OK) {
+  while (input_dispatch_one_event(info) == RET_OK) {
   };
-  close(info.fd);
-  TKMEM_FREE(info.filename);
+  
+  run_info_destroy(info);
 
   return NULL;
 }
 
-static run_info_t* info_dup(run_info_t* info) {
-  run_info_t* new_info = TKMEM_ZALLOC(run_info_t);
-
-  *new_info = *info;
-
-  return new_info;
-}
-
 tk_thread_t* input_thread_run(const char* filename, input_dispatch_t dispatch, void* ctx,
                               int32_t max_x, int32_t max_y) {
-  run_info_t info;
   tk_thread_t* thread = NULL;
-  return_value_if_fail(filename != NULL && dispatch != NULL, NULL);
+  run_info_t* info = run_info_create(filename, dispatch, ctx, max_x, max_y);
+  return_value_if_fail(info != NULL, NULL);
 
-  memset(&info, 0x00, sizeof(info));
-
-  info.max_x = max_x;
-  info.max_y = max_y;
-  info.dispatch_ctx = ctx;
-  info.dispatch = dispatch;
-  info.fd = open(filename, O_RDONLY);
-  info.filename = tk_strdup(filename);
-
-  thread = tk_thread_create(input_run, info_dup(&info));
+  thread = tk_thread_create(input_run, info);
   if (thread != NULL) {
     tk_thread_start(thread);
   } else {
-    close(info.fd);
-    TKMEM_FREE(info.filename);
+    run_info_destroy(info);
   }
 
   return thread;
