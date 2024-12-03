@@ -45,6 +45,8 @@
 #define ABS_MT_PRESSURE 0x3a
 #endif /*ABS_MT_PRESSURE*/
 
+#define AWTK_FINGER_ID_START 1000
+
 typedef struct _run_info_t {
   int fd;
   int32_t max_x;
@@ -259,6 +261,29 @@ static ret_t input_dispatch(run_info_t* info) {
   }
 
   ret = info->dispatch(info->dispatch_ctx, &(info->req), message);
+ 
+  if (!info->is_single_touch) {
+    int event_type = info->req.event.type;
+    if (event_type == EVT_POINTER_DOWN || event_type == EVT_POINTER_MOVE || event_type == EVT_POINTER_UP) {
+      event_queue_req_t req;
+      int32_t x = info->req.pointer_event.x;
+      int32_t y = info->req.pointer_event.y;
+      int32_t finger_id = info->req.pointer_event.finger_id;
+
+      memset(&req, 0x00, sizeof(req));
+      if (event_type == EVT_POINTER_DOWN) {
+        event_type = EVT_TOUCH_DOWN; 
+      } else if (event_type == EVT_POINTER_MOVE) {
+        event_type = EVT_TOUCH_MOVE; 
+      } else if (event_type == EVT_POINTER_UP) {
+        event_type = EVT_TOUCH_UP; 
+      }
+
+      req.event.type = event_type;
+      touch_event_init(&req.touch_event, event_type, NULL, 0, finger_id, x, y, 0);
+      info->dispatch(info->dispatch_ctx, &req, message);
+    }
+  }
   info->last_event_type = info->req.event.type;
   info->req.event.type = EVT_NONE;
 
@@ -358,7 +383,12 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
           break;
         }
         case ABS_MT_TRACKING_ID: {
-          req->pointer_event.finger_id = e.value;
+          if (e.value < 0) {
+            req->pointer_event.finger_id = e.value;
+          } else {
+            req->pointer_event.finger_id = e.value + AWTK_FINGER_ID_START;
+          }
+
           if (!info->is_single_touch) {
             if (e.value == -1) {
               req->event.type = EVT_POINTER_UP;
