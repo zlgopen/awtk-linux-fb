@@ -11,9 +11,13 @@ if sys.version_info.major == 2:
 else:
   import pickle
 
+OS_NAME = platform.system()
+
 import subprocess
 
 def is_raspberrypi():
+  if OS_NAME == "Windows":
+    return False
   result = str(subprocess.check_output(["uname", "-a"]))
   return result.find('Linux raspberrypi') >= 0
 
@@ -22,7 +26,6 @@ def is_raspberrypi():
 #######################################################
 
 TOOLS_PREFIX = ''
-OS_NAME = platform.system()
 MACH = platform.machine()
 ARCH = platform.architecture()
 is32bit = (ARCH[0] == '32bit')
@@ -71,8 +74,8 @@ TK_3RD_ROOT = joinPath(TK_ROOT, '3rd')
 TK_TOOLS_ROOT = joinPath(TK_ROOT, 'tools')
 TK_DEMO_ROOT = joinPath(TK_ROOT, 'demos')
 GTEST_ROOT = joinPath(TK_ROOT, '3rd/gtest/googletest')
-TKC_STATIC_LIBS = ['debugger', 'fscript_ext', 'streams', 'romfs', 'conf_io', 'hal', 'xml', 'charset',
-                   'csv', 'ubjson', 'compressors', 'miniz', 'tkc_core', 'mbedtls']
+TKC_STATIC_LIBS = ['debugger', 'fscript_ext', 'romfs', 'conf_io', 'hal', 'xml', 'charset',
+                   'csv', 'streams', 'ubjson', 'compressors', 'miniz', 'tkc_core', 'mbedtls']
 
 TOOLS_NAME = ''
 NANOVG_BACKEND = ''
@@ -93,31 +96,37 @@ OS_SUBSYSTEM_WINDOWS = ''
 OS_PROJECTS = []
 # only for c compiler flags
 COMMON_CFLAGS = ''
-OS_DEBUG = complie_helper.get_value('DEBUG')
+OS_DEBUG = complie_helper.get_value('DEBUG', True)
 
 if OS_NAME == 'Darwin':
+
+    # Find the correct SDL2 version
+    sdl_path = "/opt/homebrew/Cellar/sdl2/" 
+    if not os.path.exists(sdl_path) :
+        # Compatible with old systems
+        sdl_path = '/usr/local/Cellar/sdl2/'
+    sdl_versions = os.listdir(sdl_path)
+    if len(sdl_versions)==0:
+        print("Can not find the SDL version")
+        exit(-1)
+    sdl_lib = sdl_path + sdl_versions[0] + "/lib"
+
     TOOLS_NAME = ''
     OS_FLAGS = '-Wall -Wno-unused-function -fPIC -DWITHOUT_GLAD=1 '
     OS_LIBS = ['stdc++', 'iconv', 'pthread', 'm', 'dl']
     OS_LINKFLAGS = '-framework IOKit -framework Cocoa -framework QuartzCore -framework OpenGL -weak_framework Metal -weak_framework MetalKit'
     OS_FLAGS = OS_FLAGS + ' -DHAS_SEM_OPEN '
-    OS_FLAGS = OS_FLAGS + ' -D__APPLE__ -DHAS_PTHREAD -DMACOS -Dmacintosh '
+    OS_FLAGS = OS_FLAGS + ' -D__APPLE__ -DHAS_PTHREAD -DMACOS '
     OS_FLAGS = OS_FLAGS + ' -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS  -DBGFX_CONFIG_RENDERER_METAL=1 '
-    OS_LIBPATH = ['/usr/local/lib/', '/opt/homebrew/Cellar/sdl2/2.28.0/lib']
+    OS_LIBPATH = ['/usr/local/lib/', sdl_lib]
 
 elif OS_NAME == 'Linux':
     TOOLS_NAME = ''
     OS_FLAGS = ' -Wall -Wno-unused-function -fPIC '
-    OS_LIBS = ['GL', 'gtk-3', 'gdk-3', 'glib-2.0', 'gobject-2.0', 'Xext', 'X11',
-               'sndio', 'stdc++', 'asound', 'pthread', 'm', 'dl']
+    OS_LIBS = ['sndio', 'stdc++', 'asound', 'pthread', 'm', 'dl']
     COMMON_CFLAGS = COMMON_CFLAGS+' -std=gnu99 '
     OS_FLAGS = OS_FLAGS + ' -DLINUX -DHAS_PTHREAD'
-    OS_FLAGS = OS_FLAGS + ' -DSDL_REAL_API -DSDL_TIMER_UNIX -DSDL_VIDEO_DRIVER_X11 -DSDL_VIDEO_DRIVER_X11_SUPPORTS_GENERIC_EVENTS '
-    OS_FLAGS = OS_FLAGS + \
-        ' -DSDL_AUDIO_DRIVER_SNDIO -DSDL_VIDEO_OPENGL_GLX -DSDL_VIDEO_RENDER_OGL '
-    OS_FLAGS = OS_FLAGS + ' -DSDL_LOADSO_DLOPEN -DSDL_VIDEO_OPENGL_EGL -DSDL_VIDEO_OPENGL_ES2 '
-    OS_FLAGS = OS_FLAGS + \
-        ' -DSDL_REAL_API -DSDL_HAPTIC_DISABLED -DSDL_SENSOR_DISABLED -DSDL_JOYSTICK_DISABLED '
+
     OS_PROJECTS = ['3rd/SDL/SConscript']
     if TARGET_ARCH == 'x86':
         OS_FLAGS = OS_FLAGS + ' -U__FLT_EVAL_METHOD__ -D__FLT_EVAL_METHOD__=0 '
@@ -128,6 +137,16 @@ elif OS_NAME == 'Linux':
     if is_raspberrypi():
       OS_FLAGS = OS_FLAGS + ' -DRASPBERRYPI '
       os.environ['RASPBERRYPI'] = 'true'
+    
+    SDL_VIDEODRIVER=os.getenv('SDL_VIDEODRIVER');
+    if SDL_VIDEODRIVER is None:
+      SDL_VIDEODRIVER = 'x11'
+  
+    if SDL_VIDEODRIVER == 'wayland':
+      OS_LIBS = ['GL', 'xkbcommon', 'wayland-cursor', 'wayland-egl', 'wayland-client'] + OS_LIBS;
+      OS_FLAGS += '-DWITHOUT_NATIVE_FILE_DIALOG '
+    else:
+      OS_LIBS = ['GL', 'gtk-3', 'gdk-3', 'glib-2.0', 'gobject-2.0', 'Xext', 'X11'] + OS_LIBS;
 
 
 elif OS_NAME == 'Windows':
@@ -136,7 +155,7 @@ elif OS_NAME == 'Windows':
     if not os.path.exists(os.path.abspath(TK_LIB_DIR)):
         os.makedirs(os.path.abspath(TK_LIB_DIR))
     if TOOLS_NAME == '':
-        OS_LIBS = ['gdi32', 'user32', 'winmm.lib', 'imm32.lib', 'version.lib', 'shell32.lib',
+        OS_LIBS = ['gdi32', 'user32', 'winmm.lib', 'imm32.lib', 'version.lib', 'shell32.lib', 'Setupapi',
                    'ole32.lib', 'Oleaut32.lib', 'Advapi32.lib', 'DelayImp.lib', 'psapi.lib', "ws2_32"]
         OS_FLAGS = '-DWIN32 -D_WIN32 -DWINDOWS /EHsc -D_CONSOLE   /FS /Z7 /utf-8 '
         if TARGET_ARCH == 'x86':
@@ -153,7 +172,7 @@ elif OS_NAME == 'Windows':
         OS_FLAGS = OS_FLAGS + ' -DHAVE_LIBC '
 
     elif TOOLS_NAME == 'mingw':
-        OS_LIBS = ['kernel32', 'gdi32', 'user32', 'winmm', 'imm32', 'version', 'shell32',
+        OS_LIBS = ['kernel32', 'gdi32', 'user32', 'winmm', 'imm32', 'version', 'shell32', 'Setupapi',
                    'ole32', 'Oleaut32', 'Advapi32', 'oleaut32', 'uuid', 'stdc++', "ws2_32"]
         OS_FLAGS = '-DMINGW -DWINDOWS -D_CONSOLE  -Wall'
         OS_LINKFLAGS = ' -Wl,-rpath=./bin -Wl,-rpath=./ '
@@ -163,8 +182,6 @@ elif OS_NAME == 'Windows':
         OS_FLAGS = OS_FLAGS+' -U__FLT_EVAL_METHOD__ -D__FLT_EVAL_METHOD__=0 -DDECLSPEC=  '
 
     #OS_FLAGS='-DWIN32 -D_WIN32 -DWINDOWS /EHsc -D_CONSOLE  /DEBUG /Od  /FS /Z7 -D_DEBUG /MDd '
-    OS_FLAGS = OS_FLAGS + \
-        ' -DSDL_REAL_API -DSDL_HAPTIC_DISABLED -DSDL_SENSOR_DISABLED -DSDL_JOYSTICK_DISABLED '
     OS_FLAGS = OS_FLAGS + '-D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS -D_HAS_EXCEPTIONS=0 -D_HAS_ITERATOR_DEBUGGING=0 -D_ITERATOR_DEBUG_LEVEL=0 -D_SCL_SECURE=0'
     OS_FLAGS = OS_FLAGS + \
         '-D_SECURE_SCL=0 -D_SCL_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE '
@@ -326,6 +343,10 @@ def scons_db_check_and_remove():
       with open(f, "rb") as fs:
         pickle.load(fs)
         fs.close()
-    except:
+    except Exception as e :
         fs.close()
-        os.remove(f)
+        print(e)
+        try:
+            os.remove(f)
+        except Exception as e :
+            print(e)
