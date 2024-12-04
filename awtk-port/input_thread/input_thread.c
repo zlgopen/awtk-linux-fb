@@ -46,6 +46,13 @@
 #endif /*ABS_MT_PRESSURE*/
 
 #define AWTK_FINGER_ID_START 1000
+#define AWTK_MAX_FINGERS 10
+
+typedef struct _slot_finger_info_t {
+  int32_t id;
+  int32_t x;
+  int32_t y;
+} slot_finger_info_t;
 
 typedef struct _run_info_t {
   int fd;
@@ -64,7 +71,21 @@ typedef struct _run_info_t {
   bool_t numlock;
   event_queue_req_t req;
   bool_t is_single_touch;
+
+  uint32_t active_finger;
+  slot_finger_info_t fingers[AWTK_MAX_FINGERS];
 } run_info_t;
+
+static bool_t run_info_is_no_finger_down(run_info_t* info) {
+  uint32_t i = 0;
+  for (i = 0; i < AWTK_MAX_FINGERS; i++) {
+    if (info->fingers[i].id > 0) {
+      return FALSE;
+    }
+  }
+
+  return TRUE;
+}
 
 static run_info_t* run_info_create(const char* filename, input_dispatch_t dispatch, void* dispatch_ctx, int32_t max_x, int32_t max_y) {
   int fd = 0;
@@ -266,9 +287,10 @@ static ret_t input_dispatch(run_info_t* info) {
     int event_type = info->req.event.type;
     if (event_type == EVT_POINTER_DOWN || event_type == EVT_POINTER_MOVE || event_type == EVT_POINTER_UP) {
       event_queue_req_t req;
-      int32_t x = info->req.pointer_event.x;
-      int32_t y = info->req.pointer_event.y;
-      int32_t finger_id = info->req.pointer_event.finger_id;
+      slot_finger_info_t* finger = info->fingers + info->active_finger;
+      float x = (float)(finger->x) / (float)(info->max_x);
+      float y = (float)(finger->y) / (float)(info->max_y);
+      int32_t finger_id = finger->id;
 
       memset(&req, 0x00, sizeof(req));
       if (event_type == EVT_POINTER_DOWN) {
@@ -277,11 +299,17 @@ static ret_t input_dispatch(run_info_t* info) {
         event_type = EVT_TOUCH_MOVE; 
       } else if (event_type == EVT_POINTER_UP) {
         event_type = EVT_TOUCH_UP; 
+        finger->id = -1;
       }
 
       req.event.type = event_type;
       touch_event_init(&req.touch_event, event_type, NULL, 0, finger_id, x, y, 0);
       info->dispatch(info->dispatch_ctx, &req, message);
+
+      if (event_type == EVT_TOUCH_UP && run_info_is_no_finger_down(info)) {
+        touch_event_init(&req.touch_event, event_type, NULL, 0, -1, x, y, 0);
+        info->dispatch(info->dispatch_ctx, &req, message);
+      }
     }
   }
   info->last_event_type = info->req.event.type;
@@ -375,18 +403,22 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
         case ABS_MT_POSITION_X:
         case ABS_X: {
           req->pointer_event.x = e.value;
+          info->fingers[info->active_finger].x = e.value;
           break;
         }
         case ABS_MT_POSITION_Y:
         case ABS_Y: {
           req->pointer_event.y = e.value;
+          info->fingers[info->active_finger].y = e.value;
           break;
         }
         case ABS_MT_TRACKING_ID: {
+          log_debug("ABS_MT_TRACKING_ID:%d\n", e.value);
           if (e.value < 0) {
             req->pointer_event.finger_id = e.value;
           } else {
             req->pointer_event.finger_id = e.value + AWTK_FINGER_ID_START;
+            info->fingers[info->active_finger].id = e.value + AWTK_FINGER_ID_START;
           }
 
           if (!info->is_single_touch) {
@@ -398,13 +430,19 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
           }
           break;
         }
-        case ABS_MT_SLOT:
+        case ABS_MT_SLOT: {
+          log_debug("ABS_MT_SLOT:%d\n", e.value);
+          info->active_finger = e.value;
+          assert(info->active_finger < AWTK_MAX_FINGERS);
+          break;
+        }
         case ABS_MT_TOUCH_MAJOR:
         case ABS_MT_TOUCH_MINOR:
         case ABS_MT_WIDTH_MAJOR:
         case ABS_MT_WIDTH_MINOR:
         case ABS_MT_PRESSURE:
         case ABS_MT_BLOB_ID: {
+          log_info("ignore: e.type=%d code=%d value=%d\n", e.type, e.code, e.value);
           break;
         }
         default: {
