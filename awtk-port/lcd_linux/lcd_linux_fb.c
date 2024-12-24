@@ -126,15 +126,10 @@ static ret_t lcd_mem_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_leng
 
   ret_t ret = RET_OK;
   fb_info_t* fb = &s_fb;
-  lcd_mem_t* mem = (lcd_mem_t*)lcd;
   return_value_if_fail(lcd != NULL, RET_BAD_PARAMS);
 
   ret = fb_resize_reopen(fb, w, h);
-  if (!mem->own_offline_fb) {
-    // mem->own_offline_fb=1 means lcd_mem_special_create will manage(alloc/free) it's own offline fb mem
-    lcd_mem_set_offline_fb(mem, fb->fbmem_offline);
-  }
-  lcd_mem_set_online_fb(mem, (uint8_t*)(fb->fbmem0));
+  lcd_mem_set_double_fb_bitmap(lcd, fb->online_fb, fb->offline_fb);
   lcd_mem_set_line_length(lcd, fb_line_length(fb));
 
   if (lcd_mem_linux_resize_default && ret == RET_OK) {
@@ -148,15 +143,10 @@ static ret_t lcd_mem_linux_resize(lcd_t* lcd, wh_t w, wh_t h, uint32_t line_leng
 
 static ret_t lcd_linux_init_drawing_fb(lcd_mem_t* mem, bitmap_t* fb) {
   return_value_if_fail(mem != NULL && fb != NULL, RET_BAD_PARAMS);
-
-  memset(fb, 0x00, sizeof(bitmap_t));
-
+  
+  *fb = *mem->fb_bitmaps[0];
   fb->w = lcd_get_physical_width((lcd_t*)mem);
   fb->h = lcd_get_physical_height((lcd_t*)mem);
-  fb->format = mem->format;
-  fb->buffer = mem->offline_gb;
-  graphic_buffer_attach(mem->offline_gb, mem->offline_fb, fb->w, fb->h);
-  bitmap_set_line_length(fb, mem->line_length);
 
   return RET_OK;
 }
@@ -164,14 +154,9 @@ static ret_t lcd_linux_init_drawing_fb(lcd_mem_t* mem, bitmap_t* fb) {
 static ret_t lcd_linux_init_online_fb(lcd_mem_t* mem, bitmap_t* fb, uint8_t* buff, uint32_t w, uint32_t h, uint32_t line_length) {
   return_value_if_fail(mem != NULL && fb != NULL && buff != NULL, RET_BAD_PARAMS);
 
-  memset(fb, 0x00, sizeof(bitmap_t));
-
+  *fb = *mem->fb_bitmaps[1];
   fb->w = w;
   fb->h = h;
-  fb->format = mem->format;
-  fb->buffer = mem->online_gb;
-  graphic_buffer_attach(mem->online_gb, buff, w, h);
-  bitmap_set_line_length(fb, line_length);
 
   return RET_OK;
 }
@@ -247,38 +232,35 @@ static ret_t lcd_mem_linux_flush(lcd_t* lcd) {
 
 static lcd_t* lcd_linux_create_flushable(fb_info_t* fb) {
   lcd_t* lcd = NULL;
-  int w = fb_width(fb);
-  int h = fb_height(fb);
-  int line_length = fb_line_length(fb);
-
   int bpp = fb_bpp(fb);
-  uint8_t* online_fb = (uint8_t*)(fb->fbmem0);
-  uint8_t* offline_fb = (uint8_t*)(fb->fbmem_offline);
+  int line_length = fb_line_length(fb);
+  bitmap_t* online_fb = fb->online_fb;
+  bitmap_t* offline_fb = fb->offline_fb;
   return_value_if_fail(offline_fb != NULL, NULL);
 
   if (bpp == 16) {
     if (fb_is_bgra5551(fb)) {
       lcd = lcd_mem_bgra5551_create(fb);
     } else if (fb_is_bgr565(fb)) {
-      lcd = lcd_mem_bgr565_create_double_fb(w, h, online_fb, offline_fb);
+      lcd = lcd_mem_bgr565_create_double_fb_bitmap(online_fb, offline_fb);
     } else if (fb_is_rgb565(fb)) {
-      lcd = lcd_mem_rgb565_create_double_fb(w, h, online_fb, offline_fb);
+      lcd = lcd_mem_rgb565_create_double_fb_bitmap(online_fb, offline_fb);
     } else {
       assert(!"not supported framebuffer format.");
     }
   } else if (bpp == 32) {
     if (fb_is_bgra8888(fb)) {
-      lcd = lcd_mem_bgra8888_create_double_fb(w, h, online_fb, offline_fb);
+      lcd = lcd_mem_bgra8888_create_double_fb_bitmap(online_fb, offline_fb);
     } else if (fb_is_rgba8888(fb)) {
-      lcd = lcd_mem_rgba8888_create_double_fb(w, h, online_fb, offline_fb);
+      lcd = lcd_mem_rgba8888_create_double_fb_bitmap(online_fb, offline_fb);
     } else {
       assert(!"not supported framebuffer format.");
     }
   } else if (bpp == 24) {
     if (fb_is_bgr888(fb)) {
-      lcd = lcd_mem_bgr888_create_double_fb(w, h, online_fb, offline_fb);
+      lcd = lcd_mem_bgr888_create_double_fb_bitmap(online_fb, offline_fb);
     } else if (fb_is_rgb888(fb)) {
-      lcd = lcd_mem_rgb888_create_double_fb(w, h, online_fb, offline_fb);
+      lcd = lcd_mem_rgb888_create_double_fb_bitmap(online_fb, offline_fb);
     } else {
       assert(!"not supported framebuffer format.");
     }
@@ -467,35 +449,33 @@ static ret_t lcd_mem_linux_write_buff(lcd_t* lcd) {
 
 static lcd_t* lcd_linux_create_swappable(fb_info_t* fb) {
   lcd_t* lcd = NULL;
-  int w = fb_width(fb);
-  int h = fb_height(fb);
   int bpp = fb_bpp(fb);
   int line_length = fb_line_length(fb);
 
-  uint8_t* offline_fb = (uint8_t*)(fb->fbmem_offline);
+  bitmap_t* offline_fb = fb->offline_fb;
   return_value_if_fail(offline_fb != NULL, NULL);
 
   if (bpp == 16) {
     if (fb_is_bgr565(fb)) {
-      lcd = lcd_mem_bgr565_create_single_fb(w, h, offline_fb);
+      lcd = lcd_mem_bgr565_create_single_fb_bitmap(offline_fb);
     } else if (fb_is_rgb565(fb)) {
-      lcd = lcd_mem_rgb565_create_single_fb(w, h, offline_fb);
+      lcd = lcd_mem_rgb565_create_single_fb_bitmap(offline_fb);
     } else {
       assert(!"not supported framebuffer format.");
     }
   } else if (bpp == 32) {
     if (fb_is_bgra8888(fb)) {
-      lcd = lcd_mem_bgra8888_create_single_fb(w, h, offline_fb);
+      lcd = lcd_mem_bgra8888_create_single_fb_bitmap(offline_fb);
     } else if (fb_is_rgba8888(fb)) {
-      lcd = lcd_mem_rgba8888_create_single_fb(w, h, offline_fb);
+      lcd = lcd_mem_rgba8888_create_single_fb_bitmap(offline_fb);
     } else {
       assert(!"not supported framebuffer format.");
     }
   } else if (bpp == 24) {
     if (fb_is_bgr888(fb)) {
-      lcd = lcd_mem_bgr888_create_single_fb(w, h, offline_fb);
+      lcd = lcd_mem_bgr888_create_single_fb_bitmap(offline_fb);
     } else if (fb_is_rgb888(fb)) {
-      lcd = lcd_mem_rgb888_create_single_fb(w, h, offline_fb);
+      lcd = lcd_mem_rgb888_create_single_fb_bitmap(offline_fb);
     } else {
       assert(!"not supported framebuffer format.");
     }
