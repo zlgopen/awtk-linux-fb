@@ -168,10 +168,12 @@ static inline ret_t fb_create_fb_bitmap(fb_info_t* fb) {
   fb->offline_fb = bitmap_create_ex(w, h, line_length, format);
   assert(fb->offline_fb != NULL);
   return_value_if_fail(fb->offline_fb != NULL, RET_OOM);
+  fb->offline_fb->name = "offline_fb";
 
   fb->online_fb = bitmap_create_ex3(w, h, line_length, format, fb->fbmem0_vaddr, fb->fbmem0_paddr, FALSE); 
   assert(fb->online_fb != NULL);
   return_value_if_fail(fb->online_fb != NULL, RET_OOM);
+  fb->online_fb->name = "online_fb";
 
   return RET_OK;
 }
