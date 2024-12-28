@@ -39,9 +39,12 @@
 typedef struct _fb_info_t {
   int fd;
   uint8_t* fbmem0;
-  uint8_t* fbmem_offline;
+  uint8_t* fbmem0_vaddr;
+  uint8_t* fbmem0_paddr;
   struct fb_fix_screeninfo fix;
   struct fb_var_screeninfo var;
+  bitmap_t* online_fb;
+  bitmap_t* offline_fb;
 } fb_info_t;
 
 #define fb_width(fb) ((fb)->var.xres)
@@ -134,34 +137,89 @@ static inline bool_t fb_is_bgr888(fb_info_t* fb) {
   }
 }
 
+static inline bitmap_format_t fb_bitmap_format(fb_info_t* fb) {
+  if (fb_is_bgr565(fb)) {
+    return BITMAP_FMT_BGR565;
+  } else if (fb_is_rgb565(fb)) {
+    return BITMAP_FMT_RGB565;
+  } else if (fb_is_rgba8888(fb)) {
+    return BITMAP_FMT_RGBA8888;
+  } else if (fb_is_bgra8888(fb)) {
+    return BITMAP_FMT_BGRA8888;
+  } else if (fb_is_rgb888(fb)) {
+    return BITMAP_FMT_RGB888;
+  } else if (fb_is_bgr888(fb)) {
+    return BITMAP_FMT_BGR888;
+  } else {
+    return BITMAP_FMT_NONE;
+  }
+}
+
 #ifndef FBIO_WAITFORVSYNC
 #define FBIO_WAITFORVSYNC _IOW('F', 0x20, u_int32_t)
 #endif /*FBIO_WAITFORVSYNC*/
 
-static inline int fb_open(fb_info_t* fb, const char* filename) {
-  uint32_t size = 0;
-  uint32_t fb_nr = 1;
-  uint32_t total_size = 0;
+static inline ret_t fb_create_fb_bitmap(fb_info_t* fb) {
+  uint32_t w = fb->var.xres;
+  uint32_t h = fb->var.yres;
+  uint32_t line_length = fb->fix.line_length;
+  bitmap_format_t format = fb_bitmap_format(fb); 
 
-  memset(fb, 0x00, sizeof(fb_info_t));
+  fb->offline_fb = bitmap_create_ex(w, h, line_length, format);
+  assert(fb->offline_fb != NULL);
+  return_value_if_fail(fb->offline_fb != NULL, RET_OOM);
+  fb->offline_fb->name = "offline_fb";
 
-  fb->fd = open(filename, O_RDWR);
-  if (fb->fd < 0) {
-    log_warn("open: %s failed\n", filename);
-    return -1;
+  fb->online_fb = bitmap_create_ex3(w, h, line_length, format, fb->fbmem0_vaddr, fb->fbmem0_paddr, FALSE); 
+  assert(fb->online_fb != NULL);
+  return_value_if_fail(fb->online_fb != NULL, RET_OOM);
+  fb->online_fb->name = "online_fb";
+
+  return RET_OK;
+}
+
+static inline ret_t fb_map_memory(fb_info_t* fb) {
+  uint32_t total_size = fb_memsize(fb);
+
+#ifdef AWTK_ON_UCLINUX
+  // uclinux doesn't support MAP_SHARED or MAP_PRIVATE with PROT_WRITE, so no mmap at all is simpler
+  fb->fbmem0 = (uint8_t*)(fb->fix.smem_start);
+  fb->fbmem0_paddr = (uint8_t*)(fb->fix.smem_start);
+  fb->fbmem0_vaddr = (uint8_t*)(fb->fix.smem_start);
+#else
+  fb->fbmem0 = (uint8_t*)mmap(0, total_size, PROT_READ | PROT_WRITE, MAP_SHARED, fb->fd, 0);
+  fb->fbmem0_paddr = (uint8_t*)(fb->fix.smem_start);
+  fb->fbmem0_vaddr = fb->fbmem0;
+#endif
+
+  if (fb->fbmem0 == MAP_FAILED) {
+    perror("framebuffer");
+    log_error("map framebuffer failed.\n");
   }
 
-  if (ioctl(fb->fd, FBIOGET_FSCREENINFO, &fb->fix) < 0) goto fail;
-  if (ioctl(fb->fd, FBIOGET_VSCREENINFO, &fb->var) < 0) goto fail;
+  return fb->fbmem0 != MAP_FAILED ? RET_OK : RET_FAIL;
+}
 
-  fb->var.xoffset = 0;
-  fb->var.yoffset = 0;
+static inline ret_t fb_destroy_fb_bitmap(fb_info_t* fb) {
+  if (fb->offline_fb != NULL) {
+    bitmap_destroy(fb->offline_fb);
+    fb->offline_fb = NULL;
+  }
+  
+  if (fb->online_fb != NULL) {
+    bitmap_destroy(fb->online_fb);
+    fb->online_fb = NULL;
+  }
 
-  size = fb_size(fb);
-  fb_nr = fb_number(fb);
-  total_size = fb_memsize(fb);
+  return RET_OK;
+}
 
-  log_info("fb_info_t: %s\n", filename);
+static inline ret_t fb_dump_info(fb_info_t* fb) {
+  uint32_t size = fb_size(fb);
+  uint32_t fb_nr = fb_number(fb);
+  uint32_t total_size = fb_memsize(fb);
+
+  log_info("fb_info_t: %d\n", fb->fd);
   log_info("xres=%d yres=%d\n", fb->var.xres, fb->var.yres);
   log_info("xres_virtual=%d yres_virtual=%d\n", fb->var.xres_virtual, fb->var.yres_virtual);
   log_info("bits_per_pixel=%d line_length=%d\n", fb->var.bits_per_pixel, fb->fix.line_length);
@@ -172,28 +230,31 @@ static inline int fb_open(fb_info_t* fb, const char* filename) {
   log_info("fb_size=%u fb_total_size=%u fb_nr=%u smem_len=%u\n", size, total_size, fb_nr,
            fb->fix.smem_len);
 
-#ifdef FTK_FB_NOMMAP
-  // uclinux doesn't support MAP_SHARED or MAP_PRIVATE with PROT_WRITE, so no mmap at all is simpler
-  fb->fbmem0 = (uint8_t*)(fb->fix.smem_start);
-#else
-  fb->fbmem0 = (uint8_t*)mmap(0, total_size, PROT_READ | PROT_WRITE, MAP_SHARED, fb->fd, 0);
-#endif
+  return RET_OK;           
+}
 
-  if (fb->fbmem0 == MAP_FAILED) {
-    perror("framebuffer");
-    log_error("map framebuffer failed.\n");
-    goto fail;
+static inline int fb_open(fb_info_t* fb, const char* filename) {
+  memset(fb, 0x00, sizeof(fb_info_t));
+
+  fb->fd = open(filename, O_RDWR);
+  if (fb->fd < 0) {
+    log_warn("open: %s failed\n", filename);
+    return -1;
   }
 
-  log_info("fb_open clear\n");
-  //memset(fb->fbmem0, 0xff, total_size);
+  goto_error_if_fail(ioctl(fb->fd, FBIOGET_FSCREENINFO, &fb->fix) >= 0);
+  goto_error_if_fail(ioctl(fb->fd, FBIOGET_VSCREENINFO, &fb->var) >= 0);
 
-  fb->fbmem_offline = (uint8_t*)malloc(size);
-  assert(fb->fbmem_offline);
+  fb->var.xoffset = 0;
+  fb->var.yoffset = 0;
+
+  fb_dump_info(fb);
+  goto_error_if_fail(fb_map_memory(fb) == RET_OK);
+  goto_error_if_fail(fb_create_fb_bitmap(fb) == RET_OK);
 
   log_info("fb_open ok\n");
   return 0;
-fail:
+error:
   perror("framebuffer");
   log_warn("%s is not a framebuffer.\n", filename);
   close(fb->fd);
@@ -205,13 +266,10 @@ static inline void fb_close(fb_info_t* fb) {
   if (fb != NULL) {
     uint32_t total_size = fb_memsize(fb);
 
-    log_info("fb_close\n");
-    if (fb->fbmem_offline != NULL) {
-      free(fb->fbmem_offline);
-    }
-
+    fb_destroy_fb_bitmap(fb);
     munmap(fb->fbmem0, total_size);
     close(fb->fd);
+    fb->fbmem0 = MAP_FAILED;
     log_info("fb_close ok\n");
   }
 
@@ -240,26 +298,25 @@ static inline ret_t fb_resize_reopen(fb_info_t* fb, wh_t w, wh_t h) {
   var_set.yres = h;
   var_set.xres_virtual = w;
   var_set.yres_virtual = h * fb_num;
-  if (ioctl(fb->fd, FBIOPUT_VSCREENINFO, &var_set) < 0) {
-    return RET_FAIL;
-  }
+  goto_error_if_fail(ioctl(fb->fd, FBIOPUT_VSCREENINFO, &var_set) >= 0);
 
-  free(fb->fbmem_offline);
+  fb_destroy_fb_bitmap(fb);
   munmap(fb->fbmem0, total_size);
 
-  ioctl(fb->fd, FBIOGET_FSCREENINFO, &fb->fix);
-  ioctl(fb->fd, FBIOGET_VSCREENINFO, &fb->var);
-  uint32_t new_size = fb_size(fb);
-  uint32_t new_total_size = fb_memsize(fb);
+  goto_error_if_fail(ioctl(fb->fd, FBIOGET_FSCREENINFO, &fb->fix) >= 0);
+  goto_error_if_fail(ioctl(fb->fd, FBIOGET_VSCREENINFO, &fb->var) >= 0);
 
-  fb->fbmem0 = (uint8_t*)mmap(0, new_total_size, PROT_READ | PROT_WRITE, MAP_SHARED, fb->fd, 0);
-  if (fb->fbmem0 == MAP_FAILED) {
-    log_error("map framebuffer failed.\n");
-    return RET_FAIL;
-  }
-  fb->fbmem_offline = (uint8_t*)malloc(new_size);
-  assert(fb->fbmem_offline);
+  fb_dump_info(fb);
+  goto_error_if_fail(fb_map_memory(fb) == RET_OK);
+  goto_error_if_fail(fb_create_fb_bitmap(fb) == RET_OK);
+
+  log_info("fb_resize_reopen ok\n");
   return RET_OK;
+
+error:
+  perror("framebuffer");
+
+  return RET_FAIL;
 }
 
 static inline bool_t check_if_run_in_vmware() {
@@ -279,3 +336,4 @@ static inline bool_t check_if_run_in_vmware() {
 }
 
 #endif /*TK_FB_INFO_H*/
+
