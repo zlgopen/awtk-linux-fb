@@ -37,6 +37,8 @@ make menuconfig
 
 ![image](images/build_root_tool_chain.png)
 
+> 新版 AWTK 需要 Enable WCHAR support
+
 保存退出。
 
 * 编译
@@ -51,19 +53,10 @@ make -j4
 
 进入 awtk-linux-fb 目录：
 
-* 配置
-
-修改 awtk_config.py  中的 toolchain:
-
-```
-TOOLS_PREFIX='/opt/qemu/buildroot-2021.02.2/output/host/bin/arm-linux-'
-TSLIB_LIB_DIR=''
-```
-
 * 编译
 
 ```
-scons
+scons TOOLS_PREFIX='/opt/qemu/buildroot-2021.02.2/output/host/bin/arm-linux-' TSLIB_LIB_DIR=''
 ```
 
 * release
