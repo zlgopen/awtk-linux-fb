@@ -18,6 +18,13 @@ sudo chown yourusername.yourgroup /opt/qemu
 cd /opt/qemu
 ```
 
+* 下载 awtk 和 awtk-linux-fb
+  
+```
+git clone https://gitee.com/zlgopen/awtk.git
+git clone https://gitee.com/zlgopen/awtk-linux-fb.git
+```
+
 * 下载 buildroot
 
 ```
