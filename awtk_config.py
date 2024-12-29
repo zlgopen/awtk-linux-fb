@@ -111,7 +111,7 @@ if complie_helper.get_value('WITH_CUSTOM_GRAPHIC_BUFFER', False) :
 
 #only for c compiler flags
 COMMON_CFLAGS=''
-COMMON_CFLAGS=COMMON_CFLAGS+' -std=gnu99 '
+COMMON_CFLAGS=COMMON_CFLAGS+' -std=gnu11 '
 
 OS_LIBS=[]
 OS_LIBPATH=[]
