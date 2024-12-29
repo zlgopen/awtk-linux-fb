@@ -20,50 +20,42 @@
  */
 
 #include "common_coord.h"
-#include "tkc/mutex.h"
+#include "tkc/atomic.h"
 
-static point_t s_coord = {0, 0};
-static tk_mutex_t* s_mutex = NULL;
+static tk_atomic_t s_coord;
+
+#define COMMON_COORD_POINT_TO_U64(p) (((uint64_t)p.x << 32) | p.y)
+#define COMMON_COORD_POINT_FROM_U64(p) \
+  point_init((xy_t)((num >> 32) & 0xFFFFFFFF), (xy_t)(num & 0xFFFFFFFF))
 
 ret_t common_coord_init(void) {
-  s_mutex = tk_mutex_create();
-  goto_error_if_fail(s_mutex != NULL);
-  return RET_OK;
-error:
-  return RET_FAIL;
+  value_t v;
+  ret_t ret = tk_atomic_init(&s_coord, value_set_uint64(&v, 0));
+  return_value_if_fail(RET_OK == ret, ret);
+  return ret;
 }
 
 ret_t common_coord_get(point_t* p_coord) {
+  value_t v;
   ret_t ret = RET_FAIL;
   return_value_if_fail(p_coord != NULL, RET_BAD_PARAMS);
-  return_value_if_fail(s_mutex != NULL, ret);
 
-  ret = tk_mutex_try_lock(s_mutex);
+  ret = tk_atomic_load(&s_coord, &v);
   if (RET_OK == ret) {
-    *p_coord = s_coord;
-    tk_mutex_unlock(s_mutex);
+    uint64_t num = value_uint64(&v);
+    *p_coord = COMMON_COORD_POINT_FROM_U64(num);
   }
 
   return ret;
 }
 
 ret_t common_coord_set(point_t coord) {
-  ret_t ret = RET_FAIL;
-  return_value_if_fail(s_mutex != NULL, ret);
-
-  ret = tk_mutex_try_lock(s_mutex);
-  if (RET_OK == ret) {
-    s_coord = coord;
-    tk_mutex_unlock(s_mutex);
-  }
-
-  return ret;
+  value_t v;
+  return tk_atomic_store(&s_coord, value_set_uint64(&v, COMMON_COORD_POINT_TO_U64(coord)));
 }
 
 ret_t common_coord_deinit(void) {
-  if (s_mutex != NULL) {
-    tk_mutex_destroy(s_mutex);
-    s_mutex = NULL;
-  }
-  return RET_OK;
+  ret_t ret = tk_atomic_deinit(&s_coord);
+  return_value_if_fail(RET_OK == ret, ret);
+  return ret;
 }
