@@ -8,7 +8,7 @@ import compile_config
 import awtk_config as awtk
 
 awtk.scons_db_check_and_remove()
-complie_helper = compile_config.get_curr_config()
+compile_helper = compile_config.get_curr_config()
 
 APP_CCFLAGS = ' '
 
@@ -16,7 +16,7 @@ AWTK_LIB_PATH = awtk.joinPath(awtk.BIN_DIR, "libawtk.so");
 if os.path.exists(AWTK_LIB_PATH) :
   os.remove(AWTK_LIB_PATH)
 
-APP_ROOT = complie_helper.get_value('APP', '')
+APP_ROOT = compile_helper.get_value('APP', '')
 if len (APP_ROOT) > 0:
   app_sconstruct = awtk.joinPath(APP_ROOT, 'SConstruct')
   if not os.path.exists(APP_ROOT) or not os.path.exists(app_sconstruct):
@@ -43,7 +43,7 @@ env = DefaultEnvironment(CCFLAGS = awtk.CCFLAGS + APP_CCFLAGS,
 TK_ROOT_VAR = awtk.joinPath(awtk.VAR_DIR, 'awtk')
 VariantDir(TK_ROOT_VAR, awtk.TK_ROOT)
 
-if APP_ROOT == '' and complie_helper.get_value('BUILD_DEMOS', True):
+if APP_ROOT == '' and compile_helper.get_value('BUILD_DEMOS', True):
   APP_PROJ_VAR = [awtk.joinPath(TK_ROOT_VAR, 'demos/SConscript')]
 else:
   APP_PROJ_VAR = []
@@ -79,8 +79,8 @@ if os.environ['LCD_DEVICES'] == 'wayland' or os.environ['LCD_DEVICES'] == 'egl_f
 else :
   SConscriptFiles += [ 'awtk-port/SConscript' ]
 
-os.environ['BUILD_TOOLS'] = str(complie_helper.get_value('BUILD_TOOLS', True))
-if complie_helper.get_value('BUILD_TOOLS', True) :
+os.environ['BUILD_TOOLS'] = str(compile_helper.get_value('BUILD_TOOLS', True))
+if compile_helper.get_value('BUILD_TOOLS', True) :
   SConscriptFiles += [
     awtk.joinPath(TK_ROOT_VAR, 'tools/common/SConscript'), 
     awtk.joinPath(TK_ROOT_VAR, 'tools/ui_gen/xml_to_ui/SConscript'),
@@ -115,8 +115,8 @@ def build_app():
       shutil.copy(awtk.joinPath(app_bin, file), linux_fb_bin)
 
 def compile_end() :
-  complie_helper.save_last_complie_argv()
-  complie_helper.output_compile_data(awtk.TK_ROOT)
+  compile_helper.save_last_compile_argv()
+  compile_helper.output_compile_data(awtk.TK_ROOT)
   build_app()
 
 atexit.register(compile_end)

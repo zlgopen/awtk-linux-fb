@@ -1,7 +1,7 @@
 import os
 import copy
 import scons_argv
-complie_helper = scons_argv.get_compile_config()
+compile_helper = scons_argv.get_compile_config()
 
 BIN_DIR = os.environ['BIN_DIR'];
 LIB_DIR = os.environ['LIB_DIR'];
@@ -33,7 +33,7 @@ elif LCD_DEVICES =='egl_for_gbm' :
 
 awtk_linux_fb = env.Library(os.path.join(LIB_DIR, 'awtk_linux_fb'), SOURCES)
 
-extern_codes = complie_helper.get_value('EXTERN_CODE', None)
+extern_codes = compile_helper.get_value('EXTERN_CODE', None)
 if extern_codes != None :
   all_extern_codes = []
   for extern_code in extern_codes :

@@ -49,15 +49,15 @@ def get_compile_config() :
     return compile_config.get_curr_config()
   else :
     INIT = True
-    complie_helper = compile_config.get_curr_config_for_awtk()
-    return complie_helper
+    compile_helper = compile_config.get_curr_config_for_awtk()
+    return compile_helper
 
 
 def init(ARGUMENTS) :
   global INIT
   INIT = True
-  complie_helper = compile_config.complie_helper()
-  complie_helper.set_compile_config(COMPILE_CONFIG)
-  complie_helper.try_load_default_config()
-  complie_helper.scons_user_sopt(ARGUMENTS)
-  compile_config.set_curr_config(complie_helper)
+  compile_helper = compile_config.compile_helper()
+  compile_helper.set_compile_config(COMPILE_CONFIG)
+  compile_helper.try_load_default_config()
+  compile_helper.scons_user_sopt(ARGUMENTS)
+  compile_config.set_curr_config(compile_helper)
