@@ -1,5 +1,9 @@
 # 最新动态
 
+2025/01/09
+  * 配合最近awtk的g2d重构，删除lcd_linux_fb.c中swap和多线程模式相关代码，避免在多fb的时候运行崩溃
+  * 修改awtk_config.py脚本，链接时加入atomic库，以及修正AWTK_STATIC_LIBS的赋值，避免链接libawtk.so时出现重复包含库
+
 2024/12/30
   * 修改编译脚本拼写错误(感谢兆坤提供补丁)
 

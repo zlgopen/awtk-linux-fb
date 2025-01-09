@@ -178,7 +178,7 @@ else :
   AR = TOOLS_PREFIX + compile_helper.get_value('TOOLS_AR', 'ar')
   RANLIB = TOOLS_PREFIX + compile_helper.get_value('TOOLS_RANLIB', 'ranlib')
   STRIP = TOOLS_PREFIX + compile_helper.get_value('TOOLS_STRIP', 'strip')
-  OS_LIBS = compile_helper.get_value('OS_LIBS', []) + ['stdc++', 'pthread', 'rt', 'm', 'dl']
+  OS_LIBS = compile_helper.get_value('OS_LIBS', []) + ['atomic', 'stdc++', 'pthread', 'rt', 'm', 'dl']
 
 OS_DEBUG = compile_helper.get_value('DEBUG', False)
 if OS_DEBUG :
@@ -231,8 +231,8 @@ CCFLAGS=OS_FLAGS + COMMON_CCFLAGS
 if compile_helper.get_value('EXTERN_CODE', None) != None :
   LINKFLAGS=OS_LINKFLAGS + toWholeArchive(['__extern_code'])
 
-STATIC_LIBS =['awtk_global', 'fscript_ext_widgets', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'linebreak', 'fribidi']
-STATIC_LIBS += TKC_STATIC_LIBS
+AWTK_STATIC_LIBS =['awtk_global', 'fscript_ext_widgets', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'linebreak', 'fribidi']
+AWTK_STATIC_LIBS += TKC_STATIC_LIBS
 if TSLIB_LIB_DIR != '':
   SHARED_LIBS=['awtk'] + OS_LIBS + ['ts'];
 else:
@@ -243,18 +243,18 @@ if VGCANVAS == 'NANOVG':
   OS_PROJECTS = [ joinPath(TK_ROOT_VAR, '3rd/nanovg/SConscript') ]
   OS_CPPPATH += [joinPath(TK_3RD_ROOT, 'nanovg'),  joinPath(TK_3RD_ROOT, 'nanovg/gl'),  joinPath(TK_3RD_ROOT, 'nanovg/base') ]
   if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' or LCD_DEVICES =='wayland':
-    STATIC_LIBS = STATIC_LIBS + ['nanovg-agge', 'agge', 'nanovg']  + OS_LIBS
-    AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg'] + OS_LIBS
+    AWTK_STATIC_LIBS = AWTK_STATIC_LIBS + ['nanovg-agge', 'agge', 'nanovg']
+    AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg']
   elif lcd_devices_is_egl(LCD_DEVICES) :
     CCFLAGS += ' -DWITH_NANOVG_GLES2 -DWITH_NANOVG_GL -DWITH_NANOVG_GPU '
-    STATIC_LIBS = STATIC_LIBS + ['glad', 'nanovg']  + OS_LIBS
-    AWTK_DLL_DEPS_LIBS = ['glad', 'nanovg'] + OS_LIBS
+    AWTK_STATIC_LIBS = AWTK_STATIC_LIBS + ['glad', 'nanovg']
+    AWTK_DLL_DEPS_LIBS = ['glad', 'nanovg']
 elif VGCANVAS == 'CAIRO':
   TK_ROOT_VAR = joinPath(VAR_DIR, 'awtk')
   OS_PROJECTS = [joinPath(TK_ROOT_VAR, '3rd/cairo/SConscript'), joinPath(TK_ROOT_VAR, '3rd/pixman/SConscript')]
   OS_CPPPATH += [joinPath(TK_3RD_ROOT, 'cairo'),  joinPath(TK_3RD_ROOT, 'pixman') ]
-  STATIC_LIBS = STATIC_LIBS + ['cairo', 'pixman']  + OS_LIBS
-  AWTK_DLL_DEPS_LIBS= ['cairo', 'pixman'] + OS_LIBS
+  AWTK_STATIC_LIBS = AWTK_STATIC_LIBS + ['cairo', 'pixman']
+  AWTK_DLL_DEPS_LIBS= ['cairo', 'pixman']
   CCFLAGS += ' -DWITH_VGCANVAS_CAIRO -DHAVE_CONFIG_H -DCAIRO_WIN32_STATIC_BUILD '
 
 elif VGCANVAS == 'NANOVG_PLUS':
@@ -263,13 +263,13 @@ elif VGCANVAS == 'NANOVG_PLUS':
   OS_CPPPATH += [joinPath(TK_3RD_ROOT, 'nanovg_plus/gl'), joinPath(TK_3RD_ROOT, 'nanovg_plus/base') ]
   if lcd_devices_is_egl(LCD_DEVICES) :
     CCFLAGS += ' -DWITH_NANOVG_PLUS_GPU -DWITH_NANOVG_GPU -DWITH_GPU_GL -DWITH_GPU_GLES2 -DNVGP_GLES2 '
-    STATIC_LIBS = STATIC_LIBS + ['glad', 'nanovg_plus']  + OS_LIBS
-    AWTK_DLL_DEPS_LIBS = ['glad', 'nanovg_plus'] + OS_LIBS
+    AWTK_STATIC_LIBS = AWTK_STATIC_LIBS + ['glad', 'nanovg_plus']
+    AWTK_DLL_DEPS_LIBS = ['glad', 'nanovg_plus'] 
 
-
-LIBS=STATIC_LIBS
-AWTK_STATIC_LIBS = LIBS
-OS_WHOLE_ARCHIVE =toWholeArchive(LIBS)
+OS_WHOLE_ARCHIVE =toWholeArchive(AWTK_STATIC_LIBS)
+STATIC_LIBS = AWTK_STATIC_LIBS + OS_LIBS
+LIBS = AWTK_STATIC_LIBS + OS_LIBS
+AWTK_DLL_DEPS_LIBS = AWTK_DLL_DEPS_LIBS + OS_LIBS
 
 CPPPATH=[TK_ROOT, 
   TK_SRC, 
