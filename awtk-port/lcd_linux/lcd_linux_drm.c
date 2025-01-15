@@ -462,7 +462,7 @@ static ret_t drm_vsync(int fd) {
   drmEventContext ev;
 
   FD_ZERO(&fds);
-  srand(time(&start));
+  time(&start);
   memset(&v, 0, sizeof(v));
   memset(&ev, 0, sizeof(ev));
 
