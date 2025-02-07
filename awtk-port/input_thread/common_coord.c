@@ -25,7 +25,7 @@
 static tk_atomic_t s_coord;
 
 #define COMMON_COORD_POINT_TO_U64(p) (((uint64_t)p.x << 32) | p.y)
-#define COMMON_COORD_POINT_FROM_U64(p) \
+#define COMMON_COORD_POINT_FROM_U64(num) \
   point_init((xy_t)((num >> 32) & 0xFFFFFFFF), (xy_t)(num & 0xFFFFFFFF))
 
 ret_t common_coord_init(void) {
