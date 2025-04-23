@@ -192,6 +192,7 @@ lcd_t* lcd_linux_fb_create(const char* filename) {
 
   atexit(on_app_exit);
   signal(SIGINT, on_signal_int);
+  signal(SIGTERM, on_signal_int);
 
   return lcd;
 }

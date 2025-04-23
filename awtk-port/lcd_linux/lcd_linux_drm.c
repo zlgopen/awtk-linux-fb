@@ -686,6 +686,7 @@ lcd_t* lcd_linux_drm_create(const char* card) {
 
   atexit(on_app_exit);
   signal(SIGINT, on_signal_int);
+  signal(SIGTERM, on_signal_int);
   return lcd;
 error:
   TKMEM_FREE(drm);
