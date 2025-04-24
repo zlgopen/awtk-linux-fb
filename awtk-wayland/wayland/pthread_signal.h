@@ -1,7 +1,7 @@
 /**
  * File:   pthread_signal.h
  * Author: AWTK Develop Team
- * Brief:  thread to read /dev/input/
+ * Brief:  thread signal
  *
  * Copyright (c) 2018 - 2024 Guangzhou ZHIYUAN Electronics Co.,Ltd.
  *
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef UI_AWTK_WAYLAND_PTHREAD_SIGNAL_H_
-#define UI_AWTK_WAYLAND_PTHREAD_SIGNAL_H_
+#ifndef UI_AWTK_WAYLAND_PTHREAD_SIGNAL_H
+#define UI_AWTK_WAYLAND_PTHREAD_SIGNAL_H
 
 #include <pthread.h>
 
@@ -54,4 +54,4 @@ static void ThreadSignal_Signal(ThreadSignal *signal) {
   pthread_mutex_unlock(&signal->mutex);
 }
 
-#endif /* UI_AWTK_WAYLAND_PTHREAD_SIGNAL_H_ */
+#endif /* UI_AWTK_WAYLAND_PTHREAD_SIGNAL_H */

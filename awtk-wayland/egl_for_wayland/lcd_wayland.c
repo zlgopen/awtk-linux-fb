@@ -1,7 +1,7 @@
 /**
  * File:   lcd_wayland.c
  * Author: AWTK Develop Team
- * Brief:  thread to read /dev/input/
+ * Brief:  lcd wayland
  *
  * Copyright (c) 2018 - 2024 Guangzhou ZHIYUAN Electronics Co.,Ltd.
  *
@@ -27,6 +27,10 @@
 #include "main_loop/main_loop_simple.h"
 #include "tkc/thread.h"
 
+#ifndef FULLSCREEN
+#define FULLSCREEN FALSE
+#endif
+
 enum key_repeat_state {
   repeat_key_released = 0,
   repeat_key_pressed = 10,
@@ -34,22 +38,29 @@ enum key_repeat_state {
   repeat_key_rate,
 };
 
+lcd_wayland_t* lw = NULL;
 enum key_repeat_state __repeat_state = repeat_key_released;
-static int key_value;
+static int32_t key_value;
+extern int32_t map_key(uint8_t code);
+
+void on_app_exit(void) {
+  if (lw) {
+    destroy_wayland_data(&lw->objs);
+  }
+}
 
 static ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* e) {
   main_loop_queue_event((main_loop_t*)ctx, e);
   return RET_OK;
 }
 
-extern int32_t map_key(uint8_t code);
-static void key_input_dispatch(int state,int key) {
+static void key_input_dispatch(int32_t state, int32_t key) {
   event_queue_req_t req;
 
   req.event.type = (state == WL_KEYBOARD_KEY_STATE_PRESSED) ? EVT_KEY_DOWN : EVT_KEY_UP;
   req.key_event.key = map_key(key);
 
-  input_dispatch_to_main_loop(main_loop(), &(req));
+  input_dispatch_to_main_loop(main_loop(), &req);
 
   req.event.type = EVT_NONE;
 
@@ -61,11 +72,11 @@ static void key_input_dispatch(int state,int key) {
   }
 }
 
-static void mouse_point_dispatch(int state,int button, int x,int y) {
+static void mouse_point_dispatch(int32_t state, int32_t button, int32_t x, int32_t y) {
   event_queue_req_t r;
-  event_queue_req_t *req = &r;
+  event_queue_req_t* req = &r;
   main_loop_simple_t* l = (main_loop_simple_t*)main_loop();
-  static int __x,__y;
+  static int32_t __x,__y;
 
   if (x > 0) {
     __x = x;
@@ -150,21 +161,21 @@ void kb_repeat(void) {
   return;
 }
 
-lcd_wayland_t *lcd_wayland_create(int w, int h) {
-  lcd_wayland_t *lw = calloc(1,sizeof(lcd_wayland_t));
-  if (lw && setup_wayland (&lw->objs,0) != SETUP_OK) {
-    destroy_wayland_data (&lw->objs);
+lcd_wayland_t* lcd_wayland_create(int w, int h) {
+  lw = calloc(1, sizeof(lcd_wayland_t));
+  if (lw && setup_wayland(&lw->objs, FULLSCREEN) != SETUP_OK) {
+    destroy_wayland_data(&lw->objs);
     return NULL;
   }
 
-  lw->objs.inputs.keyboard.kb_xcb = key_input_dispatch;
-  lw->objs.inputs.mouse.point_xcb = mouse_point_dispatch;
-  lw->objs.inputs.touch.point_xcb = mouse_point_dispatch;
+  lw->objs.inputs.keyboard.keyboard_dispatch = key_input_dispatch;
+  lw->objs.inputs.mouse.pointer_dispatch = mouse_point_dispatch;
+  lw->objs.inputs.touch.pointer_dispatch = mouse_point_dispatch;
 
-  struct wayland_data *objs = &lw->objs;
-  struct wayland_output *out = container_of ( objs->monitors->next,
-                                              struct wayland_output,
-                                              link);
+  wayland_data_t* objs = &lw->objs;
+  wayland_output_t* out = container_of(objs->monitors->next,
+                                       wayland_output_t,
+                                       link);
   lw->objs.width = w;
   lw->objs.height = h;
 
@@ -173,6 +184,8 @@ lcd_wayland_t *lcd_wayland_create(int w, int h) {
     lw->objs.height = w;
     lw->objs.width = h;
   }
+
+  atexit(on_app_exit);
 
   return lw;
 }

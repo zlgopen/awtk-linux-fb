@@ -1,7 +1,7 @@
 /**
  * File:   lcd_wayland.h
  * Author: AWTK Develop Team
- * Brief:  thread to read /dev/input/
+ * Brief:  lcd wayland
  *
  * Copyright (c) 2018 - 2024 Guangzhou ZHIYUAN Electronics Co.,Ltd.
  *
@@ -19,19 +19,19 @@
  *
  */
 
-#ifndef UI_AWTK_WAYLAND_LCD_WAYLAND_H_
-#define UI_AWTK_WAYLAND_LCD_WAYLAND_H_
+#ifndef UI_AWTK_WAYLAND_LCD_WAYLAND_H
+#define UI_AWTK_WAYLAND_LCD_WAYLAND_H
 
 #include "wayland_tools.h"
 #include "tkc/mem.h"
 #include "base/lcd.h"
 
-typedef struct {
-  struct wayland_data objs;
+typedef struct _lcd_wayland_t{
+  wayland_data_t objs;
   void *impl_data;
 } lcd_wayland_t;
 
-lcd_wayland_t *lcd_wayland_create(int w, int h);
+lcd_wayland_t* lcd_wayland_create(int w, int h);
 void kb_repeat(void);
 
-#endif /* UI_AWTK_WAYLAND_LCD_WAYLAND_H_ */
+#endif /* UI_AWTK_WAYLAND_LCD_WAYLAND_H */

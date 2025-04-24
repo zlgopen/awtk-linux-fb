@@ -9,7 +9,15 @@ LCD_DEVICES = os.environ['LCD_DEVICES']
 
 env = DefaultEnvironment().Clone()
 
-SOURCES = ['protocol/xdg-shell-protocol.c']
+WAYLAND_SCANNER_PATH = compile_helper.get_value('WAYLAND_SCANNER_PATH', None)
+if WAYLAND_SCANNER_PATH != None :
+  os.system(WAYLAND_SCANNER_PATH + '/wayland-scanner ' + ' client-header ' + ' protocol/xdg-shell.xml ' + ' protocol/xdg-shell-protocol.h')
+  os.system(WAYLAND_SCANNER_PATH + '/wayland-scanner ' + ' private-code ' + ' protocol/xdg-shell.xml ' + ' protocol/xdg-shell-protocol.c')
+  os.system(WAYLAND_SCANNER_PATH + '/wayland-scanner ' + ' client-header ' + ' protocol/fullscreen-shell-unstable-v1.xml ' + ' protocol/fullscreen-shell-protocol.h')
+  os.system(WAYLAND_SCANNER_PATH + '/wayland-scanner ' + ' private-code ' + ' protocol/fullscreen-shell-unstable-v1.xml ' +  'protocol/fullscreen-shell-protocol.c')
+
+SOURCES = []
+SOURCES += Glob('protocol/*.c')
 
 if LCD_DEVICES == 'wayland' :
   SOURCES += Glob('wayland/*.c');

@@ -32,6 +32,7 @@ COMPILE_CONFIG = {
   'EXTERN_CODE' : { 'value' : None, 'type' : str.__name__, 'desc' : ['add extern code list'], 'help_info' : 'when build awtk\'s linux-fb\, user add extern code list, example is EXTERN_CODE=XXXXX/*.c,XXXXX/*.c  , use \',\' split muliple libraries' },
   'WITH_G2D' : { 'value' : False, 'type' : bool.__name__, 'desc' : ['enable g2d model '], 'help_info' : 'enable awtk\'s g2d model, value is true or false' },
   "WITH_CUSTOM_GRAPHIC_BUFFER" : { 'value' : False, 'type' : bool.__name__, 'desc' : ['use custom graphic_buffer '], 'help_info' : 'disable awtk default graphic_buffer and use custom graphic_buffer, value is true or false' },
+  'WAYLAND_SCANNER_PATH' : { 'value' : None, 'type' : str.__name__, 'desc' : ['wayland_scanner path'], 'help_info' : 'set the path of wayland_scanner' },
 }
 
 CWD = os.path.normpath(os.path.abspath(os.path.dirname(__file__)));

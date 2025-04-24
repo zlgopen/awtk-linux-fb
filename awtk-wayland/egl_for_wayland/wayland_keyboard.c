@@ -1,9 +1,9 @@
 /**
  * File:   wayland_keyboard.c
  * Author: AWTK Develop Team
- * Brief:  thread to read /dev/input/
+ * Brief:  wayland key map
  *
- * Copyright (c) 2018 - 2024 Guangzhou ZHIYUAN Electronics Co.,Ltd.
+ * Copyright (c) 2018 - 2018  Guangzhou ZHIYUAN Electronics Co.,Ltd.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,127 +15,102 @@
 /**
  * History:
  * ================================================================
- * 2024-07-17 Yang Zewu <yangzewu@zlg.cn> created
+ * 2018-09-07 Li XianJing <xianjimli@hotmail.com> created
  *
  */
 
-#include "wayland_tools.h"
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <linux/input.h>
+#include "tkc/mem.h"
+#include "base/keys.h"
+#include "tkc/thread.h"
 
-#define POINTER_BUTTON_STATE_MOTION -1
+#ifndef EV_SYN
+#define EV_SYN 0x00
+#endif
 
-void keymap_format_cb(void *data, struct wl_keyboard *keyboard, uint32_t format,
-                       int32_t fd, uint32_t keymap_size ) {
-  struct keyboard *kbd = data;
-  char *str = mmap(NULL, keymap_size, PROT_READ, MAP_SHARED, fd, 0);
-  xkb_keymap_unref(kbd->map);
-  kbd->map = xkb_keymap_new_from_string(kbd->ctx, str, XKB_KEYMAP_FORMAT_TEXT_V1,
-                                        XKB_KEYMAP_COMPILE_NO_FLAGS);
-  munmap(str, keymap_size);
-  close(fd);
-  xkb_state_unref(kbd->kb_state);
-  kbd->kb_state = xkb_state_new(kbd->map);
+static const int32_t s_key_map[0x100] = {[KEY_1] = TK_KEY_1,
+                                         [KEY_2] = TK_KEY_2,
+                                         [KEY_3] = TK_KEY_3,
+                                         [KEY_4] = TK_KEY_4,
+                                         [KEY_5] = TK_KEY_5,
+                                         [KEY_6] = TK_KEY_6,
+                                         [KEY_7] = TK_KEY_7,
+                                         [KEY_8] = TK_KEY_8,
+                                         [KEY_9] = TK_KEY_9,
+                                         [KEY_0] = TK_KEY_0,
+                                         [KEY_A] = TK_KEY_a,
+                                         [KEY_B] = TK_KEY_b,
+                                         [KEY_C] = TK_KEY_c,
+                                         [KEY_D] = TK_KEY_d,
+                                         [KEY_E] = TK_KEY_e,
+                                         [KEY_F] = TK_KEY_f,
+                                         [KEY_G] = TK_KEY_g,
+                                         [KEY_H] = TK_KEY_h,
+                                         [KEY_I] = TK_KEY_i,
+                                         [KEY_J] = TK_KEY_j,
+                                         [KEY_K] = TK_KEY_k,
+                                         [KEY_L] = TK_KEY_l,
+                                         [KEY_M] = TK_KEY_m,
+                                         [KEY_N] = TK_KEY_n,
+                                         [KEY_O] = TK_KEY_o,
+                                         [KEY_P] = TK_KEY_p,
+                                         [KEY_Q] = TK_KEY_q,
+                                         [KEY_R] = TK_KEY_r,
+                                         [KEY_S] = TK_KEY_s,
+                                         [KEY_T] = TK_KEY_t,
+                                         [KEY_U] = TK_KEY_u,
+                                         [KEY_V] = TK_KEY_v,
+                                         [KEY_W] = TK_KEY_w,
+                                         [KEY_X] = TK_KEY_x,
+                                         [KEY_Y] = TK_KEY_y,
+                                         [KEY_Z] = TK_KEY_z,
+                                         [KEY_RIGHTCTRL] = TK_KEY_RCTRL,
+                                         [KEY_RIGHTALT] = TK_KEY_RALT,
+                                         [KEY_HOME] = TK_KEY_HOME,
+                                         [KEY_UP] = TK_KEY_UP,
+                                         [KEY_PAGEUP] = TK_KEY_PAGEUP,
+                                         [KEY_LEFT] = TK_KEY_LEFT,
+                                         [KEY_RIGHT] = TK_KEY_RIGHT,
+                                         [KEY_END] = TK_KEY_END,
+                                         [KEY_DOWN] = TK_KEY_DOWN,
+                                         [KEY_PAGEDOWN] = TK_KEY_PAGEDOWN,
+                                         [KEY_INSERT] = TK_KEY_INSERT,
+                                         [KEY_DELETE] = TK_KEY_DELETE,
+                                         [KEY_F1] = TK_KEY_F1,
+                                         [KEY_F2] = TK_KEY_F2,
+                                         [KEY_F3] = TK_KEY_F3,
+                                         [KEY_F4] = TK_KEY_F4,
+                                         [KEY_F5] = TK_KEY_F5,
+                                         [KEY_F6] = TK_KEY_F6,
+                                         [KEY_F7] = TK_KEY_F7,
+                                         [KEY_F8] = TK_KEY_F8,
+                                         [KEY_F9] = TK_KEY_F9,
+                                         [KEY_F10] = TK_KEY_F10,
+                                         [KEY_F11] = TK_KEY_F11,
+                                         [KEY_F12] = TK_KEY_F12,
+                                         [KEY_COMMA] = TK_KEY_COMMA,
+                                         [KEY_DOT] = TK_KEY_DOT,
+                                         [KEY_SLASH] = TK_KEY_SLASH,
+                                         [KEY_RIGHTSHIFT] = TK_KEY_RSHIFT,
+                                         [KEY_LEFTALT] = TK_KEY_LALT,
+                                         [KEY_SPACE] = TK_KEY_SPACE,
+                                         [KEY_CAPSLOCK] = TK_KEY_CAPSLOCK,
+                                         [KEY_SEMICOLON] = TK_KEY_SEMICOLON,
+                                         [KEY_LEFTSHIFT] = TK_KEY_LSHIFT,
+                                         [KEY_BACKSLASH] = TK_KEY_BACKSLASH,
+                                         [KEY_LEFTBRACE] = TK_KEY_LEFTBRACE,
+                                         [KEY_RIGHTBRACE] = TK_KEY_RIGHTBRACE,
+                                         [KEY_ENTER] = TK_KEY_SPACE,
+                                         [KEY_LEFTCTRL] = TK_KEY_LCTRL,
+                                         [KEY_MINUS] = TK_KEY_MINUS,
+                                         [KEY_EQUAL] = TK_KEY_EQUAL,
+                                         [KEY_BACKSPACE] = TK_KEY_BACKSPACE,
+                                         [KEY_TAB] = TK_KEY_TAB,
+                                         [KEY_ESC] = TK_KEY_ESCAPE};
+
+int32_t map_key(uint8_t code) {
+  return s_key_map[code];
 }
-
-extern void key_input(int,int);
-void key_cb(void *data, struct wl_keyboard *keyboard, uint32_t serial,
-             uint32_t time, uint32_t key, uint32_t state) {
-  (void) keyboard;
-  (void) serial;
-  (void) time;
-  struct keyboard *keydata = data;
-  if (keydata->kb_xcb) {
-    keydata->kb_xcb(state,key);
-  }
-}
-
-static void motion_pointer_cb(void *data, struct wl_pointer *pointer, uint32_t time,
-                   wl_fixed_t surface_x, wl_fixed_t surface_y) {
-  struct input_bundle *input = data;
-  if (input->mouse.point_xcb) {
-    input->mouse.point_xcb(POINTER_BUTTON_STATE_MOTION, 0, 
-                           wl_fixed_to_int(surface_x), wl_fixed_to_int(surface_y));
-  }
-}
-
-static void button_pointer_cb(void *data, struct wl_pointer *pointer, uint32_t serial,
-                                uint32_t time, uint32_t button, uint32_t state) {
-  struct input_bundle *input = data;
-  if (input->mouse.point_xcb) {
-    input->mouse.point_xcb(state, button, -1, -1);
-  }
-}
-
-static void enter_pointer_cb(void *data, struct wl_pointer *wl_pointer, uint32_t serial,
-                             struct wl_surface *surface, wl_fixed_t surface_x, wl_fixed_t surface_y) {
-  struct input_bundle *inputs = data;
-  struct wl_cursor *default_cursor = wl_cursor_theme_get_cursor(inputs->mouse.cursor_theme, "left_ptr");
-  struct wl_cursor_image *image = default_cursor->images[0];
-  struct wl_buffer *buffer = wl_cursor_image_get_buffer(image);
-  wl_pointer_set_cursor(inputs->mouse.pointer, 1, inputs->mouse.point_surface, 0, 0);
-  wl_surface_attach(inputs->mouse.point_surface, buffer, 0, 0);
-  wl_surface_damage(inputs->mouse.point_surface, 0, 0, image->width, image->height);
-  wl_surface_commit(inputs->mouse.point_surface);
-}
-
-const struct wl_pointer_listener pointer_listener = { 
-    enter_pointer_cb,
-    do_nothing,
-    motion_pointer_cb,
-    button_pointer_cb,
-    do_nothing,
-    do_nothing,
-    do_nothing,
-    do_nothing,
-    do_nothing };
-
-static void touch_down_cb(void *data, struct wl_touch *wl_touch, uint32_t serial, uint32_t time,
-                          struct wl_surface *surface, int32_t id,  wl_fixed_t x, wl_fixed_t y) {
-  struct touch *point = data;
-  if (point->point_xcb) {
-    point->point_xcb(WL_POINTER_BUTTON_STATE_PRESSED, BTN_LEFT,
-                     wl_fixed_to_int(x), wl_fixed_to_int(y));
-  }
-}
-
-static void touch_up_cb(void *data, struct wl_touch *wl_touch,
-                        uint32_t serial, uint32_t time, int32_t id) {
-  struct touch *point = data;
-  if (point->point_xcb) {
-    point->point_xcb(WL_POINTER_BUTTON_STATE_RELEASED, BTN_LEFT, -1, -1);
-  }
-}
-
-static void touch_motion_cb(void *data, struct wl_touch *wl_touch, uint32_t time,
-                            int32_t id, wl_fixed_t x, wl_fixed_t y) {
-  struct touch *point = data;
-
-  if (point->point_xcb) {
-    point->point_xcb(POINTER_BUTTON_STATE_MOTION, 0,
-                     wl_fixed_to_int(x), wl_fixed_to_int(y));
-  }
-}
-
-const struct wl_touch_listener touch_listerner = {
-    touch_down_cb,
-    touch_up_cb,
-    touch_motion_cb,
-    do_nothing,
-    do_nothing,
-    do_nothing,
-    do_nothing
-};
-
-static void _keyboard_repeat_info(void *data, struct wl_keyboard *keyboard,
-                                  int32_t rate, int32_t delay) {
-    printf("repeat_info: rate %d, delay %d\n", rate, delay);
-}
-
-const struct wl_keyboard_listener xkb_keyboard_listener = {
-    keymap_format_cb,
-    do_nothing,
-    do_nothing,
-    key_cb,
-    do_nothing,
-    _keyboard_repeat_info,
-};
-

@@ -13,7 +13,7 @@ def joinPath(root, subdir):
   return os.path.normpath(os.path.join(root, subdir))
 
 def lcd_devices_is_egl(lcd_devices):
-  if lcd_devices =='egl_for_fsl' or lcd_devices =='egl_for_x11' or lcd_devices =='egl_for_gbm' or lcd_devices =='egl_for_wayland':
+  if lcd_devices == 'egl_for_fsl' or lcd_devices == 'egl_for_x11' or lcd_devices == 'egl_for_gbm' or lcd_devices == 'egl_for_wayland':
     return True
   return False
 
@@ -59,7 +59,7 @@ VGCANVAS='NANOVG'
 #VGCANVAS='NANOVG_PLUS'
 VGCANVAS = compile_helper.get_value('VGCANVAS', VGCANVAS)
 
-if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' or LCD_DEVICES =='wayland':
+if LCD_DEVICES == 'fb' or LCD_DEVICES == 'drm' or LCD_DEVICES == 'wayland':
   LCD='LINUX_FB'
   NANOVG_BACKEND='AGGE'
 elif lcd_devices_is_egl(LCD_DEVICES) :
@@ -81,14 +81,14 @@ COMMON_CCFLAGS=COMMON_CCFLAGS+' -DAPP_TYPE=APP_MOBILE -DLINUX_FB '
 #COMMON_CCFLAGS=COMMON_CCFLAGS+' -DENABLE_CUSTOM_KEYS=1 '
 #COMMON_CCFLAGS=COMMON_CCFLAGS+' -DCUSTOM_KEYS_FILEPATH=\"asset://custom_keys.json\" '
 
-if LCD_DEVICES =='fb' or LCD_DEVICES =='wayland':
+if LCD_DEVICES == 'fb' or LCD_DEVICES == 'wayland':
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_LINUX_FB -DWITH_FAST_LCD_PORTRAIT '
-elif LCD_DEVICES =='drm' :
+elif LCD_DEVICES == 'drm' :
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_NANOVG_AGGE -DWITH_LINUX_DRM -DWITH_FAST_LCD_PORTRAIT '
 elif lcd_devices_is_egl(LCD_DEVICES) :
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_GPU_GL -DWITH_GPU_GLES2 -DWITH_GPU -DWITH_LINUX_EGL '
 
-if LCD_DEVICES =='egl_for_wayland' :
+if LCD_DEVICES == 'egl_for_wayland' :
   COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWL_EGL_PLATFORM '
 
 if INPUT_ENGINE == 't9':
@@ -193,11 +193,11 @@ if LCD_DEVICES =='drm' :
   #OS_CPPPATH += ['/usr/include/libdrm']
   OS_LIBS = ['drm'] + OS_LIBS
 elif LCD_DEVICES =='wayland' :
-  OS_LIBS = ['xkbcommon','wayland-client','wayland-cursor'] + OS_LIBS
+  OS_LIBS = [ 'xkbcommon', 'wayland-client', 'wayland-cursor' ] + OS_LIBS
 elif LCD_DEVICES =='egl_for_fsl':
   #for egl for fsl
   OS_FLAGS=OS_FLAGS + ' -DEGL_API_FB '
-  OS_LIBS = [ 'GLESv2', 'EGL'] + OS_LIBS
+  OS_LIBS = [ 'GLESv2', 'EGL' ] + OS_LIBS
 elif LCD_DEVICES =='egl_for_x11' :
   #for egl for fsl
   OS_LIBS = [ 'X11', 'EGL', 'GLESv2' ] + OS_LIBS
@@ -206,7 +206,7 @@ elif LCD_DEVICES =='egl_for_gbm' :
   #OS_CPPPATH += ['/usr/include/libdrm', '/usr/include/GLES2']
   OS_LIBS = [ 'drm', 'gbm', 'EGL', 'GLESv2' ] + OS_LIBS
 elif LCD_DEVICES =='egl_for_wayland' :
-  OS_LIBS = ['xkbcommon', 'wayland-client', 'wayland-cursor', 'GLESv2', 'EGL', 'wayland-egl'] + OS_LIBS
+  OS_LIBS = [ 'xkbcommon', 'wayland-client', 'wayland-cursor', 'GLESv2', 'EGL', 'wayland-egl' ] + OS_LIBS
 
 COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DLINUX -DHAS_PTHREAD -fPIC '
 COMMON_CCFLAGS = COMMON_CCFLAGS+' -DWITH_DATA_READER_WRITER=1 '
@@ -240,8 +240,8 @@ else:
 
 if VGCANVAS == 'NANOVG':
   TK_ROOT_VAR = joinPath(VAR_DIR, 'awtk')
-  OS_PROJECTS = [ joinPath(TK_ROOT_VAR, '3rd/nanovg/SConscript') ]
-  OS_CPPPATH += [joinPath(TK_3RD_ROOT, 'nanovg'),  joinPath(TK_3RD_ROOT, 'nanovg/gl'),  joinPath(TK_3RD_ROOT, 'nanovg/base') ]
+  OS_PROJECTS = [joinPath(TK_ROOT_VAR, '3rd/nanovg/SConscript') ]
+  OS_CPPPATH += [joinPath(TK_3RD_ROOT, 'nanovg'), joinPath(TK_3RD_ROOT, 'nanovg/gl'), joinPath(TK_3RD_ROOT, 'nanovg/base') ]
   if LCD_DEVICES =='fb' or LCD_DEVICES =='drm' or LCD_DEVICES =='wayland':
     AWTK_STATIC_LIBS = AWTK_STATIC_LIBS + ['nanovg-agge', 'agge', 'nanovg']
     AWTK_DLL_DEPS_LIBS = ['nanovg-agge', 'agge', 'nanovg']
@@ -252,7 +252,7 @@ if VGCANVAS == 'NANOVG':
 elif VGCANVAS == 'CAIRO':
   TK_ROOT_VAR = joinPath(VAR_DIR, 'awtk')
   OS_PROJECTS = [joinPath(TK_ROOT_VAR, '3rd/cairo/SConscript'), joinPath(TK_ROOT_VAR, '3rd/pixman/SConscript')]
-  OS_CPPPATH += [joinPath(TK_3RD_ROOT, 'cairo'),  joinPath(TK_3RD_ROOT, 'pixman') ]
+  OS_CPPPATH += [joinPath(TK_3RD_ROOT, 'cairo'), joinPath(TK_3RD_ROOT, 'pixman') ]
   AWTK_STATIC_LIBS = AWTK_STATIC_LIBS + ['cairo', 'pixman']
   AWTK_DLL_DEPS_LIBS= ['cairo', 'pixman']
   CCFLAGS += ' -DWITH_VGCANVAS_CAIRO -DHAVE_CONFIG_H -DCAIRO_WIN32_STATIC_BUILD '
