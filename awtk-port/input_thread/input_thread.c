@@ -88,22 +88,11 @@ static bool_t run_info_is_no_finger_down(run_info_t* info) {
 }
 
 static run_info_t* run_info_create(const char* filename, input_dispatch_t dispatch, void* dispatch_ctx, int32_t max_x, int32_t max_y) {
-  int fd = 0;
   run_info_t* info = NULL;
   return_value_if_fail(filename != NULL && dispatch != NULL, NULL);
-  fd = open(filename, O_RDONLY);
-  if (fd > 0) {
-    log_debug("open %s successed\n", filename);
-  } else {
-    log_warn("open %s failed\n", filename);
-  }
-  return_value_if_fail(fd > 0, NULL);
   info = TKMEM_ZALLOC(run_info_t);
-  if (info == NULL) {
-    close(fd);
-  }
   return_value_if_fail(info != NULL, NULL);
-  info->fd = fd;
+  info->fd = open(filename, O_RDONLY);
   info->max_x = max_x;
   info->max_y = max_y;
   info->dispatch = dispatch;
