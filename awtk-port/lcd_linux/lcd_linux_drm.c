@@ -516,12 +516,11 @@ static ret_t lcd_bgra8888_flush(lcd_t* lcd) {
   }
 
   if (o == LCD_ORIENTATION_0 || o == LCD_ORIENTATION_180) {
-    bitmap_init(&dst_img, lcd->w, lcd->h, special->format, (uint8_t*)dst);
+    bitmap_init_ex(&dst_img, lcd->w, lcd->h, dst_line_length, special->format, (uint8_t*)dst);
   } else {
-    bitmap_init(&dst_img, lcd->h, lcd->w, special->format, (uint8_t*)dst);
+    bitmap_init_ex(&dst_img, lcd->h, lcd->w, dst_line_length, special->format, (uint8_t*)dst);
   }
 
-  bitmap_set_line_length(&dst_img, dst_line_length);
   bitmap_init(&src_img, lcd->w, lcd->h, special->format, (uint8_t*)src);
 
   if (o == LCD_ORIENTATION_0) {
