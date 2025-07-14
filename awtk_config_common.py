@@ -78,7 +78,7 @@ GTEST_ROOT = joinPath(TK_ROOT, '3rd/gtest/googletest')
 TKC_STATIC_LIBS = ['debugger', 'fscript_ext', 'romfs', 'conf_io', 'hal', 'xml', 'charset',
                    'csv', 'streams', 'ubjson', 'compressors', 'miniz', 'tkc_core', 'mbedtls']
 
-TOOLS_NAME = ''
+TOOLS_NAME = 'gnutools' # for compatibility with old app scons script, avoid gen /DEF: flags
 NANOVG_BACKEND = ''
 NATIVE_WINDOW = ''
 #TOOLS_NAME = 'mingw'
@@ -112,7 +112,7 @@ if OS_NAME == 'Darwin':
         exit(-1)
     sdl_lib = sdl_path + sdl_versions[0] + "/lib"
 
-    TOOLS_NAME = ''
+    # TOOLS_NAME = ''
     OS_FLAGS = '-Wall -Wno-unused-function -fPIC -DWITHOUT_GLAD=1 '
     OS_LIBS = ['stdc++', 'iconv', 'pthread', 'm', 'dl']
     OS_LINKFLAGS = '-framework IOKit -framework Cocoa -framework QuartzCore -framework OpenGL -weak_framework Metal -weak_framework MetalKit'
@@ -122,7 +122,7 @@ if OS_NAME == 'Darwin':
     OS_LIBPATH = ['/usr/local/lib/', sdl_lib]
 
 elif OS_NAME == 'Linux':
-    TOOLS_NAME = ''
+    # TOOLS_NAME = ''
     OS_FLAGS = ' -Wall -Wno-unused-function -fPIC '
     OS_LIBS = ['sndio', 'stdc++', 'asound', 'pthread', 'm', 'dl']
     COMMON_CFLAGS = COMMON_CFLAGS+' -std=gnu99 '
