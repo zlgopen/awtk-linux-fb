@@ -4,10 +4,9 @@ import shutil
 import scons_argv
 compile_helper = scons_argv.get_compile_config()
 
-from awtk_config_common import TKC_STATIC_LIBS
+from awtk_config_common import TKC_STATIC_LIBS, TOOLS_NAME, OS_NAME
 from awtk_config_common import joinPath, toWholeArchive, genIdlAndDefEx, setEnvSpawn, genDllLinkFlags, copySharedLib, cleanSharedLib, scons_db_check_and_remove
 
-OS_NAME = platform.system()
 
 def joinPath(root, subdir):
   return os.path.normpath(os.path.join(root, subdir))
@@ -25,10 +24,9 @@ TK_SRC           = joinPath(TK_ROOT, 'src')
 TK_3RD_ROOT      = joinPath(TK_ROOT, '3rd')
 GTEST_ROOT       = joinPath(TK_ROOT, '3rd/gtest/googletest')
 
-BUILD_DIR        = joinPath(TK_LINUX_FB_ROOT, 'build')
 BIN_DIR          = joinPath(TK_LINUX_FB_ROOT, 'bin')
 LIB_DIR          = joinPath(TK_LINUX_FB_ROOT, 'lib')
-VAR_DIR          = joinPath(BUILD_DIR, 'var')
+VAR_DIR          = joinPath(TK_LINUX_FB_ROOT, 'var')
 TK_DEMO_ROOT     = joinPath(TK_ROOT, 'demos')
 
 LCD_DIR          = joinPath(TK_LINUX_FB_ROOT, 'awtk-port/lcd_linux')
@@ -311,6 +309,7 @@ CPPPATH += compile_helper.get_value('OS_CPPPATH', [])
 os.environ['LCD'] = LCD
 os.environ['LCD_DEVICES'] = LCD_DEVICES
 os.environ['TARGET_ARCH'] = 'arm'
+os.environ['TARGET_OS'] = OS_NAME;
 os.environ['BIN_DIR'] = BIN_DIR;
 os.environ['LIB_DIR'] = LIB_DIR;
 os.environ['TK_ROOT'] = TK_ROOT;
@@ -321,7 +320,7 @@ os.environ['TSLIB_LIB_DIR'] = TSLIB_LIB_DIR;
 os.environ['NANOVG_BACKEND'] = NANOVG_BACKEND;
 os.environ['TK_3RD_ROOT'] = TK_3RD_ROOT;
 os.environ['GTEST_ROOT'] = GTEST_ROOT;
-os.environ['TOOLS_NAME'] = '';
+os.environ['TOOLS_NAME'] = TOOLS_NAME;
 os.environ['GRAPHIC_BUFFER'] = GRAPHIC_BUFFER;
 os.environ['WITH_AWTK_SO'] = 'true'
 

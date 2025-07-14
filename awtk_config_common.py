@@ -11,15 +11,16 @@ if sys.version_info.major == 2:
 else:
   import pickle
 
-OS_NAME = platform.system()
+OS_NAME = 'Linux'
 
 import subprocess
 
 def is_raspberrypi():
-  if OS_NAME == "Windows":
+  try:
+    result = str(subprocess.check_output(["uname", "-a"]))
+    return result.find('Linux raspberrypi') >= 0
+  except Exception as e:
     return False
-  result = str(subprocess.check_output(["uname", "-a"]))
-  return result.find('Linux raspberrypi') >= 0
 
 #######################################################
 # XXX: This file can be edited only in tkc project

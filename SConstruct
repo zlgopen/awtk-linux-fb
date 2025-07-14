@@ -25,6 +25,8 @@ if len (APP_ROOT) > 0:
 
 env = DefaultEnvironment(CCFLAGS = awtk.CCFLAGS + APP_CCFLAGS, 
   ENV = os.environ,
+  TOOLS=['gcc', 'g++', 'gnulink', 'ar', 'gas', 'gfortran', 'm4'],
+  PROGPREFIX='',PROGSUFFIX='',LIBPREFIX='lib',LIBSUFFIX='.a',SHLIBPREFIX='lib',SHLIBSUFFIX='.so',LIBPREFIXES=['lib'],LIBSUFFIXES=['.a', '.so'],
   CFLAGS = awtk.CFLAGS,
   CC=awtk.CC,
   CXX=awtk.CXX,
