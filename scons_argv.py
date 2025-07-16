@@ -23,6 +23,7 @@ COMPILE_CONFIG = {
   'ENABLE_CURSOR' : { 'value' : True, 'type' : bool.__name__, 'desc' : ['enable cursor mouse'], 'help_info' : 'set enable cursor mouse, value is true or false'},
   'INPUT_ENGINE' : { 'value' : None, 'type' : str.__name__, 'desc' : ['null/spinyin/t9/t9ext/pinyin', '..example: INPUT_ENGINE = "pinyin"'], 'help_info' : 'set awtk use input engine' },
   'VGCANVAS' : { 'value' : None, 'type' : str.__name__, 'desc' : ['NANOVG/NANOVG_PLUS/CAIRO', '..example: VGCANVAS = "NANOVG"'], 'help_info' : 'set awtk use render vgcanvas type' },
+  'OPENGL_ANTIALIAS' : { 'value' : 'HW', 'type' : str.__name__, 'str_enum' : ['HW', 'SW', 'NONE'], 'desc' : ['value is HW/SW/NONE', 'Default value is HW', 'HW is platform\'s MultiSample antialias, SW is VGCANVAS\'s soft antialias, NONE is no antialias'], 'help_info' : 'Set OpenGL antialiasing mode (HW/SW/NONE), OPENGL_ANTIALIAS = "HW" ' },
   'DEBUG' : { 'value' : False, 'type' : bool.__name__, 'desc' : ['awtk\'s compile is debug'], 'help_info' : 'awtk\'s compile is debug, value is true or false' },
   'APP' : { 'value' : None, 'type' : str.__name__, 'save_file' : False, 'desc' : ['build this app'], 'help_info' : 'set app is build, value is app\'s root' },
   'LCD_DEVICES' : { 'value' : None, 'type' : str.__name__, 'desc' : ['linux\'s lcd devices type, value is fb/drm/wayland/egl_for_fsl/egl_for_x11/egl_for_gbm/egl_for_wayland', '..example: LCD_DEVICES = "fb"'], 'help_info' : 'when building, use linux\'s lcd devices type, value is fb/drm/wayland/egl_for_fsl/egl_for_x11/egl_for_gbm/egl_for_wayland' },

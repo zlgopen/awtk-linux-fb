@@ -66,6 +66,10 @@ const EGLint attribute_list[] = {
   EGL_BLUE_SIZE, 8,
   EGL_ALPHA_SIZE, 0,
   EGL_STENCIL_SIZE, 8,
+#ifdef WITH_OPENGL_HW_ANTIALIAS
+  EGL_SAMPLE_BUFFERS, 1,
+  EGL_SAMPLES, 4,
+#endif
   EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
   EGL_NONE
 };
@@ -259,6 +263,10 @@ ret_t egl_devices_make_current(void* ctx) {
   return_value_if_fail(context != NULL, RET_BAD_PARAMS);
 
   eglMakeCurrent(context->egl_display, context->egl_surface, context->egl_surface, context->egl_context);
+  if (eglGetError() == EGL_SUCCESS) {
+    glViewport(0, 0, context->screen_width, context->screen_height);
+    glClear(GL_STENCIL_BUFFER_BIT);
+  }
   return eglGetError() == EGL_SUCCESS ? RET_OK : RET_FAIL;
 }
 
@@ -291,5 +299,7 @@ ret_t egl_devices_resize(void* ctx, uint32_t w, uint32_t h) {
   context->gbm_surface = gbm_surface_create(context->gbm_device, context->mode_info.hdisplay, context->mode_info.vdisplay, GBM_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT|GBM_BO_USE_RENDERING);
   context->egl_surface = eglCreateWindowSurface(context->egl_display, context->egl_configs[context->egl_config_index], (EGLNativeWindowType)context->gbm_surface, NULL);
   assert(context->egl_surface != EGL_NO_SURFACE);
+  context->screen_width = context->mode_info.hdisplay;
+  context->screen_height = context->mode_info.vdisplay;
   return RET_OK;
 }
