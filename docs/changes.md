@@ -1,5 +1,9 @@
 # 最新动态
 
+2025/07/17
+  * 修改scons脚本支持在windows和osx平台下做linux-fb的交叉编译
+  * 强制设置OS_NAME='Linux'和TOOLS_NAME='gnutools'，增加os.environ['TARGET_OS']给下级scons脚本读取使用
+
 2025/07/16
   * 增加OpenGL模式下的硬件和软件抗锯齿开关选项(感谢智明提供补丁)
 
