@@ -137,6 +137,7 @@ elif OS_NAME == 'Linux':
     OS_LINKFLAGS = ' -Wl,-rpath=./bin -Wl,-rpath=./ '
     if is_raspberrypi():
       OS_FLAGS = OS_FLAGS + ' -DRASPBERRYPI '
+      OS_LIBS = OS_LIBS + ['atomic']
       os.environ['RASPBERRYPI'] = 'true'
     
     SDL_VIDEODRIVER=os.getenv('SDL_VIDEODRIVER');
