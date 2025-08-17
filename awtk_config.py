@@ -34,6 +34,7 @@ INPUT_DIR        = joinPath(TK_LINUX_FB_ROOT, 'awtk-port/input_thread')
 
 WAYLAND_DIR      = joinPath(TK_LINUX_FB_ROOT, 'awtk-wayland/wayland')
 EGL_WAYLAND_DIR  = joinPath(TK_LINUX_FB_ROOT, 'awtk-wayland/egl_for_wayland')
+COMMON_DIR       = joinPath(TK_LINUX_FB_ROOT, 'common')
 
 # lcd devices
 LCD_DEVICES='fb'
@@ -283,6 +284,7 @@ CPPPATH=[TK_ROOT,
   LCD_DIR, 
   INPUT_DIR, 
   WAYLAND_DIR, 
+  COMMON_DIR,
   EGL_WAYLAND_DIR,
   joinPath(TK_SRC, 'ext_widgets'), 
   joinPath(TK_SRC, 'custom_widgets'), 
