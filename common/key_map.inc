@@ -104,7 +104,7 @@ static const int32_t s_key_map[0x100] = {
     [KEY_ENTER] = TK_KEY_KP_ENTER,
 };
 
-static int32_t map_key(uint16_t code) {
+int32_t map_key(uint16_t code) {
   if (custom_keys() != NULL && custom_keys_nr() > 0) {
     const key_type_value_t* key_value =
         find_item_by_value(custom_keys(), custom_keys_nr(), (uint32_t)code);
