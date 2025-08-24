@@ -22,6 +22,7 @@
 #include <poll.h>
 #include "main_loop/main_loop_simple.h"
 #include "tkc/thread.h"
+#include "native_window/native_window_raw.h"
 
 #include "lcd_wayland.h"
 

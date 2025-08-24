@@ -25,6 +25,7 @@
 #include "base/window_manager.h"
 #include "main_loop/main_loop_simple.h"
 #include "tkc/thread.h"
+#include "tkc/time_now.h"
 #include "base/lcd_fb_dirty_rects.h"
 
 #ifndef FULLSCREEN
