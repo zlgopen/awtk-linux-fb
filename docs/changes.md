@@ -1,5 +1,8 @@
 # 最新动态
 
+2025/09/15
+  * 完善编译脚本(感谢兆坤提供补丁)
+
 2025/07/17
   * 修改scons脚本支持在windows和osx平台下做linux-fb的交叉编译
   * 强制设置OS_NAME='Linux'和TOOLS_NAME='gnutools'，增加os.environ['TARGET_OS']给下级scons脚本读取使用
