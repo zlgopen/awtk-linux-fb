@@ -56,7 +56,6 @@ if awtk.lcd_devices_is_egl(os.environ['LCD_DEVICES']) :
 SConscriptFiles=[
   awtk.joinPath(TK_ROOT_VAR, '3rd/mbedtls/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/cjson/SConscript'),
-  awtk.joinPath(TK_ROOT_VAR, '3rd/agg/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/agge/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/fribidi/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/gpinyin/SConscript'), 
