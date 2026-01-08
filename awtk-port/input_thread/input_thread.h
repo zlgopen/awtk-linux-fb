@@ -24,11 +24,14 @@
 
 #include "tkc/thread.h"
 #include "input_dispatcher.h"
+#include "exit_notifier.h"
 
 BEGIN_C_DECLS
 
 tk_thread_t* input_thread_run(const char* filename, input_dispatch_t dispatch, void* ctx,
                               int32_t max_x, int32_t max_y);
+tk_thread_t* input_thread_run_ex(const char* filename, input_dispatch_t dispatch, void* ctx,
+                              int32_t max_x, int32_t max_y, exit_notifier_t* exit_notifier);               
 ret_t input_thread_global_init(void);
 ret_t input_thread_global_deinit(void);
 

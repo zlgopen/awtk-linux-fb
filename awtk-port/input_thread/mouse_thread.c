@@ -44,6 +44,7 @@ typedef struct _run_info_t {
   void* dispatch_ctx;
   char* filename;
   input_dispatch_t dispatch;
+  exit_notifier_t* exit_notifier;
   union {
     int8_t d[3];
     struct input_event e; /* for EasyARM-iMX280A_283A_287A */
@@ -113,9 +114,19 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
   int ret = 0;
   event_queue_req_t* req = &(info->req);
 
+  if (info->exit_notifier && exit_notifier_get_flag(info->exit_notifier)) {
+    return RET_QUIT;
+  }
+
   if (info->fd < 0) {
     ret = -1;
   } else {
+    if (info->exit_notifier && exit_notifier_wait(info->exit_notifier, info->fd) != info->fd) {
+      // If the fd device is unplugged, wait function will still return the fd and read return -1
+      // To avoid function exceptions returning, Check flag to ensure the program needs to exit
+      if (exit_notifier_get_flag(info->exit_notifier))
+        return RET_QUIT;
+    }
     ret = read(info->fd, &info->data.e, sizeof(info->data.e));
   }
 
@@ -281,7 +292,9 @@ void* input_run(void* ctx) {
   TKMEM_FREE(ctx);
   while (input_dispatch_one_event(&info) == RET_OK) {
   };
-  close(info.fd);
+  if (info.fd >= 0) {
+    close(info.fd);
+  }
   TKMEM_FREE(info.filename);
 
   return NULL;
@@ -297,6 +310,11 @@ static run_info_t* info_dup(run_info_t* info) {
 
 tk_thread_t* mouse_thread_run(const char* filename, input_dispatch_t dispatch, void* ctx,
                               int32_t max_x, int32_t max_y) {
+  return mouse_thread_run_ex(filename, dispatch, ctx, max_x, max_y, NULL);
+}
+
+tk_thread_t* mouse_thread_run_ex(const char* filename, input_dispatch_t dispatch, void* ctx,
+                              int32_t max_x, int32_t max_y, exit_notifier_t* exit_notifier) {
   run_info_t info;
   tk_thread_t* thread = NULL;
   return_value_if_fail(filename != NULL && dispatch != NULL, NULL);
@@ -307,6 +325,7 @@ tk_thread_t* mouse_thread_run(const char* filename, input_dispatch_t dispatch, v
   info.max_y = max_y;
   info.dispatch_ctx = ctx;
   info.dispatch = dispatch;
+  info.exit_notifier = exit_notifier;
   info.fd = open(filename, O_RDONLY);
   info.filename = tk_strdup(filename);
 

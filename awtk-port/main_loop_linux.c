@@ -68,6 +68,7 @@ static device_info_t s_devices_default[] = {{"fb", FB_DEVICE_FILENAME},
                                             {"input", KB_DEVICE_FILENAME},
                                             {"mouse", MICE_DEVICE_FILENAME}};
 static slist_t s_device_threads_list;
+static exit_notifier_t s_exit_notifier;
 
 static ret_t main_loop_linux_destroy(main_loop_t* l) {
   main_loop_simple_t* loop = (main_loop_simple_t*)l;
@@ -136,10 +137,15 @@ ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* evt, const
 }
 
 static void on_app_exit(void) {
+  // notify all input device thread exit
+  exit_notifier_set_flag(&s_exit_notifier, 1);
+  exit_notifier_signal(&s_exit_notifier, slist_size(&s_device_threads_list));
   slist_deinit(&s_device_threads_list);
+
   input_thread_global_deinit();
   common_coord_deinit();
   devices_unload();
+  exit_notifier_deinit(&s_exit_notifier);
 }
 
 static ret_t lcd_create_on_devices_visit(void* ctx, const device_info_t* info) {
@@ -172,12 +178,12 @@ static ret_t device_thread_run_on_devices_visit(void* ctx, const device_info_t* 
   ret_t ret = RET_OK;
 
   if (tk_str_eq(info->type, "input")) {
-    thread = input_thread_run(info->path, input_dispatch_to_main_loop, loop, loop->w, loop->h);
+    thread = input_thread_run_ex(info->path, input_dispatch_to_main_loop, loop, loop->w, loop->h, &s_exit_notifier);
   } else if (tk_str_eq(info->type, "mouse")) {
-    thread = mouse_thread_run(info->path, input_dispatch_to_main_loop, loop, loop->w, loop->h);
+    thread = mouse_thread_run_ex(info->path, input_dispatch_to_main_loop, loop, loop->w, loop->h, &s_exit_notifier);
   } else if (tk_str_eq(info->type, "ts")) {
 #ifdef HAS_TSLIB
-    thread = tslib_thread_run(info->path, input_dispatch_to_main_loop, loop, loop->w, loop->h);
+    thread = tslib_thread_run_ex(info->path, input_dispatch_to_main_loop, loop, loop->w, loop->h, &s_exit_notifier);
 #endif /*HAS_TSLIB*/
   }
 
@@ -186,6 +192,12 @@ static ret_t device_thread_run_on_devices_visit(void* ctx, const device_info_t* 
   }
 
   return ret;
+}
+
+static ret_t device_thread_exit(void* data) {
+  tk_thread_join((tk_thread_t*)data);
+  tk_thread_destroy((tk_thread_t*)data);
+  return RET_OK;
 }
 
 main_loop_t* main_loop_init(int w, int h) {
@@ -209,7 +221,8 @@ main_loop_t* main_loop_init(int w, int h) {
 
   common_coord_init();
   input_thread_global_init();
-  slist_init(&s_device_threads_list, (tk_destroy_t)tk_thread_destroy, NULL);
+  exit_notifier_init(&s_exit_notifier, 0);
+  slist_init(&s_device_threads_list, (tk_destroy_t)device_thread_exit, NULL);
   devices_foreach(device_thread_run_on_devices_visit, loop);
 
   atexit(on_app_exit);

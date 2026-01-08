@@ -37,6 +37,7 @@ typedef struct _run_info_t {
   void* dispatch_ctx;
   char* filename;
   input_dispatch_t dispatch;
+  exit_notifier_t* exit_notifier;
 
   event_queue_req_t req;
 } run_info_t;
@@ -56,7 +57,17 @@ static ret_t tslib_dispatch_one_event(run_info_t* info) {
   struct ts_sample e = {0};
   int ret = -1;
 
+  if (info->exit_notifier && exit_notifier_get_flag(info->exit_notifier)) {
+    return RET_QUIT;
+  }
+
   if (info->ts != NULL) {
+    if (info->exit_notifier && exit_notifier_wait(info->exit_notifier, ts_fd(info->ts)) != ts_fd(info->ts)) {
+      // If the fd device is unplugged, wait function will still return the fd and read return -1
+      // To avoid function exceptions returning, Check flag to ensure the program needs to exit
+      if (exit_notifier_get_flag(info->exit_notifier))
+        return RET_QUIT;
+    }
     ret = ts_read(info->ts, &e, 1);
   }
 
@@ -124,7 +135,9 @@ void* tslib_run(void* ctx) {
   TKMEM_FREE(ctx);
   while (tslib_dispatch_one_event(&info) == RET_OK) {
   };
-  ts_close(info.ts);
+  if (info.ts != NULL) {
+    ts_close(info.ts);
+  }
   TKMEM_FREE(info.filename);
 
   return NULL;
@@ -140,6 +153,11 @@ static run_info_t* info_dup(run_info_t* info) {
 
 tk_thread_t* tslib_thread_run(const char* filename, input_dispatch_t dispatch, void* ctx,
                               int32_t max_x, int32_t max_y) {
+  return tslib_thread_run_ex(filename, dispatch, ctx, max_x, max_y, NULL);
+}
+
+tk_thread_t* tslib_thread_run_ex(const char* filename, input_dispatch_t dispatch, void* ctx,
+                              int32_t max_x, int32_t max_y, exit_notifier_t* exit_notifier) {
   run_info_t info;
   tk_thread_t* thread = NULL;
   return_value_if_fail(filename != NULL && dispatch != NULL, NULL);
@@ -150,6 +168,7 @@ tk_thread_t* tslib_thread_run(const char* filename, input_dispatch_t dispatch, v
   info.max_y = max_y;
   info.dispatch_ctx = ctx;
   info.dispatch = dispatch;
+  info.exit_notifier = exit_notifier;
   info.ts = ts_open(filename, 0);
   info.filename = tk_strdup(filename);
 

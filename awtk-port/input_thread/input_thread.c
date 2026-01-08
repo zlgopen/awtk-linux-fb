@@ -64,6 +64,7 @@ typedef struct _run_info_t {
   void* dispatch_ctx;
   char* filename;
   input_dispatch_t dispatch;
+  exit_notifier_t* exit_notifier;
 
   bool_t pressed;
   bool_t is_mod_inited;
@@ -87,7 +88,7 @@ static bool_t run_info_is_no_finger_down(run_info_t* info) {
   return TRUE;
 }
 
-static run_info_t* run_info_create(const char* filename, input_dispatch_t dispatch, void* dispatch_ctx, int32_t max_x, int32_t max_y) {
+static run_info_t* run_info_create(const char* filename, input_dispatch_t dispatch, void* dispatch_ctx, int32_t max_x, int32_t max_y, exit_notifier_t* exit_notifier) {
   run_info_t* info = NULL;
   return_value_if_fail(filename != NULL && dispatch != NULL, NULL);
   info = TKMEM_ZALLOC(run_info_t);
@@ -97,6 +98,8 @@ static run_info_t* run_info_create(const char* filename, input_dispatch_t dispat
   info->max_y = max_y;
   info->dispatch = dispatch;
   info->dispatch_ctx = dispatch_ctx;
+  info->exit_notifier = exit_notifier;
+
   info->filename = tk_strdup(filename);
 
   return info;
@@ -104,7 +107,7 @@ static run_info_t* run_info_create(const char* filename, input_dispatch_t dispat
 
 static ret_t run_info_destroy(run_info_t* info) {
   return_value_if_fail(info != NULL, RET_BAD_PARAMS);
-  if (info->fd > 0) {
+  if (info->fd >= 0) {
     close(info->fd);
   }
   TKMEM_FREE(info->filename);
@@ -197,9 +200,19 @@ static ret_t input_dispatch_one_event(run_info_t* info) {
   struct input_event e;
   event_queue_req_t* req = &(info->req);
 
+  if (info->exit_notifier && exit_notifier_get_flag(info->exit_notifier)) {
+    return RET_QUIT;
+  }
+
   if (info->fd < 0) {
     ret = -1;
   } else {
+    if (info->exit_notifier && exit_notifier_wait(info->exit_notifier, info->fd) != info->fd) {
+      // If the fd device is unplugged, wait function will still return the fd and read return -1
+      // To avoid function exceptions returning, Check flag to ensure the program needs to exit
+      if (exit_notifier_get_flag(info->exit_notifier))
+        return RET_QUIT;
+    }
     ret = read(info->fd, &e, sizeof(e));
   }
 
@@ -416,8 +429,13 @@ static void* input_run(void* ctx) {
 
 tk_thread_t* input_thread_run(const char* filename, input_dispatch_t dispatch, void* ctx,
                               int32_t max_x, int32_t max_y) {
+  return input_thread_run_ex(filename, dispatch, ctx, max_x, max_y, NULL);
+}
+
+tk_thread_t* input_thread_run_ex(const char* filename, input_dispatch_t dispatch, void* ctx,
+                              int32_t max_x, int32_t max_y, exit_notifier_t* exit_notifier) {
   tk_thread_t* thread = NULL;
-  run_info_t* info = run_info_create(filename, dispatch, ctx, max_x, max_y);
+  run_info_t* info = run_info_create(filename, dispatch, ctx, max_x, max_y, exit_notifier);
   return_value_if_fail(info != NULL, NULL);
 
   thread = tk_thread_create(input_run, info);
