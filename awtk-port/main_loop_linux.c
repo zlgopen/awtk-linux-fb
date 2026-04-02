@@ -115,8 +115,8 @@ ret_t input_dispatch_to_main_loop(void* ctx, const event_queue_req_t* evt, const
         break;
       }
       case EVT_POINTER_UP: {
-        e->pointer_event.pressed = l->pressed;
         l->pressed = FALSE;
+        e->pointer_event.pressed = l->pressed;
         e->event.size = sizeof(e->pointer_event);
         break;
       }
