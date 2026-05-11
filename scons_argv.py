@@ -34,6 +34,7 @@ COMPILE_CONFIG = {
   'WITH_G2D' : { 'value' : False, 'type' : bool.__name__, 'desc' : ['enable g2d model '], 'help_info' : 'enable awtk\'s g2d model, value is true or false' },
   "WITH_CUSTOM_GRAPHIC_BUFFER" : { 'value' : False, 'type' : bool.__name__, 'desc' : ['use custom graphic_buffer '], 'help_info' : 'disable awtk default graphic_buffer and use custom graphic_buffer, value is true or false' },
   'WAYLAND_SCANNER_PATH' : { 'value' : None, 'type' : str.__name__, 'desc' : ['wayland_scanner path'], 'help_info' : 'set the path of wayland_scanner' },
+  'BIDI_BACKEND' : { 'value' : None, 'type' : str.__name__, 'str_enum' : ['sheenbidi', 'fribidi'], 'desc' : ['Unicode bidi implementation: sheenbidi (default) or fribidi'], 'help_info' : 'set bidi backend, BIDI_BACKEND=sheenbidi|fribidi, default is sheenbidi' },
 }
 
 CWD = os.path.normpath(os.path.abspath(os.path.dirname(__file__)));

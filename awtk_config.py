@@ -102,6 +102,19 @@ elif INPUT_ENGINE == 'spinyin' :
 elif INPUT_ENGINE == 'null' :
     COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DWITH_IME_NULL '
 
+BIDI_BACKEND = compile_helper.get_value('BIDI_BACKEND', 'sheenbidi')
+if isinstance(BIDI_BACKEND, str):
+  BIDI_BACKEND = BIDI_BACKEND.lower()
+if BIDI_BACKEND not in ('sheenbidi', 'fribidi'):
+  print('Invalid BIDI_BACKEND (must be sheenbidi or fribidi):', BIDI_BACKEND)
+  sys.exit(1)
+
+if BIDI_BACKEND == 'fribidi':
+  COMMON_CCFLAGS = COMMON_CCFLAGS+' -DWITH_BIDI_FRIBIDI=1 '
+else:
+  COMMON_CCFLAGS = COMMON_CCFLAGS+' -DWITH_BIDI_SHEEN=1 '
+  COMMON_CCFLAGS = COMMON_CCFLAGS+' -DSB_CONFIG_EXPERIMENTAL_TEXT_API=1 '
+
 GRAPHIC_BUFFER='default'
 if compile_helper.get_value('WITH_CUSTOM_GRAPHIC_BUFFER', False) :
   GRAPHIC_BUFFER='custom'
@@ -238,7 +251,11 @@ CCFLAGS=OS_FLAGS + COMMON_CCFLAGS
 if compile_helper.get_value('EXTERN_CODE', None) != None :
   LINKFLAGS=OS_LINKFLAGS + toWholeArchive(['__extern_code'])
 
-AWTK_STATIC_LIBS =['awtk_global', 'fscript_ext_widgets', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'linebreak', 'fribidi']
+AWTK_STATIC_LIBS =['awtk_global', 'fscript_ext_widgets', 'extwidgets', 'widgets', 'awtk_linux_fb', 'base', 'gpinyin', 'linebreak']
+if BIDI_BACKEND == 'fribidi':
+  AWTK_STATIC_LIBS.append('fribidi')
+else:
+  AWTK_STATIC_LIBS.append('sheenbidi')
 AWTK_STATIC_LIBS += TKC_STATIC_LIBS
 if TSLIB_LIB_DIR != '':
   SHARED_LIBS=['awtk'] + OS_LIBS + ['ts'];
@@ -294,12 +311,16 @@ CPPPATH=[TK_ROOT,
   joinPath(TK_3RD_ROOT, 'agg/include'), 
   joinPath(TK_3RD_ROOT, 'mbedtls/include'), 
   joinPath(TK_3RD_ROOT, 'mbedtls/3rdparty/everest/include'), 
-  joinPath(TK_3RD_ROOT, 'fribidi'), 
   joinPath(TK_3RD_ROOT, 'libunibreak'), 
   joinPath(TK_3RD_ROOT, 'gpinyin/include'), 
   joinPath(TK_3RD_ROOT, 'gtest/googletest'), 
   joinPath(TK_3RD_ROOT, 'gtest/googletest/include'), 
   ] + OS_CPPPATH
+
+if BIDI_BACKEND == 'fribidi' :
+  CPPPATH.append(joinPath(TK_3RD_ROOT, 'fribidi'))
+else :
+  CPPPATH.append(joinPath(TK_3RD_ROOT, 'SheenBidi-3.0.0/Headers'))
 
 if TSLIB_LIB_DIR != '':
   LIBS = LIBS + ['ts']

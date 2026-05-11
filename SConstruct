@@ -53,11 +53,16 @@ else:
 if awtk.lcd_devices_is_egl(os.environ['LCD_DEVICES']) :
   APP_PROJ_VAR += [awtk.joinPath(TK_ROOT_VAR, '3rd/glad/SConscript')]
 
+if awtk.BIDI_BACKEND == 'fribidi':
+  _bidi_sconscript = awtk.joinPath(TK_ROOT_VAR, '3rd/fribidi/SConscript')
+else:
+  _bidi_sconscript = awtk.joinPath(TK_ROOT_VAR, '3rd/SheenBidi-3.0.0/SConscript')
+
 SConscriptFiles=[
   awtk.joinPath(TK_ROOT_VAR, '3rd/mbedtls/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/cjson/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/agge/SConscript'),
-  awtk.joinPath(TK_ROOT_VAR, '3rd/fribidi/SConscript'),
+  _bidi_sconscript,
   awtk.joinPath(TK_ROOT_VAR, '3rd/gpinyin/SConscript'), 
   awtk.joinPath(TK_ROOT_VAR, '3rd/libunibreak/SConscript'),
   awtk.joinPath(TK_ROOT_VAR, '3rd/miniz/SConscript'),
