@@ -22,6 +22,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <linux/input.h>
 #include "tslib.h"
 #include "tkc/mem.h"
 #include "tkc/utils.h"
@@ -29,6 +31,9 @@
 #include "base/keys.h"
 
 #include "tslib_thread.h"
+
+#define TS_OPEN_NONBLOCK 1
+#define TS_OPEN_BLOCK    0
 
 typedef struct _run_info_t {
   int32_t max_x;
@@ -53,6 +58,36 @@ static ret_t tslib_dispatch(run_info_t* info) {
   return ret;
 }
 
+/* If the touch device has been removed, then return 0 (errno==ENODEV) */
+static int touch_device_alive(int fd) {
+  int version;
+  return ioctl(fd, EVIOCGVERSION, &version) == 0;
+}
+
+/* reopen the touch device, then init the info.ts */
+static ret_t tslib_reopen(run_info_t* info) {
+  assert(info);
+  log_warn("reopen tslib, filename=%s\n", info->filename);
+
+  if (info->ts != NULL) {
+    ts_close(info->ts);
+    info->ts = NULL;
+  }
+
+  info->ts = ts_open(info->filename, info->exit_notifier? TS_OPEN_NONBLOCK: TS_OPEN_BLOCK);
+  if (info->ts != NULL) {
+    ts_config(info->ts);
+  }
+
+  if (info->ts == NULL) {
+    log_debug("%s:%d: open tslib failed, filename=%s\n", __func__, __LINE__, info->filename);
+    perror("print tslib: ");
+  } else {
+    log_debug("%s:%d: open tslib successful, filename=%s\n", __func__, __LINE__, info->filename);
+  }
+  return RET_OK;
+}
+
 static ret_t tslib_dispatch_one_event(run_info_t* info) {
   struct ts_sample e = {0};
   int ret = -1;
@@ -61,45 +96,36 @@ static ret_t tslib_dispatch_one_event(run_info_t* info) {
     return RET_QUIT;
   }
 
-  if (info->ts != NULL) {
+  if (info->ts == NULL) {
+    sleep(1);
+    return tslib_reopen(info);
+  }
+
+  /* Use nonblock ts_read->wait->ts_read to fix issues/123 in tslib-1.1 variance module */
+  ret = ts_read(info->ts, &e, 1);
+  if (ret <= 0) {
     if (info->exit_notifier && exit_notifier_wait(info->exit_notifier, ts_fd(info->ts)) != ts_fd(info->ts)) {
-      // If the fd device is unplugged, wait function will still return the fd and read return -1
-      // To avoid function exceptions returning, Check flag to ensure the program needs to exit
+      /*
+      If the fd device is unplugged, wait function will still return the fd and read return -1
+      */
       if (exit_notifier_get_flag(info->exit_notifier))
         return RET_QUIT;
     }
     ret = ts_read(info->ts, &e, 1);
   }
 
-  event_queue_req_t* req = &(info->req);
-
-  if (ret == 0) {
+  if (ret <= 0) {
     log_warn("%s:%d: get tslib data failed, filename=%s\n", __func__, __LINE__, info->filename);
-    sleep(1);
-    return RET_OK;
-  } else if (ret < 0) {
-    sleep(2);
 
-    if (access(info->filename, R_OK) == 0) {
-      if (info->ts != NULL) {
-        ts_close(info->ts);
-      }
-      info->ts = ts_open(info->filename, 0);
-      return_value_if_fail(info->ts != NULL, RET_OK);
-      ts_config(info->ts);
-
-      if (info->ts == NULL) {
-        log_debug("%s:%d: open tslib failed, filename=%s\n", __func__, __LINE__, info->filename);
-        perror("print tslib: ");
-      } else {
-        log_debug("%s:%d: open tslib successful, filename=%s\n", __func__, __LINE__,
-                  info->filename);
-      }
+    if (!touch_device_alive(ts_fd(info->ts))) {
+      return tslib_reopen(info);
     }
 
+    /* Touch data incomplete, continue to next ts_read */
     return RET_OK;
   }
 
+  event_queue_req_t* req = &(info->req);
   req->event.type = EVT_NONE;
   req->pointer_event.x = e.x;
   req->pointer_event.y = e.y;
@@ -169,7 +195,7 @@ tk_thread_t* tslib_thread_run_ex(const char* filename, input_dispatch_t dispatch
   info.dispatch_ctx = ctx;
   info.dispatch = dispatch;
   info.exit_notifier = exit_notifier;
-  info.ts = ts_open(filename, 0);
+  info.ts = ts_open(filename, exit_notifier? TS_OPEN_NONBLOCK: TS_OPEN_BLOCK);
   info.filename = tk_strdup(filename);
 
   if (info.ts != NULL) {
@@ -180,7 +206,9 @@ tk_thread_t* tslib_thread_run_ex(const char* filename, input_dispatch_t dispatch
   if (thread != NULL) {
     tk_thread_start(thread);
   } else {
-    ts_close(info.ts);
+    if (info.ts != NULL) {
+      ts_close(info.ts);
+    }
     TKMEM_FREE(info.filename);
   }
 
