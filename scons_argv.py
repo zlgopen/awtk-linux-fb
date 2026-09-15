@@ -35,6 +35,9 @@ COMPILE_CONFIG = {
   "WITH_CUSTOM_GRAPHIC_BUFFER" : { 'value' : False, 'type' : bool.__name__, 'desc' : ['use custom graphic_buffer '], 'help_info' : 'disable awtk default graphic_buffer and use custom graphic_buffer, value is true or false' },
   'WAYLAND_SCANNER_PATH' : { 'value' : None, 'type' : str.__name__, 'desc' : ['wayland_scanner path'], 'help_info' : 'set the path of wayland_scanner' },
   'BIDI_BACKEND' : { 'value' : None, 'type' : str.__name__, 'str_enum' : ['sheenbidi', 'fribidi'], 'desc' : ['Unicode bidi implementation: sheenbidi (default) or fribidi'], 'help_info' : 'set bidi backend, BIDI_BACKEND=sheenbidi|fribidi, default is sheenbidi' },
+  'FONT_LOADER': { 'value' : None, 'type' : str.__name__, 'str_enum' : ['freetype', 'stb', 'bitmap'], 'desc' : ['if FONT_LOADER is freetype/stb/bitmap'], 'help_info': 'font engine in FreeType, bitmap.' },
+  'TEXT_SHAPING': { 'value' : None, 'type' : str.__name__,'str_enum' : ['no_text_shaping', 'harfbuzz', 'harfbuzz_data'], 'desc' : ['TEXT_SHAPING is no_text_shaping/harfbuzz'], 'help_info' : 'text shaping engine in none or harfbuzz.' },  
+  'WITH_FS_RES' : { 'value' : True, 'type' : bool.__name__, 'desc' : ['with fs res'], 'help_info' : 'is build with WITH_FS_RES, value is true or false' },
 }
 
 CWD = os.path.normpath(os.path.abspath(os.path.dirname(__file__)));

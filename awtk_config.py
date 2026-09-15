@@ -65,6 +65,15 @@ elif lcd_devices_is_egl(LCD_DEVICES) :
   LCD='FB_GL'
   NANOVG_BACKEND='GLES2'
 
+OS_LIBS=[]
+OS_LIBPATH=[]
+OS_CPPPATH=[]
+OS_LINKFLAGS = ''
+OS_SUBSYSTEM_CONSOLE=''
+OS_SUBSYSTEM_WINDOWS=''
+COMMON_CCFLAGS = ''
+OS_FLAGS = ' -Wall -fno-strict-aliasing '
+
 #INPUT_ENGINE='null'
 #INPUT_ENGINE='spinyin'
 #INPUT_ENGINE='t9'
@@ -72,10 +81,46 @@ elif lcd_devices_is_egl(LCD_DEVICES) :
 INPUT_ENGINE='pinyin'
 INPUT_ENGINE = compile_helper.get_value('INPUT_ENGINE', INPUT_ENGINE)
 
-COMMON_CCFLAGS=' -DHAS_STD_MALLOC -DHAS_STDIO -DHAS_FAST_MEMCPY -DWITH_VGCANVAS -DWITH_UNICODE_BREAK '
+FONT_LOADER = 'stb'
+#FONT_LOADER = 'freetype'
+#FONT_LOADER = 'bitmap'
+FONT_LOADER = compile_helper.get_value('FONT_LOADER', FONT_LOADER)
+
+if FONT_LOADER == 'stb':
+  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_STB_FONT '
+elif FONT_LOADER == 'freetype':
+  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_FT_FONT '
+elif FONT_LOADER == 'bitmap':
+  COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_BITMAP_FONT '
+
+TEXT_SHAPING = 'no_text_shping'
+#TEXT_SHAPING = 'harfbuzz'
+#TEXT_SHAPING = 'harfbuzz_data'
+TEXT_SHAPING = compile_helper.get_value('TEXT_SHAPING', TEXT_SHAPING)
+TEXT_SHAPING_PROJS = []
+
+if TEXT_SHAPING == 'no_text_shping':
+  COMMON_CCFLAGS=COMMON_CCFLAGS + ' -DWITH_NO_TEXT_SHAPING '
+elif TEXT_SHAPING == 'harfbuzz':
+  if FONT_LOADER == 'bitmap' :
+    COMMON_CCFLAGS=COMMON_CCFLAGS + ' -DWITH_NO_TEXT_SHAPING '
+  else:
+    TK_ROOT_VAR = joinPath(VAR_DIR, 'awtk')
+    COMMON_CCFLAGS=COMMON_CCFLAGS + ' -DWITH_HARFBUZZ_TEXT_SHAPING '
+    OS_LIBS += ['harfbuzz']
+    TEXT_SHAPING_PROJS = [joinPath(TK_ROOT_VAR, '3rd/harfbuzz/SConscript')]
+    OS_CPPPATH += [joinPath(TK_3RD_ROOT, 'harfbuzz')]
+elif TEXT_SHAPING == 'harfbuzz_data':
+  COMMON_CCFLAGS=COMMON_CCFLAGS + ' -DWITH_HARFBUZZ_DATA_TEXT_SHAPING '
+
+WITH_FS_RES = compile_helper.get_value('WITH_FS_RES', True)
+if FONT_LOADER != 'bitmap' and WITH_FS_RES:
+    COMMON_CCFLAGS = COMMON_CCFLAGS + ' -DWITH_FS_RES '
+
+COMMON_CCFLAGS=COMMON_CCFLAGS+' -DHAS_STD_MALLOC -DHAS_STDIO -DHAS_FAST_MEMCPY -DWITH_VGCANVAS -DWITH_UNICODE_BREAK '
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DLOAD_ASSET_WITH_MMAP=1 -DWITH_SOCKET=1 '
-COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_ASSET_LOADER -DWITH_FS_RES -DHAS_GET_TIME_US64=1 ' 
-COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_STB_FONT -DWITH_TEXT_BIDI=1 '
+COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_ASSET_LOADER -DHAS_GET_TIME_US64=1 ' 
+COMMON_CCFLAGS=COMMON_CCFLAGS+' -DSTBTT_STATIC -DSTB_IMAGE_STATIC -DWITH_STB_IMAGE -DWITH_TEXT_BIDI=1 '
 COMMON_CCFLAGS=COMMON_CCFLAGS+' -DAPP_TYPE=APP_MOBILE -DLINUX_FB '
 #COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_STATE_ACTIVATED=1 '
 #COMMON_CCFLAGS=COMMON_CCFLAGS+' -DENABLE_CUSTOM_KEYS=1 '
@@ -126,14 +171,6 @@ if compile_helper.get_value('WITH_CUSTOM_GRAPHIC_BUFFER', False) :
 COMMON_CFLAGS=''
 COMMON_CFLAGS=COMMON_CFLAGS+' -std=gnu11 '
 
-OS_LIBS=[]
-OS_LIBPATH=[]
-OS_CPPPATH=[]
-OS_LINKFLAGS = ''
-OS_SUBSYSTEM_CONSOLE=''
-OS_SUBSYSTEM_WINDOWS=''
-OS_FLAGS = ' -Wall -fno-strict-aliasing '
-
 TSLIB_LIB_DIR=''
 TSLIB_INC_DIR=''
 
@@ -182,7 +219,7 @@ if compile_helper.get_value('PLATFORM', 'linux') == 'android' :
   STRIP = TOOLS_PREFIX + compile_helper.get_value('TOOLS_STRIP', 'arm-linux-androideabi-strip')
   RANLIB = TOOLS_PREFIX + compile_helper.get_value('TOOLS_RANLIB', 'arm-linux-androideabi-ranlib') 
   OS_LINKFLAGS=' -Wl,--allow-multiple-definition '
-  OS_LIBS = compile_helper.get_value('OS_LIBS', []) + ['stdc++', 'm']
+  OS_LIBS += compile_helper.get_value('OS_LIBS', []) + ['stdc++', 'm']
   OS_FLAGS='-Wall -Os -DFB_DEVICE_FILENAME=\\\"\"/dev/graphics/fb0\\\"\" '
 else :
   CC = TOOLS_PREFIX + compile_helper.get_value('TOOLS_CC', 'gcc') 
@@ -191,7 +228,7 @@ else :
   AR = TOOLS_PREFIX + compile_helper.get_value('TOOLS_AR', 'ar')
   RANLIB = TOOLS_PREFIX + compile_helper.get_value('TOOLS_RANLIB', 'ranlib')
   STRIP = TOOLS_PREFIX + compile_helper.get_value('TOOLS_STRIP', 'strip')
-  OS_LIBS = compile_helper.get_value('OS_LIBS', []) + ['atomic', 'stdc++', 'pthread', 'rt', 'm', 'dl']
+  OS_LIBS += compile_helper.get_value('OS_LIBS', []) + ['atomic', 'stdc++', 'pthread', 'rt', 'm', 'dl']
 
 OS_DEBUG = compile_helper.get_value('DEBUG', False)
 if OS_DEBUG :
@@ -204,22 +241,22 @@ OS_LINKFLAGS= OS_LINKFLAGS + ' -Wl,-rpath=./bin -Wl,-rpath=./ '
 if LCD_DEVICES =='drm' :
   #for drm
   #OS_CPPPATH += ['/usr/include/libdrm']
-  OS_LIBS = ['drm'] + OS_LIBS
+  OS_LIBS += ['drm'] + OS_LIBS
 elif LCD_DEVICES =='wayland' :
-  OS_LIBS = [ 'xkbcommon', 'wayland-client', 'wayland-cursor' ] + OS_LIBS
+  OS_LIBS += [ 'xkbcommon', 'wayland-client', 'wayland-cursor' ] + OS_LIBS
 elif LCD_DEVICES =='egl_for_fsl':
   #for egl for fsl
   OS_FLAGS=OS_FLAGS + ' -DEGL_API_FB '
-  OS_LIBS = [ 'GLESv2', 'EGL' ] + OS_LIBS
+  OS_LIBS += [ 'GLESv2', 'EGL' ] + OS_LIBS
 elif LCD_DEVICES =='egl_for_x11' :
   #for egl for fsl
-  OS_LIBS = [ 'X11', 'EGL', 'GLESv2' ] + OS_LIBS
+  OS_LIBS += [ 'X11', 'EGL', 'GLESv2' ] + OS_LIBS
 elif LCD_DEVICES =='egl_for_gbm' :
   #for egl for gbm
   #OS_CPPPATH += ['/usr/include/libdrm', '/usr/include/GLES2']
-  OS_LIBS = [ 'drm', 'gbm', 'EGL', 'GLESv2' ] + OS_LIBS
+  OS_LIBS += [ 'drm', 'gbm', 'EGL', 'GLESv2' ] + OS_LIBS
 elif LCD_DEVICES =='egl_for_wayland' :
-  OS_LIBS = [ 'xkbcommon', 'wayland-client', 'wayland-cursor', 'GLESv2', 'EGL', 'wayland-egl' ] + OS_LIBS
+  OS_LIBS += [ 'xkbcommon', 'wayland-client', 'wayland-cursor', 'GLESv2', 'EGL', 'wayland-egl' ] + OS_LIBS
 
 OPENGL_ANTIALIAS = compile_helper.get_value('OPENGL_ANTIALIAS', 'HW');
 if OPENGL_ANTIALIAS == 'HW':
