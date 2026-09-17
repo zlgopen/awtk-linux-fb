@@ -258,7 +258,7 @@ elif LCD_DEVICES =='egl_for_gbm' :
 elif LCD_DEVICES =='egl_for_wayland' :
   OS_LIBS += [ 'xkbcommon', 'wayland-client', 'wayland-cursor', 'GLESv2', 'EGL', 'wayland-egl' ] + OS_LIBS
 
-OPENGL_ANTIALIAS = compile_helper.get_value('OPENGL_ANTIALIAS', 'HW');
+OPENGL_ANTIALIAS = compile_helper.get_value('OPENGL_ANTIALIAS', 'SW');
 if OPENGL_ANTIALIAS == 'HW':
     COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_ANTIALIAS '
     COMMON_CCFLAGS=COMMON_CCFLAGS+' -DWITH_OPENGL_HW_ANTIALIAS '
